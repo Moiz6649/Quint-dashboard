@@ -66,7 +66,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.10.0";
+const VER = "1.11.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -165,6 +165,40 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .mc{display:flex;align-items:center;gap:14px}.mc button{background:none;border:0;padding:6px;font-size:22px;color:#e6eaf2;display:grid;place-items:center}
 .mc button.pp{width:54px;height:54px;border-radius:50%;background:#f1efec;color:#12151c;padding:0;font-size:22px}
 .vol{display:flex;align-items:center;gap:10px;flex:1 1 150px;min-width:130px;color:#b7c0d1;font-size:16px}
+/* ===== window / shutter / curtain cards ===== */
+.win{position:relative;width:104px;aspect-ratio:3/4;flex:none;border-radius:10px;overflow:hidden;background:linear-gradient(180deg,#6fa8d8 0%,#bfdcf0 58%,#f3dcae 100%);box-shadow:0 10px 22px rgba(0,0,0,.38);touch-action:none;-webkit-user-select:none;user-select:none}
+.win.cd{cursor:ns-resize}.win.cd.k-curtain{cursor:ew-resize}
+.win .wg{position:absolute;inset:0;background:radial-gradient(circle at 72% 26%,#fff6c7 0 13%,rgba(255,246,199,0) 14%),radial-gradient(ellipse at 30% 105%,rgba(255,255,255,.35),transparent 60%)}
+.win::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;background:#aeb3bf;z-index:1}
+.win::after{content:"";position:absolute;left:0;right:0;top:46%;height:4px;background:#aeb3bf;z-index:1}
+.win.night{background:linear-gradient(180deg,#0f1a3a 0%,#1e2f5c 60%,#31407a 100%)}
+.win.night .wg{background:radial-gradient(circle at 72% 26%,#f4f1dc 0 9%,rgba(244,241,220,0) 10%),radial-gradient(circle at 20% 20%,#fff 0 1.5%,transparent 2%),radial-gradient(circle at 40% 45%,#fff 0 1.2%,transparent 2%),radial-gradient(circle at 12% 60%,#fff 0 1.2%,transparent 2%)}
+.win .wc,.win .wl,.win .wr{position:absolute;z-index:2;transition:height .55s cubic-bezier(.3,.7,.2,1),width .55s cubic-bezier(.3,.7,.2,1)}
+.win .wc{left:0;right:0;top:0;height:calc((100 - var(--p)) * 1%);background:repeating-linear-gradient(180deg,#e3e5ea 0 5px,#a4a8b3 5px 7px);border-bottom:4px solid #6e727e;box-shadow:0 8px 12px rgba(0,0,0,.35)}
+.win.k-curtain .wc,.win.k-awning .wl,.win.k-awning .wr,.win.k-slats .wl,.win.k-slats .wr{display:none}
+.win.k-curtain .wl,.win.k-curtain .wr{top:0;bottom:0;width:calc(13% + (100 - var(--p)) * .37%);background:repeating-linear-gradient(90deg,#d7c4ab 0 7px,#a8957c 7px 14px);box-shadow:inset -6px 0 10px rgba(0,0,0,.25)}
+.win.k-curtain .wl{left:0}.win.k-curtain .wr{right:0;box-shadow:inset 6px 0 10px rgba(0,0,0,.25)}
+.win.k-awning .wc{background:repeating-linear-gradient(90deg,#e8554e 0 12px,#f6f1ec 12px 24px);height:calc(14% + (100 - var(--p)) * .5%);border-bottom:0;border-radius:0 0 14px 14px;box-shadow:0 10px 14px rgba(0,0,0,.3)}
+.win .wf{position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 0 3px #dfe2e8,inset 0 0 0 5px #8b909c;z-index:4;pointer-events:none}
+.win.mvg .wc,.win.mvg .wl,.win.mvg .wr{transition-duration:2.4s;transition-timing-function:linear}
+.win.mini{width:100%;max-width:92px}
+.wrow{display:flex;gap:12px;justify-content:space-around;margin:6px 0 4px}
+.wm{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0}
+.wm .wn{font-size:12px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.wm .wp{font-weight:600;font-size:13px}
+.shg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:6px}
+.shc{display:flex;gap:18px;align-items:center;padding:16px}
+.shc .shr{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.shc .nm{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shc .st{font-size:12px;color:var(--mu)}
+.shc .bigs{font-size:44px}.shc .bigs small{display:inline;font-size:13px;margin-left:6px}
+.pre{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.pre button{padding:5px 9px;border-radius:999px;border:1px solid var(--bd);background:rgba(255,255,255,.05);font-size:11.5px;font-weight:500}
+.pre button.on{background:var(--ac);color:#12151c;border-color:var(--ac)}.pre button:active{background:var(--ac);color:#000}
+.shb{display:flex;gap:10px;margin-top:6px}
+.shb button{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);padding:0;display:grid;place-items:center;font-size:15px}
+.shb button:active{background:var(--ac);color:#000}
+.shc .tlt{margin-top:8px}.shc .tlt .lbl{margin-bottom:2px}
 .shv{width:62px;height:70px;border:1px solid rgba(255,255,255,.35);border-radius:6px;overflow:hidden;flex:none;background:rgba(255,255,255,.04)}
 .shv i{display:block;background:repeating-linear-gradient(#8f8f93 0 4px,#4f5157 4px 7px);transition:height .3s}
 .bigs{font-family:var(--serif);font-size:48px;line-height:1;font-weight:400}.bigs small{display:block;font-family:inherit;font-size:14px;color:#c3cbdb;margin-top:6px}
@@ -402,10 +436,10 @@ class QuintDashboard extends HTMLElement {
     this.shadowRoot.addEventListener("pointerdown", (e) => { if (e.target.type === "range") this._drag = true; });
     window.addEventListener("pointerup", () => { this._drag = false; });
     const R = this.shadowRoot;
-    R.addEventListener("pointerdown", (e) => this._pdown(e));
-    R.addEventListener("pointermove", (e) => this._pmove(e));
-    R.addEventListener("pointerup", () => this._pup());
-    R.addEventListener("pointercancel", () => this._pup());
+    R.addEventListener("pointerdown", (e) => { if (!this._wdown(e)) this._pdown(e); });
+    R.addEventListener("pointermove", (e) => { if (!this._wmove(e)) this._pmove(e); });
+    R.addEventListener("pointerup", () => { if (!this._wup()) this._pup(); });
+    R.addEventListener("pointercancel", () => { if (!this._wup()) this._pup(); });
     R.addEventListener("input", (e) => this._input(e));
     R.addEventListener("touchmove", (e) => { if (this._mv) e.preventDefault(); }, { passive: false });
     R.addEventListener("contextmenu", (e) => { if (this._hold || this._mv) e.preventDefault(); });
@@ -859,6 +893,7 @@ class QuintDashboard extends HTMLElement {
       const b = a.brightness || 0, dim = !(a.supported_color_modes || []).every((m) => m === "onoff");
       return `<div class="card ${s.state === "on" ? "on" : ""}">${hd(s.state === "on" ? Math.round(b / 2.55) + "%" : "Off")}${tg(s.state === "on")}</div>${dim && s.state !== "unavailable" ? `<input type=range min=1 max=255 value=${b} data-slider="light|turn_on|brightness_pct|2.55" data-e="${id}">` : ""}</div>`.replace("brightness_pct|2.55", "brightness|1");
     }
+    if (d === "cover" && this._svcOf(id) === "shades") return this._shadeCard(id);
     if (d === "cover") return `<div class="card ${on && s.state !== "closed" ? "on" : ""}">${hd(s.state + (a.current_position != null ? " · " + a.current_position + "%" : ""))}</div><div class="btns">${bt("cover.open_cover", "▲ Open")}${bt("cover.stop_cover", "■")}${bt("cover.close_cover", "▼ Close")}</div></div>`;
     if (d === "climate") {
       const t = a.temperature || 22;
@@ -887,6 +922,66 @@ class QuintDashboard extends HTMLElement {
     return arr.map((x, i) => [x, i]).sort((p, q) => r(p[0]) - r(q[0]) || p[1] - q[1]).map((x) => x[0]);
   }
   _kw(k, html) { return `<div class="kw" data-k="${k}">${html}</div>`; }
+  /* ---------- window / shutter / curtain visuals ---------- */
+  _cvKind(id) {
+    const a = this._h.states[id].attributes, dc = a.device_class, n = (this._nm(id) + " " + id).toLowerCase();
+    if (dc === "curtain" || /curtain|drape|ستار/.test(n)) return "curtain";
+    if (dc === "awning" || /awning|pergola|canopy/.test(n)) return "awning";
+    return "slats";
+  }
+  _cvCan(id) { const a = this._h.states[id].attributes; return a.current_position != null || ((a.supported_features || 0) & 4) > 0; }
+  _cvPos(id) {
+    const o = this._wopt && this._wopt[id]; if (o && Date.now() - o.t < 4500) return o.p;
+    const s = this._h.states[id], a = s.attributes;
+    if (a.current_position != null) return Math.round(a.current_position);
+    return s.state === "closed" || s.state === "unavailable" ? 0 : 100;
+  }
+  _cvSt(id) {
+    const s = this._h.states[id], p = this._cvPos(id);
+    if (s.state === "opening") return "Opening…"; if (s.state === "closing") return "Closing…"; if (s.state === "unavailable") return "Unavailable";
+    return p >= 99 ? "Fully open" : p <= 1 ? "Closed" : p >= 45 && p <= 55 ? "Half open" : "Partly open";
+  }
+  _win(id, cls) {
+    const s = this._h.states[id], k = this._cvKind(id), sun = this._h.states["sun.sun"], night = sun && sun.state === "below_horizon", mv = ["opening", "closing"].includes(s.state);
+    return `<div class="win k-${k} ${night ? "night" : ""} ${mv ? "mvg" : ""} ${this._cvCan(id) ? "cd" : ""} ${cls || ""}" data-win="${id}" data-kind="${k}" style="--p:${this._cvPos(id)}"><i class="wg"></i><i class="wc"></i><i class="wl"></i><i class="wr"></i><i class="wf"></i></div>`;
+  }
+  _winMini(id) {
+    const E = (t) => this._esc(t);
+    return `<div class="wm" data-id="wm:${E(id)}">${this._win(id, "mini")}<div class="wn">${E(this._nm(id))}</div><div class="wp"><span data-wv>${this._cvPos(id)}%</span></div></div>`;
+  }
+  _shadeCard(id) {
+    const s = this._h.states[id], a = s.attributes, E = (t) => this._esc(t), p = this._cvPos(id), can = this._cvCan(id), tilt = ((a.supported_features || 0) & 128) > 0 || a.current_tilt_position != null;
+    const act = (svc, x) => `data-act="cover.${svc}" data-e="${E(id)}" ${x ? `data-x='${x}'` : ""}`;
+    const pre = can ? [[100, "Open"], [75, "75"], [50, "50"], [25, "25"], [0, "Closed"]].map(([v, t]) => `<button class="${Math.abs(p - v) <= 2 ? "on" : ""}" ${act("set_cover_position", `{"position":${v}}`)}>${t}</button>`).join("") : "";
+    const closed = s.state === "closed" || p <= 1;
+    return `<div class="card shc ${closed ? "" : "on"}">${this._win(id)}<div class="shr"><div class="nm">${E(this._nm(id))}</div><div class="st">${E(this._cvSt(id))}</div>${can ? `<div class="bigs"><span data-wv>${p}%</span><small>open</small></div>` : ""}${pre ? `<div class="pre">${pre}</div>` : ""}<div class="shb"><button ${act("open_cover")} title="Open">▲</button><button ${act("stop_cover")} title="Stop">■</button><button ${act("close_cover")} title="Close">▼</button></div>${tilt ? `<div class="tlt"><div class="lbl">Tilt</div><input type=range min=0 max=100 value=${a.current_tilt_position ?? 50} data-slider="cover|set_cover_tilt_position|tilt_position|1" data-e="${E(id)}"></div>` : ""}</div></div>`;
+  }
+  _wdown(e) {
+    if (e.button > 0) return false;
+    const w = e.composedPath().find((n) => n.dataset && n.dataset.win !== undefined && n.classList.contains("cd")); if (!w) return false;
+    try { w.setPointerCapture(e.pointerId); } catch (er) {}
+    this._wd = { w, id: w.dataset.win, kind: w.dataset.kind, x: e.clientX, y: e.clientY, moved: false, p: null };
+    this._drag = true; return true;
+  }
+  _wmove(e) {
+    const D = this._wd; if (!D) return false;
+    if (!D.moved && Math.hypot(e.clientX - D.x, e.clientY - D.y) < 5) return true;
+    D.moved = true; const r = D.w.getBoundingClientRect(), cl = (v) => Math.max(0, Math.min(1, v));
+    const c = D.kind === "curtain" ? cl(Math.min(e.clientX - r.left, r.right - e.clientX) / (r.width / 2)) : cl((e.clientY - r.top) / r.height);
+    const open = Math.round((1 - c) * 100); D.p = open;
+    D.w.classList.remove("mvg"); D.w.style.setProperty("--p", open);
+    const box = D.w.closest(".shc,.wm"); if (box) box.querySelectorAll("[data-wv]").forEach((x) => (x.textContent = open + "%"));
+    return true;
+  }
+  _wup() {
+    const D = this._wd; if (!D) return false;
+    this._wd = null; this._drag = false;
+    if (D.moved && D.p != null) {
+      (this._wopt = this._wopt || {})[D.id] = { p: D.p, t: Date.now() };
+      this._h.callService("cover", "set_cover_position", { entity_id: D.id, position: D.p });
+    }
+    return true;
+  }
   _cardsOf(ids, ctx) { return this._sort(ctx, ids, (i) => "e:" + i).map((i) => this._kw("e:" + i, this._card(i))).join(""); }
   _csKey(it) { const n = (it.svc || "").trim(); return !n || n.toLowerCase() === "more" ? "more" : "cs:" + n; }
   _csItems(rid, key) { return (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => this._csKey(x.it) === key); }
@@ -1344,7 +1439,7 @@ class QuintDashboard extends HTMLElement {
     if (k === "automations") return { h: this._autoCard(false), w: 3.2 };
     if (k === "intercom") return this._icList().map((ic) => ({ h: this._icCard(ic, false), w: 4.4 }));
     const hd = (r, ic) => `<div class="bh" ${go}><span>${S.n}</span><span class="bs">${r || ""}${ic || ""}</span></div>`;
-    const WT = { security: 5, cameras: 2.5, climate: 3, media: 3, shades: 3.4 }, wrap = (cls, inner, id, w) => ({ h: `<div class="bc ${cls}" data-id="${E(id || "b:" + k)}">${inner}</div>`, w: w || WT[k] || 2.4, wide: /(^| )wide( |$)/.test(cls) });
+    const WT = { security: 5, cameras: 2.5, climate: 3, media: 3, shades: 4.2 }, wrap = (cls, inner, id, w) => ({ h: `<div class="bc ${cls}" data-id="${E(id || "b:" + k)}">${inner}</div>`, w: w || WT[k] || 2.4, wide: /(^| )wide( |$)/.test(cls) });
     const none = `<div class="lbl" style="padding:6px 0">No devices selected. Choose them in Settings → Tiles.</div>`;
     const ids = isCs(k) ? [] : this._tileIds(k), isOff = (i) => ["off", "unavailable", "unknown"].includes(st(i));
     this._pick = this._pick || {};
@@ -1398,8 +1493,8 @@ class QuintDashboard extends HTMLElement {
     if (k === "shades") {
       if (!ids.length) return wrap("", `${hd("")}${none}`);
       const pos = ids.map((i) => H[i].attributes.current_position).filter((p) => p != null), avg = pos.length ? Math.round(pos.reduce((a, b) => a + b, 0) / pos.length) : null;
-      const open = ids.filter((i) => ["open", "opening"].includes(st(i))).length, all = ids.join(",");
-      return wrap("", `${hd(`${ids.length} window${ids.length === 1 ? "" : "s"}`)}<div class="cen"><div class="shv"><i style="height:${avg != null ? 100 - avg : open ? 0 : 100}%"></i></div><div class="bigs">${avg != null ? avg + "%" : `${open}/${ids.length}`}<small>${avg != null ? "open" : "open / total"}</small></div></div><div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div>`);
+      const all = ids.join(","), shown = ids.slice(0, 4);
+      return wrap("", `${hd(avg != null ? `${ids.length} window${ids.length === 1 ? "" : "s"} · ${avg}% open` : `${ids.length} window${ids.length === 1 ? "" : "s"}`)}<div class="wrow">${shown.map((i) => this._winMini(i)).join("")}</div>${ids.length > 4 ? `<div class="lbl" ${go} style="cursor:pointer;text-align:center;margin-top:2px">+ ${ids.length - 4} more ›</div>` : ""}<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div>`);
     }
     const t = this._stats(k);
     return wrap("", `${hd("", S.i)}<div class="cnt">${t.big}</div><div class="cap2">${t.big ? t.lbl : "No cards yet · tap to open"}</div>`);
@@ -1456,8 +1551,8 @@ class QuintDashboard extends HTMLElement {
         }).join("");
         sec.push(`<div class="bc tall" data-id="a:lights"><div class="bh" ${this._tileGo(s)}><span>${SV.lights.n}</span><span class="bs">${onL.length} on</span></div>${rows}</div>`);
       } else if (s === "shades") {
-        const all = sh.join(","), open = sh.filter((i) => ["open", "opening"].includes(st(i))).length;
-        sec.push(`<div class="bc" data-id="a:shades"><div class="bh" ${this._tileGo(s)}><span>${SV.shades.n}</span><span class="bs">${sh.length} window${sh.length === 1 ? "" : "s"}</span></div><div class="cen"><div class="shv"><i style="height:${avg != null ? 100 - avg : open ? 0 : 100}%"></i></div><div class="bigs">${avg != null ? avg + "%" : `${open}/${sh.length}`}<small>${avg != null ? "open" : "open / total"}</small></div></div><div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div></div>`);
+        const all = sh.join(",");
+        sec.push(`<div class="bc span2" data-id="a:shades"><div class="bh" ${this._tileGo(s)}><span>${SV.shades.n}</span><span class="bs">${sh.length} window${sh.length === 1 ? "" : "s"}${avg != null ? " · " + avg + "% open" : ""}</span></div><div class="shg">${sh.map((i) => this._kw("e:" + i, this._shadeCard(i))).join("")}</div>${sh.length > 1 ? `<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open all</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close all</button></div>` : ""}</div>`);
       } else if (s === "climate") {
         const id = cl[0], a = H[id].attributes, off = ["off", "unavailable", "unknown"].includes(st(id)), tg = a.temperature, step = a.target_temp_step || 0.5, x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
         const verb = a.hvac_action === "heating" ? "heating to " : a.hvac_action === "cooling" ? "cooling to " : "set to ";
@@ -1492,7 +1587,7 @@ class QuintDashboard extends HTMLElement {
       const btn = s === "lights" ? `<button data-act="light.turn_on" data-e="${all}">All on</button><button data-act="light.turn_off" data-e="${all}">All off</button>`
         : s === "shades" ? `<button data-act="cover.open_cover" data-e="${all}">Open all</button><button data-act="cover.close_cover" data-e="${all}">Close all</button>` : "";
       const go = rid ? `data-go='${JSON.stringify({ p: "room", room: rid, svc: s })}'` : "";
-      return `<section><div class="rh"><div class="grow" ${go}><div class="rn">${title}</div><div class="lbl">${on} active of ${ids.length}</div></div><div class="btns rb">${btn}</div></div><div class="grid" data-grid="svc:${s}:${rid || "other"}">${this._cardsOf(ids, "svc:" + s + ":" + (rid || "other"))}</div></section>`;
+      return `<section><div class="rh"><div class="grow" ${go}><div class="rn">${title}</div><div class="lbl">${on} active of ${ids.length}</div></div><div class="btns rb">${btn}</div></div><div class="grid" data-grid="svc:${s}:${rid || "other"}" ${s === "shades" ? 'style="grid-template-columns:repeat(auto-fill,minmax(310px,1fr))"' : ""}>${this._cardsOf(ids, "svc:" + s + ":" + (rid || "other"))}</div></section>`;
     };
     const rs = this._rooms(), known = new Set(rs.map((r) => r.id));
     const parts = rs.map((r) => [r, this._ents(s, r.id)]).filter(([, e]) => e.length).map(([r, e]) => sec(r.name, e, r.id));
