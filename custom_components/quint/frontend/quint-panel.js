@@ -38,7 +38,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.7.0";
+const VER = "1.7.1";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 520px at 88% -8%,rgba(245,166,35,.16),transparent),radial-gradient(800px 520px at -10% 108%,rgba(74,163,255,.15),transparent),linear-gradient(160deg,#080d19,#131c34)",
@@ -48,15 +48,24 @@ const BG = {
   ocean: "radial-gradient(900px 600px at 10% 0%,rgba(74,163,255,.38),transparent),linear-gradient(160deg,#04111f,#0a2540)",
   forest: "radial-gradient(900px 600px at 90% 0%,rgba(52,201,139,.30),transparent),linear-gradient(160deg,#07140f,#10261c)",
 };
+const SWATCH = {
+  midnight: "linear-gradient(135deg,#25365f,#080d19 62%,#f5a623)",
+  graphite: "linear-gradient(135deg,#454b58,#15171c)",
+  aurora: "linear-gradient(135deg,#34c98b,#07121a 58%,#b388ff)",
+  sunset: "linear-gradient(135deg,#ff7a59,#2a1a2e 58%,#b388ff)",
+  ocean: "linear-gradient(135deg,#4aa3ff,#04111f)",
+  forest: "linear-gradient(135deg,#34c98b,#07140f)",
+};
 const FRESH = () => ({ rooms: [], map: {}, hide: [], name: "", custom: {}, order: {} });
 
 const CSS = `
-:host{display:block;height:100vh;overflow-y:auto;--ac:#f5a623;--ok:#34c98b;--bad:#ff5d6c;--mu:#8d9ab8;--bd:rgba(255,255,255,.10);color:#eef2fa;font-family:"Inter",-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
+:host{display:block;--vh:100vh;height:var(--vh);overflow-y:auto;--ac:#f5a623;--ok:#34c98b;--bad:#ff5d6c;--mu:#8d9ab8;--bd:rgba(255,255,255,.10);color:#eef2fa;font-family:"Inter",-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
+@supports (height:100dvh){:host{--vh:100dvh}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .si{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.12em}
-.app{min-height:100%;display:flex;flex-direction:column;position:relative;z-index:1}
-#r{position:relative}
-.bgl{position:sticky;top:0;height:100vh;margin-bottom:-100vh;overflow:hidden;pointer-events:none;z-index:0;background:#0b1220}
+.app{flex:1 0 auto;display:flex;flex-direction:column;position:relative;z-index:1}
+#r{position:relative;display:flex;flex-direction:column;min-height:100%}
+.bgl{flex:none;position:sticky;top:0;height:var(--vh,100vh);margin-bottom:calc(var(--vh,100vh) * -1);overflow:hidden;pointer-events:none;z-index:0;background:#0b1220}
 .bgl i{position:absolute;inset:-30px;background-image:var(--qbg-img,none);background-size:cover;background-position:center;filter:blur(var(--qbg-blur,0px))}
 .bgl::after{content:"";position:absolute;inset:0;background:rgba(5,8,16,var(--qbg-dim,0))}
 header{display:flex;justify-content:space-between;align-items:center;padding:18px 28px}
@@ -135,7 +144,7 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .shd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
 .shd small{letter-spacing:0;text-transform:none;font-weight:400;color:var(--mu);font-size:12px;text-align:right}
 .srow{display:grid;grid-template-columns:minmax(0,34%) minmax(0,1fr);gap:16px;align-items:center;background:rgba(255,255,255,.06);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;margin-bottom:8px}
-.sn{font-weight:600}.ss{color:var(--mu);font-size:12px;margin-top:2px;word-break:break-all}
+.sn{font-weight:600}.ss{color:var(--mu);font-size:12px;margin-top:2px;overflow-wrap:anywhere}
 .sc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}.sc>input[type=text],.sc>select{flex:1;min-width:120px}
 .sc input[type=range]{margin-top:0;flex:1;min-width:140px}.sc input[type=file]{color:var(--mu);font-size:13px;max-width:100%}
 .ib2{background:rgba(255,255,255,.1);border:0;border-radius:10px;width:36px;height:36px;flex:none}.ib2:disabled{opacity:.3}
@@ -187,13 +196,13 @@ ha-icon{--mdc-icon-size:24px}nav button ha-icon{--mdc-icon-size:23px}
 :host([data-dev="desktop"]) .num{font-size:44px}
 :host([data-dev="desktop"]) .rn{font-size:26px}
 :host([data-nav="bar"]) nav{position:sticky;bottom:0;margin:0;max-width:none;width:100%;border-radius:0;border-width:1px 0 0;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:2px;box-shadow:none}
-:host([data-nav="bar"]) nav button{min-width:58px;padding:7px 8px;font-size:10px}
+:host([data-nav="bar"]) nav button{min-width:0;flex:1 1 0;padding:7px 2px;font-size:10px}
 :host([data-nav="bar"]) nav button .si{font-size:22px}
 :host([data-nav="rail"]) .app{display:grid;grid-template-columns:104px minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"nav hdr" "nav main"}
 :host([data-dev="desktop"][data-nav="rail"]) .app{grid-template-columns:124px minmax(0,1fr)}
 :host([data-nav="rail"]) header{grid-area:hdr}
 :host([data-nav="rail"]) main{grid-area:main}
-:host([data-nav="rail"]) nav{grid-area:nav;position:sticky;top:0;align-self:start;height:100vh;flex-direction:column;justify-content:flex-start;margin:0;max-width:none;width:auto;border-radius:0 30px 30px 0;border-width:0 1px 0 0;padding:16px 8px;gap:6px;overflow-x:hidden;overflow-y:auto;box-shadow:none}
+:host([data-nav="rail"]) nav{grid-area:nav;position:sticky;top:0;align-self:start;height:var(--vh,100vh);flex-direction:column;justify-content:flex-start;margin:0;max-width:none;width:auto;border-radius:0 30px 30px 0;border-width:0 1px 0 0;padding:16px 8px;gap:6px;overflow-x:hidden;overflow-y:auto;box-shadow:none}
 :host([data-nav="rail"]) nav button{min-width:0;width:100%;padding:12px 4px;font-size:11px}
 :host([data-nav="rail"]) .hint{bottom:30px}
 `;
@@ -219,7 +228,6 @@ class QuintDashboard extends HTMLElement {
     R.addEventListener("pointerup", () => this._pup());
     R.addEventListener("pointercancel", () => this._pup());
     R.addEventListener("input", (e) => this._input(e));
-    this._applyBg();
     R.addEventListener("touchmove", (e) => { if (this._mv) e.preventDefault(); }, { passive: false });
     R.addEventListener("contextmenu", (e) => { if (this._hold || this._mv) e.preventDefault(); });
   }
@@ -334,7 +342,7 @@ class QuintDashboard extends HTMLElement {
     if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; }
   }
   _time() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
-  connectedCallback() { this._layout(); if (typeof ResizeObserver !== "undefined") { this._ro = new ResizeObserver(() => this._layout()); this._ro.observe(this); } this._iv2 = setInterval(() => this._refreshCams(), 5000); this._iv = setInterval(() => { const r = this.shadowRoot; [".clk", ".tm"].forEach((q) => { const e = r.querySelector(q); if (e) e.textContent = this._time(); }); }, 15000); }
+  connectedCallback() { this._applyBg(); this._layout(); if (typeof ResizeObserver !== "undefined") { this._ro = new ResizeObserver(() => this._layout()); this._ro.observe(this); } this._iv2 = setInterval(() => this._refreshCams(), 5000); this._iv = setInterval(() => { const r = this.shadowRoot; [".clk", ".tm"].forEach((q) => { const e = r.querySelector(q); if (e) e.textContent = this._time(); }); }, 15000); }
   disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
   set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
@@ -410,7 +418,7 @@ class QuintDashboard extends HTMLElement {
     if (o.svcOrder) c.svcOrder = o.svcOrder;
     this._save(); this._applyBg(); this._syncTpl(); this._draw(true);
   }
-  _mv(arr, i, d) { const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  _swap(arr, i, d) { const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
   _sact(a, v) {
     const c = this._c;
     if (a === "save") { this._push(); this._dirty = false; this._snap = JSON.stringify(c); this._toast("Saved"); this._draw(true); return; }
@@ -427,8 +435,8 @@ class QuintDashboard extends HTMLElement {
     else if (a === "bgm") c.bg = { ...(c.bg || {}), mode: "image" };
     else if (a === "bgx") { this._h.callApi("DELETE", "quint/background").catch(() => {}); this._bgData = ""; c.bg = { ...(c.bg || {}), mode: "preset" }; }
     else if (a === "svcvis") c.svcHide = (c.svcHide || []).includes(v) ? c.svcHide.filter((x) => x !== v) : [...(c.svcHide || []), v];
-    else if (a === "svcup" || a === "svcdn") { const l = this._svcsAll(); this._mv(l, l.indexOf(v), a === "svcup" ? -1 : 1); c.svcOrder = l; }
-    else if (a === "rup" || a === "rdn") this._mv(c.rooms, +v, a === "rup" ? -1 : 1);
+    else if (a === "svcup" || a === "svcdn") { const l = this._svcsAll(); this._swap(l, l.indexOf(v), a === "svcup" ? -1 : 1); c.svcOrder = l; }
+    else if (a === "rup" || a === "rdn") this._swap(c.rooms, +v, a === "rup" ? -1 : 1);
     else if (a === "pill") { const P = c.pills || ["lights", "climate", "security"]; c.pills = P.includes(v) ? P.filter((x) => x !== v) : [...P, v]; }
     else if (a === "clk") c.noClock = !c.noClock;
     else return;
@@ -498,13 +506,13 @@ class QuintDashboard extends HTMLElement {
   _stats(svc) {
     const e = this._ents(svc), st = (i) => this._h.states[i].state;
     if (isCs(svc)) { const all = Object.entries(this._c.custom).filter(([k]) => k !== "home").flatMap(([, v]) => v.filter((x) => this._csKey(x) === svc)); const n = all.filter((x) => x.entity && this._h.states[x.entity] && this._isOn(x.entity)).length; return { big: all.length, lbl: `cards · ${n} on`, on: n > 0 }; }
-    if (svc === "lights") { const n = e.filter((i) => st(i) === "on").length; return { big: n, lbl: `on of ${e.length}`, on: n > 0 }; }
-    if (svc === "cameras") { const n = e.filter((i) => !["unavailable", "unknown"].includes(st(i))).length; return { big: n, lbl: `online of ${e.length}`, on: n > 0 }; }
+    if (svc === "lights") { const n = e.filter((i) => st(i) === "on").length; return { big: n, lbl: `of ${e.length} on`, on: n > 0 }; }
+    if (svc === "cameras") { const n = e.filter((i) => !["unavailable", "unknown"].includes(st(i))).length; return { big: n, lbl: `of ${e.length} online`, on: n > 0 }; }
     if (svc === "shades") { const o = e.filter((i) => ["open", "opening"].includes(st(i))).length; return { big: `${o} / ${e.length - o}`, lbl: "open / closed", on: o > 0 }; }
-    if (svc === "climate") { const n = e.filter((i) => !["off", "unavailable"].includes(st(i))).length; return { big: n, lbl: `HVAC on of ${e.length}`, on: n > 0 }; }
-    if (svc === "media") { const n = e.filter((i) => ["on", "playing", "paused", "idle"].includes(st(i))).length; return { big: n, lbl: `audio on of ${e.length}`, on: n > 0 }; }
+    if (svc === "climate") { const n = e.filter((i) => !["off", "unavailable"].includes(st(i))).length; return { big: n, lbl: `of ${e.length} on`, on: n > 0 }; }
+    if (svc === "media") { const n = e.filter((i) => ["on", "playing", "paused", "idle"].includes(st(i))).length; return { big: n, lbl: `of ${e.length} on`, on: n > 0 }; }
     const o = e.filter((i) => ["on", "open", "unlocked"].includes(st(i))).length;
-    return { big: o ? `${o} open` : "Secure", lbl: o ? "doors / locks open" : "all closed & locked", on: o > 0 };
+    return { big: o ? `${o} open` : "Secure", lbl: o ? "doors & locks" : "all closed & locked", on: o > 0 };
   }
   _roomCount(svc, r) {
     if (isCs(svc)) { const it = this._csItems(r, svc).map((x) => x.it); return { n: it.filter((x) => x.entity && this._h.states[x.entity] && this._isOn(x.entity)).length, t: it.length }; }
@@ -790,7 +798,7 @@ class QuintDashboard extends HTMLElement {
     const h = new Date().getHours(), g = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
     const who = this._c.name || (this._h.user && this._h.user.name) || "";
     const L = this._svcs();
-    const pill = (k) => { const t = this._stats(k); return `<span class="pill" style="--c:${SV[k].c}">${SV[k].i}${t.big} ${t.lbl}</span>`; };
+    const pill = (k) => { const t = this._stats(k); return `<span class="pill" style="--c:${SV[k].c}">${SV[k].i}${k === "security" ? t.big : t.big + " " + t.lbl}</span>`; };
     return `<section class="hero"><div>${this._c.noClock ? "" : `<div class="clk">@@T@@</div>`}<div class="sub">${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</div></div>
     <div><h1>${g}${who ? ", " + who : ""}</h1><div class="pills">${(this._c.pills || ["lights", "climate", "security"]).filter((k) => L.includes(k)).map(pill).join("")}</div></div></section>
     <div class="grid">${L.map((k) => { const t = this._stats(k); return `<div class="tile ${t.on ? "on" : ""}" data-id="s:${k}" style="--c:${SV[k].c}" ${this._tileGo(k)}><div class="bdg">${SV[k].i}</div><div><div class="num">${t.big}</div><div class="nm">${SV[k].n}</div><div class="lbl">${t.lbl}</div></div></div>`; }).join("") || '<div class="card">No supported devices found.</div>'}</div>${this._homeCards()}`;
@@ -845,7 +853,7 @@ class QuintDashboard extends HTMLElement {
         row("Title", "top left in the navigation", `<input type="text" data-ttl value="${E(c.title || "")}" placeholder="${E(this._title || "Quint")}">`) +
         row("Greeting name", "shown on the home page", `<input type="text" data-uname value="${E(c.name || "")}" placeholder="${E((this._h.user && this._h.user.name) || "")}">`)) +
       sec("Background", "everything sits on top of this",
-        row("Theme", "colour themes", Object.keys(BG).map((k) => `<button class="swt ${bg.mode !== "image" && bg.preset === k ? "sel" : ""}" style="background:${BG[k]}" title="${k}" data-s="bgp|${k}"></button>`).join("")) +
+        row("Theme", "colour themes", Object.keys(BG).map((k) => `<button class="swt ${bg.mode !== "image" && bg.preset === k ? "sel" : ""}" style="background:${SWATCH[k]}" title="${k}" data-s="bgp|${k}"></button>`).join("")) +
         row("Photo", "your own picture; jpg or png, shrunk to fit automatically", `<input type="file" accept="image/*" data-bgfile="1">${this._bgData ? `<button class="sbtn" data-s="bgm|">${bg.mode === "image" ? "In use" : "Use photo"}</button><button class="sbtn" data-s="bgx|">Remove</button>` : ""}`) +
         row("Darken", "easier to read text on a bright photo", `<input type="range" min="0" max="80" value="${+bg.dim || 0}" data-bg="dim">`) +
         row("Blur", "soften the background", `<input type="range" min="0" max="20" value="${+bg.blur || 0}" data-bg="blur">`)) +
