@@ -3,6 +3,7 @@
 Standalone Savant-style dashboard for Home Assistant. Installs as an integration and adds its own **sidebar panel**. No Lovelace setup, no token, no YAML.
 
 - Home page (wall-panel style): client name top left, big clock, date, weather + sunset, greeting, scene buttons, and one live card per service – Security (status, doors/locks, alarm mode), Cameras (live picture), Lighting (rooms with on/off), Climate, Media (now playing + controls), Shades
+- **v1.9.3**: the room photo now fills the **whole screen** behind that room's page (slightly darkened so text stays readable); the normal background returns when you leave the room
 - **v1.9.2**: **floors** (tabs like Ground / First / Outside on the Rooms page; add, rename, order floors and choose each room's floor in Settings → Rooms; HA floors are imported automatically); **room photos** are now set in Settings → Room photos (shared for everyone by an admin with a switch per room; normal users can pick their own photo per room on their device); the photo button is removed from the room page
 - **v1.9.1**: scenes are added only in **Settings → Scenes** (not on the home page); a scene can belong to a room and then also shows on that room's page; every user now has a settings button with **Scenes** and **Background** (saved on their own device); **room photo** button at the top right of every room page; Intercom buttons (Video / Audio / Open door) can be shown or hidden in Settings → Intercom
 - **v1.9.0**: organized balanced home columns, **Intercom** tile (video call, audio call, open door, doorbell ring), **each camera as its own tile**, a clearer **Lighting** tile (rooms with switch + dimmer, All on / All off), **Scenes you can create** (shared or only on this device), **personal background** for every user, a dynamic sliding bottom bar, and AM/PM clock fix
@@ -72,7 +73,7 @@ Scenes are added in **Settings → Scenes** (the home page only shows and runs t
 In **Settings → Rooms** add floors (or let Quint import your Home Assistant floors), then choose a floor for each room. The Rooms page shows one tab per floor (rooms without a floor are under **Other**).
 
 ### Room photos
-**Settings → Room photos** lists every room. Admins choose a photo per room (stored on the HA server in `.storage/quint.roomimg`, shared by everyone) and use the switch to show or hide it at the top of that room's page. Normal users see the same tab and can pick their own photo for a room; it is saved in their browser only.
+**Settings → Room photos** lists every room. Admins choose a photo per room (stored on the HA server in `.storage/quint.roomimg`, shared by everyone) and use the switch to show or hide it as the full-screen background of that room's page. Normal users see the same tab and can pick their own photo for a room; it is saved in their browser only.
 
 ### Background
 Pick a colour theme, or upload your own photo (shrunk to 1920 px and stored on the HA server in `.storage/quint.background`). **Darken** and **Blur** keep text readable. The shared background is set by admins. Every user can also press the palette button in the bottom bar to choose a theme or their **own photo for this device only** (stored in the browser). Normal users can also do this in Settings → Background.

@@ -65,7 +65,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.9.2";
+const VER = "1.9.3";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -226,8 +226,6 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .seg.fl{margin:0 0 14px}
 .rpv{width:84px;height:52px;border-radius:8px;object-fit:cover;background:rgba(255,255,255,.06);border:1px solid var(--bd);flex:none}
 .ahb{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:none}
-.ah.hasimg{background-size:cover;background-position:center;border-radius:18px;padding:22px 24px;min-height:150px;align-items:flex-end;border:1px solid rgba(255,255,255,.12)}
-.ah.hasimg .ahb{align-self:flex-start}
 .ob2{padding:11px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.32);background:none;font-weight:600;font-size:14px;flex:none}
 .chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:16px 0}
 .abody{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
@@ -587,6 +585,7 @@ class QuintDashboard extends HTMLElement {
   _toast(t) { this._hint(t); clearTimeout(this._tt); this._tt = setTimeout(() => this._hint(""), 1800); }
   _bgu() { try { return JSON.parse(localStorage.getItem("quint_bgu") || "null"); } catch (e) { return null; } }
   _applyBg() {
+    if (this._rbgOn) { this.style.setProperty("--qbg-img", `url("${this._rbgOn}")`); this.style.setProperty("--qbg-dim", "0.5"); this.style.setProperty("--qbg-blur", "0px"); return; }
     const u = this._bgu(), b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(u || this._c.bg || {}) }, data = u ? u.data : this._bgData;
     const img = b.mode === "image" && data ? `url("${data}")` : BG[b.preset] || BG.midnight;
     this.style.setProperty("--qbg-img", img);
@@ -1409,7 +1408,7 @@ class QuintDashboard extends HTMLElement {
     const pos = sh.map((i) => H[i].attributes.current_position).filter((p) => p != null), avg = pos.length ? Math.round(pos.reduce((a, b) => a + b, 0) / pos.length) : null;
     const sub = [lights.length ? `${onL.length} of ${lights.length} lights on` : "", cl.length && H[cl[0]].attributes.current_temperature != null ? this._fmt(H[cl[0]].attributes.current_temperature) + "°" : "", avg != null ? `${SV.shades.n.toLowerCase()} ${avg}% open` : ""].filter(Boolean).join(" · ");
     const scenes = Object.keys(H).filter((i) => i.startsWith("scene.") && !this._c.hide.includes(i) && this._roomOf(i) === rid);
-    const img = this._rimgOf(room);
+    this._roomBg = this._rimgOf(room);
     const mySc = this._c.noScenes ? [] : this._myScenes().filter((x) => x.room === rid);
     const chips = scenes.length || mySc.length ? `<div class="chips">${mySc.map((x) => `<button class="scb ${this._sceneOn(x) ? "on" : ""}" data-id="sc:${x.sc}:${x.id}" data-sc="run|${x.sc}:${x.id}"><i></i><span>${E(x.name)}</span></button>`).join("")}${scenes.map((i) => `<button class="scb" data-id="sc:${i}" data-act="scene.turn_on" data-e="${i}"><i></i><span>${E(this._nm(i))}</span></button>`).join("")}</div>` : "";
     const sec = [];
@@ -1436,7 +1435,7 @@ class QuintDashboard extends HTMLElement {
     });
     if (!sec.length) sec.push(`<div class="bc span2" data-id="a:none"><div class="lbl">Nothing in this room yet.</div></div>`);
     if (adm) sec.push(`<div class="tile add span2" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
-    return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah ${img ? "hasimg" : ""}" ${img ? `style="background-image:linear-gradient(90deg,rgba(6,10,20,.78),rgba(6,10,20,.25)),url('${img}')"` : ""}><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}<div class="abody">${sec.join("")}</div></div></div>`;
+    return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}<div class="abody">${sec.join("")}</div></div></div>`;
   }
   _camView() {
     const id = this._cam, s = id && this._h.states[id];
@@ -1596,8 +1595,13 @@ class QuintDashboard extends HTMLElement {
     this._ringPrev = ring;
     const p = this._v.p, V = this._v;
     if (this._cam && !(this._h.states[this._cam] && this._h.states[this._cam].attributes.entity_picture)) this._cam = null;
+    this._roomBg = "";
     let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : p === "intercom" ? this._icPage() : this._settings();
     if (p !== "home" && p !== "room") body = `<div class="page">${body}</div>`;
+    if ((this._roomBg || "") !== (this._rbgOn || "")) {
+      this._rbgOn = this._roomBg || "";
+      this._applyBg();
+    }
     const tab = (cls, go, ico, t, col) => `<button class="t ${cls}" data-c="${col}" style="--c:${col}" ${go}>${ico}<span>${t}</span></button>`;
     const tabs = `<span class="tind" data-id="tind" data-ks="1"></span>` + tab(p === "home" ? "act" : "", `data-go='{"p":"home"}'`, HOME_I, "Home", "#e8c98f") +
       (c.noRooms || !this._rooms().length ? "" : tab(p === "room" ? "act" : "", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", "#7dd3fc")) +
