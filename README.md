@@ -91,6 +91,15 @@ Every cover that Home Assistant calls a shutter, blind, shade, curtain, awning o
 ### Automations
 **Settings → Automations** lists every Home Assistant automation and script. Switch on the ones you want on the dashboard: they appear in an **Automations** tile and tab, where users can switch an automation on/off or press **▶** to run it (scripts only have ▶).
 
+### Users: one Quint admin, limits per user (v1.13)
+**Settings → Users**
+- **Quint admin** – a Home Assistant admin picks **one** normal user. That person has the same rights as every other user, **plus** the Users tab: they can add users, remove users and choose what each user may use. They cannot become a Home Assistant admin and cannot change their own limits (only a Home Assistant admin can).
+- **Add a user** – name, login name and password (8+ characters). The account is a normal Home Assistant user.
+- **Limits** – for each user switch services (Lights, Cameras, Intercom, Rooms page, …) and rooms off. A hidden room hides its devices and any scene that uses them. Limits are saved right away (no Save button) and apply the next time that user opens Quint.
+- New users start with everything allowed. Home Assistant admins are never limited.
+
+Limits hide things inside Quint; they are **not a security wall**. Also use **Access → Lock to Quint** so users cannot open Home Assistant itself.
+
 ### Access (default page and lock)
 **Settings → Access** (admin only):
 - **Open Quint first** – after signing in, normal users land on Quint instead of the default Home Assistant page (once per browser session; they can still go elsewhere).

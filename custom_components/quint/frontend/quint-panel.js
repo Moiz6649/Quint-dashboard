@@ -61,12 +61,12 @@ const SET_I = {
   rooms: ICONS.door, devices: ICONS.plug, home: ICONS.home,
   cards: ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'),
 };
-SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
+SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.users = ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M17 5.5a3.2 3.2 0 0 1 0 6M18.5 14.8c1.9.7 3.1 2.4 3.5 5.2"/>');  SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
 const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.12.0";
+const VER = "1.13.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -357,6 +357,7 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 .ssec{background:var(--cd);border:1px solid var(--bd);border-radius:20px;padding:22px;margin-bottom:18px}
 .shd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
 .shd small{letter-spacing:0;text-transform:none;font-weight:400;color:var(--mu);font-size:12px;text-align:right}
+.ulim{margin:-2px 0 10px 18px;padding-left:12px;border-left:2px solid var(--bd)}
 .srow{display:grid;grid-template-columns:minmax(0,34%) minmax(0,1fr);gap:16px;align-items:center;background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:14px;padding:12px 16px;margin-bottom:8px}
 .sn{font-weight:600}.ss{color:var(--mu);font-size:12px;margin-top:2px;overflow-wrap:anywhere}
 .sc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}.sc>input[type=text],.sc>select{flex:1;min-width:120px}
@@ -617,7 +618,7 @@ class QuintDashboard extends HTMLElement {
     this._st = setTimeout(() => this._h.callApi("POST", "quint/config", this._c).catch(() => {}), 300);
   }
   _revert() {
-    try { this._c = { ...FRESH(), ...JSON.parse(this._snap) }; } catch (e) {}
+    try { const pm = { perms: this._c.perms, manager: this._c.manager }; this._c = { ...FRESH(), ...JSON.parse(this._snap), ...pm }; } catch (e) {}
     localStorage.setItem(KEY, JSON.stringify(this._c));
     this._dirty = false; this._applyBg(); this._syncTpl();
   }
@@ -767,6 +768,59 @@ class QuintDashboard extends HTMLElement {
     const c = this._c, u = this._h && this._h.user; if (!c || !c.lock || !u || u.is_admin) return false;
     const l = c.lockUsers || []; return !l.length || l.includes(u.id);
   }
+  _loadUsers(force) {
+    if (force) this._ua = null;
+    if (this._ua || this._usersBusy || !(this._admin() || this._mgr())) return;
+    this._usersBusy = true;
+    this._h.callApi("GET", "quint/users").then((l) => { this._ua = (l || []).filter((x) => x.is_active !== false); }).catch(() => { this._ua = []; }).finally(() => { this._usersBusy = false; this._draw(true); });
+  }
+  _normUsers() { return (this._ua || []).filter((x) => !x.is_admin); }
+  _err(e, d) { return (e && e.body && e.body.message) || (e && e.message) || d; }
+  _permPush() {
+    try { localStorage.setItem(KEY, JSON.stringify(this._c)); } catch (e) {}
+    this._h.callApi("POST", "quint/users", { action: "perms", perms: this._c.perms || {} }).catch((e) => this._toast("Could not save the limits: " + this._err(e, "error")));
+  }
+  _uact(a, v) {
+    const c = this._c;
+    if (a === "usel") { this._pu = this._pu === v ? "" : v; return this._draw(true); }
+    if (a === "usvc" || a === "urm") {
+      const i = v.indexOf("|"), uid = v.slice(0, i); if (this._mgr() && uid === this._h.user.id) return;
+      const P = (c.perms = c.perms || {}), p = (P[uid] = P[uid] || { svcOff: [], roomOff: [] }), k = a === "usvc" ? "svcOff" : "roomOff", l = new Set(p[k] || []), key = v.slice(i + 1);
+      l.has(key) ? l.delete(key) : l.add(key); p[k] = [...l];
+      if (!(p.svcOff || []).length && !(p.roomOff || []).length) delete P[uid];
+      this._permPush(); return this._draw(true);
+    }
+    if (a === "ureset") { if (c.perms) delete c.perms[v]; this._permPush(); return this._draw(true); }
+    if (a === "mgr") {
+      if (!this._admin()) return;
+      return this._h.callApi("POST", "quint/users", { action: "manager", user_id: c.manager === v ? "" : v }).then((d) => { if (d && d.manager) c.manager = d.manager; else delete c.manager; try { localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} this._toast(c.manager ? "Quint admin chosen" : "No Quint admin"); this._draw(true); }).catch((e) => this._toast("Could not change it: " + this._err(e, "error")));
+    }
+    if (a === "unew") return this._userNew();
+    if (a === "udel") return this._userDel(v);
+  }
+  async _userNew() {
+    const q = (k) => { const el = this.shadowRoot.querySelector(`[data-nu="${k}"]`); return el ? el.value : ""; };
+    const name = q("name").trim(), un = q("user").trim().toLowerCase(), pw = q("pass");
+    if (!name || !/^[a-z0-9._-]{2,}$/.test(un)) return this._toast("Give a name, and a login name with letters or numbers only");
+    if (pw.length < 8) return this._toast("The password needs at least 8 characters");
+    this._ubusy = true; this._draw(true);
+    try {
+      const d = await this._h.callApi("POST", "quint/users", { action: "create", name, username: un, password: pw });
+      this._pu = d && d.id; this._toast(`${name} was added`);
+      ["name", "user", "pass"].forEach((k) => { const el = this.shadowRoot.querySelector(`[data-nu="${k}"]`); if (el) el.value = ""; });
+    } catch (e) { this._toast(this._err(e, "Could not add the user")); }
+    this._ubusy = false; this._loadUsers(true); this._draw(true);
+  }
+  async _userDel(uid) {
+    const u = (this._ua || []).find((x) => x.id === uid); if (!u || u.is_admin) return;
+    if (!confirm(`Remove ${u.name}? Their Home Assistant account is deleted.`)) return;
+    try { await this._h.callApi("POST", "quint/users", { action: "delete", user_id: uid }); } catch (e) { return this._toast(this._err(e, "Could not remove the user")); }
+    if (this._c.perms) delete this._c.perms[uid];
+    if (this._c.manager === uid) delete this._c.manager;
+    if (this._c.lockUsers) { this._c.lockUsers = this._c.lockUsers.filter((x) => x !== uid); this._save(); }
+    if (this._pu === uid) this._pu = "";
+    this._loadUsers(true); this._draw(true);
+  }
   _applyFull() {
     const v = localStorage.getItem("quint_full"); if (v === null && !this._locked()) return;
     const full = v === "1" || this._locked();
@@ -797,17 +851,18 @@ class QuintDashboard extends HTMLElement {
     if (d === "binary_sensor" && SEC_BS.includes(dc)) return "security";
   }
   _ents(svc, room) {
-    return Object.keys(this._h.states).filter((id) => this._svcOf(id) === svc && !this._c.hide.includes(id) && (!room || this._roomOf(id) === room));
+    if (!this._svOk(svc)) return [];
+    return Object.keys(this._h.states).filter((id) => this._svcOf(id) === svc && !this._c.hide.includes(id) && (!room || this._roomOf(id) === room) && this._rmOk(this._roomOf(id)));
   }
   _nm(id) { return this._h.states[id].attributes.friendly_name || id; }
   _svcsAll() {
     const o = this._c.svcOrder || [], keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
     const r = (k) => { const i = o.indexOf(k); return i < 0 ? 1000 + keys.indexOf(k) : i; };
-    return keys.slice().sort((p, q) => r(p) - r(q));
+    return keys.filter((k) => this._svOk(k)).sort((p, q) => r(p) - r(q));
   }
   _svcs() { const h = this._c.svcHide || []; return this._svcsAll().filter((x) => !h.includes(x)); }
   _titles() { const T = this._c.svcTitle || {}; Object.keys(SV).forEach((k) => { SV[k].n = T[k] || (k.startsWith("cs:") ? k.slice(3) : SV_DEF[k]); }); }
-  _rooms() { return this._c.rooms.filter((r) => r.on !== false); }
+  _rooms() { return this._svOk("rooms") ? this._c.rooms.filter((r) => r.on !== false && this._rmOk(r.id)) : []; }
   _isOn(id) { return !OFF.includes(this._h.states[id].state); }
   _stats(svc) {
     const e = this._ents(svc), st = (i) => this._h.states[i].state;
@@ -827,6 +882,12 @@ class QuintDashboard extends HTMLElement {
     return { n, t: e.length };
   }
   _admin() { return !!(this._h && this._h.user && this._h.user.is_admin); }
+  _mgr() { const u = this._h && this._h.user; return !!(u && !u.is_admin && this._c && this._c.manager && this._c.manager === u.id); }
+  _perm() { const u = this._h && this._h.user; if (!u || u.is_admin || !this._c) return null; return (this._c.perms || {})[u.id] || null; }
+  _svOk(s) { const p = this._perm(); return !p || !s || !(p.svcOff || []).includes(s); }
+  _rmOk(r) { const p = this._perm(); return !p || !r || !(p.roomOff || []).includes(r); }
+  _entOk(id) { return this._svOk(this._svcOf(id)) && this._rmOk(this._roomOf(id)); }
+  _sceneOk(x) { return !this._perm() || (this._rmOk(x.room) && (x.items || []).every((i) => this._entOk(i.e))); }
   _nav(p, x = {}) {
     if (this._v.p === "settings" && p !== "settings" && this._dirty) { if (!confirm("Discard unsaved settings changes?")) return; this._revert(); }
     if (p === "settings" && this._v.p !== "settings") { this._snap = JSON.stringify(this._c); this._dirty = false; }
@@ -837,10 +898,11 @@ class QuintDashboard extends HTMLElement {
   /* ---------- events ---------- */
   _click(e) {
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.pb || n.dataset.pick || n.dataset.rimgb));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
+    if (d.um) { const i = d.um.indexOf("|"); if (!this._admin() && !this._mgr()) return; return this._uact(d.um.slice(0, i), d.um.slice(i + 1)); }
     if (d.sc !== undefined) { const i = d.sc.indexOf("|"); return this._scAct(d.sc.slice(0, i), d.sc.slice(i + 1)); }
     if (d.ic) return this._icAct(d.ic);
     if (d.rimgb) return this._rimgDel(d.rimgb);
@@ -1350,7 +1412,7 @@ class QuintDashboard extends HTMLElement {
     });
   }
   _scenes() {
-    const H = this._h.states, out = this._myScenes().map((s) => ({ key: s.sc + ":" + s.id, nm: s.name, on: this._sceneOn(s), mine: s, ha: "" }));
+    const H = this._h.states, out = this._myScenes().filter((s) => this._sceneOk(s)).map((s) => ({ key: s.sc + ":" + s.id, nm: s.name, on: this._sceneOn(s), mine: s, ha: "" }));
     const ids = Object.keys(H).filter((i) => i.startsWith("scene.") && !this._c.hide.includes(i));
     let best = "", bt = 0;
     ids.forEach((i) => { const t = Date.parse(H[i].state); if (t > bt) { bt = t; best = i; } });
@@ -1390,7 +1452,7 @@ class QuintDashboard extends HTMLElement {
   }
   _scList() {
     const D = this._sd, ok = ["lights", "shades", "climate", "media"];
-    return Object.keys(this._h.states).filter((i) => (ok.includes(this._svcOf(i)) || ["switch", "fan", "input_boolean"].includes(i.split(".")[0])) && !this._c.hide.includes(i) && (!D.room || this._roomOf(i) === D.room) && (!D.q || (i + " " + this._nm(i)).toLowerCase().includes(D.q)));
+    return Object.keys(this._h.states).filter((i) => (ok.includes(this._svcOf(i)) || ["switch", "fan", "input_boolean"].includes(i.split(".")[0])) && !this._c.hide.includes(i) && this._entOk(i) && (!D.room || this._roomOf(i) === D.room) && (!D.q || (i + " " + this._nm(i)).toLowerCase().includes(D.q)));
   }
   _scDialog() {
     const D = this._sd; if (!D) return "";
@@ -1569,7 +1631,7 @@ class QuintDashboard extends HTMLElement {
     const sub = [lights.length ? `${onL.length} of ${lights.length} lights on` : "", cl.length && H[cl[0]].attributes.current_temperature != null ? this._fmt(H[cl[0]].attributes.current_temperature) + "°" : "", avg != null ? `${SV.shades.n.toLowerCase()} ${avg}% open` : ""].filter(Boolean).join(" · ");
     const scenes = Object.keys(H).filter((i) => i.startsWith("scene.") && !this._c.hide.includes(i) && this._roomOf(i) === rid);
     this._roomBg = this._rimgOf(room);
-    const mySc = this._c.noScenes ? [] : this._myScenes().filter((x) => x.room === rid);
+    const mySc = this._c.noScenes ? [] : this._myScenes().filter((x) => x.room === rid && this._sceneOk(x));
     const chips = scenes.length || mySc.length ? `<div class="chips">${mySc.map((x) => `<button class="scb ${this._sceneOn(x) ? "on" : ""}" data-id="sc:${x.sc}:${x.id}" data-sc="run|${x.sc}:${x.id}"><i></i><span>${E(x.name)}</span></button>`).join("")}${scenes.map((i) => `<button class="scb" data-id="sc:${i}" data-act="scene.turn_on" data-e="${i}"><i></i><span>${E(this._nm(i))}</span></button>`).join("")}</div>` : "";
     const sec = [];
     [...L.filter((x) => ["lights", "shades", "climate"].includes(x)).sort((p, q) => ["lights", "shades", "climate"].indexOf(p) - ["lights", "shades", "climate"].indexOf(q)), ...L.filter((x) => !["lights", "shades", "climate"].includes(x))].forEach((s) => {
@@ -1635,10 +1697,10 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     let tab2 = tab;
-    if (!adm) tab2 = tab === "bg" || tab === "rphoto" ? tab : "scenes";
+    if (!adm) tab2 = tab === "bg" || tab === "rphoto" || (tab === "users" && this._mgr()) ? tab : "scenes";
     tab = tab2;
     let body = "";
     if (tab === "bg") {
@@ -1739,8 +1801,8 @@ class QuintDashboard extends HTMLElement {
         row("Reload open screens", "always on: every open Quint screen reloads itself after the restart", '<b>On</b>')) +
       sec("How it works", "", '<div class="lbl" style="padding:6px 4px 12px">You publish the new version on GitHub (a release is created automatically when the version number changes). HACS notices it within about two hours; <b>Check now</b> asks HACS right away. Quint then installs it, restarts Home Assistant and every open screen reloads itself. The two switches are saved with <b>Save</b>.</div>');
     } else if (tab === "access") {
-      if (!this._users && !this._usersBusy) { this._usersBusy = true; this._h.callWS({ type: "config/auth/list" }).then((l) => { this._users = (l || []).filter((x) => !x.system_generated && x.is_active !== false && !(x.group_ids || []).includes("system-admin")); }).catch(() => { this._users = []; }).finally(() => { this._usersBusy = false; this._draw(true); }); }
-      const U = this._users || [], sel = new Set(c.lockUsers || []);
+      this._loadUsers();
+      const U = this._normUsers(), sel = new Set(c.lockUsers || []);
       body = sec("Quint as the home of your users", "applies to normal (non-admin) users; admins are never affected",
         row("Open Quint first", "after signing in, normal users land on Quint instead of the default Home Assistant page", tg(!!c.dflt || !!c.lock, 'data-s="flag|dflt"')) +
         row("Lock to Quint", "hide the Home Assistant sidebar and send users back to Quint when they try to open any other page", tg(!!c.lock, 'data-s="flag|lock"'))) +
@@ -1748,13 +1810,44 @@ class QuintDashboard extends HTMLElement {
         (U.length ? U.map((x) => row(E(x.name), sel.size ? "" : "locked, because no one is chosen", tg(sel.has(x.id), `data-s="lockuser|${E(x.id)}"`))).join("") : `<div class="lbl" style="padding:6px 4px 12px">${this._usersBusy ? "Loading users…" : "No normal users found."}</div>`) +
         '<div class="lbl" style="padding:8px 4px 4px">Switch on specific users to lock only them. With none switched on, every normal user is locked.</div>') +
       sec("Good to know", "", '<div class="lbl" style="padding:6px 4px 12px">This hides and redirects the screens of Home Assistant for these users. It is not a security wall: for real limits keep their accounts non-admin. Pressing Close or Save here does not change what you (an admin) see.</div>');
+    } else if (tab === "users") {
+      this._loadUsers();
+      const isA = this._admin(), U = (this._ua || []).filter((x) => isA || !x.is_admin), P = c.perms || {}, me = this._h.user && this._h.user.id, busy = !!this._ubusy, mg = c.manager || "";
+      const um = (a, v) => `data-um="${a}|${v}"`;
+      const sum = (id) => { const p = P[id]; if (!p) return "everything"; const a = (p.svcOff || []).length, b = (p.roomOff || []).length; return [a ? `${a} service${a === 1 ? "" : "s"} off` : "", b ? `${b} room${b === 1 ? "" : "s"} off` : ""].filter(Boolean).join(" · "); };
+      const one = (x) => {
+        const adm2 = !!x.is_admin, self = x.id === me, open = this._pu === x.id && !adm2 && !self;
+        let h = row(E(x.name) + (adm2 ? " · Admin" : x.id === mg ? " · Quint admin" : ""), adm2 ? "full access" : self ? "you · you add users and set their limits" : `can use: ${sum(x.id)}`,
+          adm2 || self ? "" : `<button class="sbtn" ${um("usel", E(x.id))}>${open ? "Close" : "Limits"}</button>${x.id === mg ? "" : `<button class="ib2" ${um("udel", E(x.id))} title="Remove user">✕</button>`}`);
+        if (open) {
+          const p = P[x.id] || {}, so = p.svcOff || [], ro = p.roomOff || [], rs = (c.rooms || []).filter((r) => r.on !== false), ks = [...this._svcsAll(), "rooms"].filter((k, i, a) => a.indexOf(k) === i);
+          h += `<div class="ulim">` +
+            `<div class="lbl" style="padding:8px 4px 2px">Services ${E(x.name)} can use · switched off = hidden</div>` +
+            ks.map((k) => row(E(k === "rooms" ? "Rooms page" : SV[k] ? SV[k].n : k), "", tg(!so.includes(k), um("usvc", E(x.id) + "|" + E(k))))).join("") +
+            `<div class="lbl" style="padding:10px 4px 2px">Rooms ${E(x.name)} can see · switched off = hidden, with their devices</div>` +
+            (rs.map((r) => row(E(r.name), "", tg(!ro.includes(r.id), um("urm", E(x.id) + "|" + E(r.id))))).join("") || '<div class="lbl" style="padding:6px 4px">No rooms yet.</div>') +
+            (P[x.id] ? `<div class="btns"><button ${um("ureset", E(x.id))}>Give full access again</button></div>` : "") + `</div>`;
+        }
+        return h;
+      };
+      body = (isA ? sec("Quint admin", "one person you trust: a normal user who can also add users and limit their services and rooms",
+        (this._normUsers().map((x) => row(E(x.name), x.id === mg ? "Quint admin" : "", tg(x.id === mg, um("mgr", E(x.id))))).join("") || `<div class="lbl" style="padding:6px 4px 12px">${this._usersBusy ? "Loading users…" : "Add a user below first."}</div>`) +
+        '<div class="lbl" style="padding:8px 4px 4px">Only one person can be the Quint admin. Switch the person off again to have none. They can use everything the other users can, plus this Users tab. They cannot become a Home Assistant admin.</div>') : "") +
+      sec("People", isA ? "admins can use everything; for the others choose what they may use" : "choose what each person may use. Changes are saved right away",
+        (U.length ? U.map(one).join("") : `<div class="lbl" style="padding:6px 4px 12px">${this._usersBusy ? "Loading users…" : "No users found."}</div>`)) +
+      sec("Add a user", "creates a normal Home Assistant account (not an admin)",
+        row("Name", "shown on the home page", '<input type="text" data-nu="name" placeholder="Anna" autocomplete="off">') +
+        row("Login name", "letters and numbers", '<input type="text" data-nu="user" placeholder="anna" autocomplete="off" autocapitalize="none">') +
+        row("Password", "at least 8 characters", '<input type="password" data-nu="pass" autocomplete="new-password">') +
+        `<div class="btns"><button class="pri" ${um("unew", "")} ${busy ? "disabled" : ""}>${busy ? "Adding…" : "＋ Add user"}</button></div>`) +
+      sec("Good to know", "", '<div class="lbl" style="padding:6px 4px 12px">New users start with everything. Limits hide services, rooms and their devices inside Quint. It is not a security wall: a user could still open Home Assistant itself, so also switch on <b>Lock to Quint</b> in the Access tab (admin). Limits apply to normal users only.</div>');
     } else if (tab === "autos") {
       const all = Object.keys(this._h.states).filter((i) => /^(automation|script)\./.test(i)).sort((a, b) => this._nm(a).localeCompare(this._nm(b))).slice(0, 300), sel = new Set(c.autos || []);
       body = sec("Automations", `choose the automations and scripts that appear on the home page and in the Automations tab (${sel.size} chosen). Users can switch an automation on or off and run it with ▶`,
         (all.map((id) => row(E(this._nm(id)), E(id), tg(sel.has(id), `data-s="auto|${E(id)}"`))).join("") || '<div class="lbl" style="padding:6px 4px 12px">No automations or scripts found in Home Assistant.</div>') +
         (sel.size ? '<div class="btns"><button data-s="autoclear|">Clear all</button></div>' : ""));
     } else if (tab === "scenes") {
-      const mine = this._myScenes().filter((x) => adm || x.sc === "l"), has = Object.keys(this._h.states).filter((i) => i.startsWith("scene.")).slice(0, 60), hid = c.hide || [];
+      const mine = this._myScenes().filter((x) => (adm || x.sc === "l") && this._sceneOk(x)), has = Object.keys(this._h.states).filter((i) => i.startsWith("scene.")).slice(0, 60), hid = c.hide || [];
       body = sec("Scenes", "set your devices the way you want, then add the scene here. It shows on the home page, and on the room's page if you choose a room. Update re-saves the current state",
         (mine.map((x) => row(E(x.name), `${(x.items || []).length} devices${x.room && this._rooms().find((r) => r.id === x.room) ? " · " + this._rooms().find((r) => r.id === x.room).name : ""} · ${x.sc === "s" ? "everyone" : "this device only"}`, `<button class="sbtn" data-sc="re|${E(x.sc + ":" + x.id)}">Update</button><button class="ib2" data-sc="del|${E(x.sc + ":" + x.id)}">✕</button>`)).join("") || '<div class="lbl" style="padding:6px 4px 12px">No scenes yet.</div>') +
         '<div class="btns"><button class="pri" data-sc="new|">＋ New scene</button></div>') +
@@ -1778,6 +1871,7 @@ class QuintDashboard extends HTMLElement {
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "intercom" && !this._icOn()) this._v = { p: "home" };
+    if (this._perm()) { const v = this._v; if ((["cameras", "security", "intercom", "automations"].includes(v.p) && !this._svOk(v.p)) || (v.p === "rooms" && v.svc && !this._svOk(v.svc)) || (v.p === "room" && !this._svOk("rooms"))) this._v = { p: "home" }; }
     const c = this._c;
     this._track = new Set(Object.keys(this._h.states).filter((i) => this._svcOf(i) || i.startsWith("scene.") || i.startsWith("weather.") || i === "sun.sun"));
     Object.values(c.custom).flat().forEach((x) => x.entity && this._track.add(x.entity));

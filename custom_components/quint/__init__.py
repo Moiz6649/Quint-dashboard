@@ -11,7 +11,7 @@ from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, PANEL_PATH, STATIC_URL, VERSION
 from .updater import QuintUpdater, read_disk_version
-from .util import is_newer, valid_image
+from .util import clean_perms, is_newer, valid_image, valid_new_user
 
 
 class QuintConfigView(HomeAssistantView):
@@ -31,8 +31,118 @@ class QuintConfigView(HomeAssistantView):
         user = request.get("hass_user")
         if user is None or not user.is_admin:
             return self.json_message("Admin required", 403)
-        await self._store.async_save(await request.json())
+        data = await request.json()
+        if not isinstance(data, dict):
+            return self.json_message("Bad settings", 400)
+        old = await self._store.async_load() or {}
+        # who the Quint admin is and what each user may use are changed only through /api/quint/users
+        for key in ("perms", "manager"):
+            if key in old:
+                data[key] = old[key]
+            else:
+                data.pop(key, None)
+        await self._store.async_save(data)
         return self.json({"ok": True})
+
+
+class QuintUsersView(HomeAssistantView):
+    """People: the Quint admin (a normal user chosen in Settings) and Home Assistant admins
+    can list, add and remove normal users and choose which services and rooms each may use."""
+
+    url = "/api/quint/users"
+    name = "api:quint:users"
+    requires_auth = True
+
+    def __init__(self, hass: HomeAssistant, store: Store) -> None:
+        self._hass = hass
+        self._store = store
+
+    async def _caller(self, request):
+        user = request.get("hass_user")
+        cfg = await self._store.async_load() or {}
+        is_admin = bool(user and user.is_admin)
+        is_mgr = bool(user and not is_admin and cfg.get("manager") and cfg.get("manager") == user.id)
+        return user, cfg, is_admin, is_mgr
+
+    async def get(self, request):
+        user, cfg, is_admin, is_mgr = await self._caller(request)
+        if not (is_admin or is_mgr):
+            return self.json_message("Not allowed", 403)
+        users = await self._hass.auth.async_get_users()
+        return self.json(
+            [
+                {"id": u.id, "name": u.name, "is_admin": u.is_admin, "is_active": u.is_active, "is_owner": u.is_owner}
+                for u in users
+                if not u.system_generated
+            ]
+        )
+
+    async def post(self, request):
+        user, cfg, is_admin, is_mgr = await self._caller(request)
+        if not (is_admin or is_mgr):
+            return self.json_message("Not allowed", 403)
+        try:
+            body = await request.json()
+        except ValueError:
+            return self.json_message("Bad request", 400)
+        action = body.get("action") if isinstance(body, dict) else None
+        auth = self._hass.auth
+
+        if action == "perms":
+            cfg["perms"] = clean_perms(body.get("perms"), cfg.get("perms"), user.id if is_mgr else "")
+            await self._store.async_save(cfg)
+            return self.json({"ok": True, "perms": cfg["perms"]})
+
+        if action == "manager":
+            if not is_admin:
+                return self.json_message("Admin required", 403)
+            uid = body.get("user_id") or ""
+            if uid:
+                target = await auth.async_get_user(uid)
+                if target is None or target.system_generated or target.is_admin or not target.is_active:
+                    return self.json_message("Pick a normal user", 400)
+                cfg["manager"] = uid
+            else:
+                cfg.pop("manager", None)
+            await self._store.async_save(cfg)
+            return self.json({"ok": True, "manager": cfg.get("manager", "")})
+
+        if action == "create":
+            msg = valid_new_user(body.get("name"), body.get("username"), body.get("password"))
+            if msg:
+                return self.json_message(msg, 400)
+            from homeassistant.auth.providers import homeassistant as auth_ha
+
+            username = body["username"].strip().lower()
+            provider = auth_ha.async_get_provider(self._hass)
+            new_user = await auth.async_create_user(body["name"].strip(), group_ids=["system-users"])
+            try:
+                await provider.async_add_auth(username, body["password"])
+                creds = await provider.async_get_or_create_credentials({"username": username})
+                await auth.async_link_user(new_user, creds)
+            except Exception as err:  # noqa: BLE001 - undo the half-made user, tell the person
+                await auth.async_remove_user(new_user)
+                return self.json_message(f"Could not add the user ({err})", 400)
+            return self.json({"ok": True, "id": new_user.id})
+
+        if action == "delete":
+            target = await auth.async_get_user(str(body.get("user_id") or ""))
+            if (
+                target is None
+                or target.system_generated
+                or target.is_admin
+                or target.is_owner
+                or target.id == user.id
+                or target.id == cfg.get("manager")
+            ):
+                return self.json_message("That user cannot be removed here", 400)
+            await auth.async_remove_user(target)
+            if isinstance(cfg.get("perms"), dict):
+                cfg["perms"].pop(target.id, None)
+                await self._store.async_save(cfg)
+            return self.json({"ok": True})
+
+        return self.json_message("Unknown action", 400)
 
 
 class QuintVersionView(HomeAssistantView):
@@ -162,6 +272,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.http.register_view(QuintConfigView(store))
         updater = QuintUpdater(hass, store)
         data["updater"] = updater
+        hass.http.register_view(QuintUsersView(hass, store))
         hass.http.register_view(QuintVersionView(hass, updater))
         hass.http.register_view(QuintUpdateView(updater))
         hass.http.register_view(QuintBackgroundView(Store(hass, 1, f"{DOMAIN}.background")))
