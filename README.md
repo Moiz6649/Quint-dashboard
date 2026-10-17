@@ -3,6 +3,7 @@
 Standalone Savant-style dashboard for Home Assistant. Installs as an integration and adds its own **sidebar panel**. No Lovelace setup, no token, no YAML.
 
 - Home page (wall-panel style): client name top left, big clock, date, weather + sunset, greeting, scene buttons, and one live card per service – Security (status, doors/locks, alarm mode), Cameras (live picture), Lighting (rooms with on/off), Climate, Media (now playing + controls), Shades
+- **v1.9.1**: scenes are added only in **Settings → Scenes** (not on the home page); a scene can belong to a room and then also shows on that room's page; every user now has a settings button with **Scenes** and **Background** (saved on their own device); **room photo** button at the top right of every room page; Intercom buttons (Video / Audio / Open door) can be shown or hidden in Settings → Intercom
 - **v1.9.0**: organized balanced home columns, **Intercom** tile (video call, audio call, open door, doorbell ring), **each camera as its own tile**, a clearer **Lighting** tile (rooms with switch + dimmer, All on / All off), **Scenes you can create** (shared or only on this device), **personal background** for every user, a dynamic sliding bottom bar, and AM/PM clock fix
 - **Tap a camera to open it big** (live stream, with snapshot fallback); switch cameras with the arrows or the name buttons
 - **Rooms** tab: pick a room on the left and see all its lights (with dimmers), shades, climate, media, cameras and custom cards
@@ -59,15 +60,18 @@ Left menu, right panels, with **Save / Reset everything / Close** at the top. Ch
 - **Devices** – search, assign a room, hide.
 - **Home page** – turn the clock, weather line, scenes and Rooms tab on/off; **show or hide each service** (card + tab); choose which scenes appear.
 - **Home tiles** – choose exactly which devices appear on each home tile (Security, Cameras, Lighting, Climate, Media, Shades). Every chosen camera becomes its own tile. *Back to automatic* undoes it.
-- **Intercom** – pick the camera, the doorbell (binary_sensor or event), and the action for **Video call**, **Audio call** and **Open door**. An action can be a link (`https:`, `tel:`, `sip:`), an HA path (`/lovelace/x`), an entity (lock, script, button…) or `domain.service` + target + JSON data. **Open door needs two taps** so it cannot open by accident. There is no built-in two-way audio: use your own script, SIP link or app for the audio call.
+- **Intercom** – pick the camera, the doorbell (binary_sensor or event), and the action for **Video call**, **Audio call** and **Open door**. An action can be a link (`https:`, `tel:`, `sip:`), an HA path (`/lovelace/x`), an entity (lock, script, button…) or `domain.service` + target + JSON data. **Video / Audio / Open door buttons can each be hidden** in Settings → Intercom. **Open door needs two taps** so it cannot open by accident. There is no built-in two-way audio: use your own script, SIP link or app for the audio call.
 - **Scenes** – list, edit and delete shared scenes. Choose which HA `scene.*` entities show.
 - **Cards** – every custom card you added, with delete and add.
 
-### Scenes (everyone)
-On the home page press **＋** to make a scene: choose a room, switch on the devices to include, set their state (lights keep brightness/colour, shades position, climate, media volume), name it and save. Admins can save it for **everyone** (stored on the server); other users save it **only on this device**. Press ✎ to edit or delete.
+### Scenes
+Scenes are added in **Settings → Scenes** (the home page only shows and runs them). Set your devices the way you want, press **＋ New scene**, pick a room (optional), choose the devices and save. A scene with a room also shows on that room's page. Admins can save a scene for **everyone** (stored on the server) or **only this device**. Normal users also have the Settings button, but only with **Scenes** and **Background**, and everything they save stays on their own device.
+
+### Room photo
+On every room page, the **＋ Photo** button at the top right sets a photo for that room (shown in the room header; **✕** removes it). Photos are stored in the browser of that device.
 
 ### Background
-Pick a colour theme, or upload your own photo (shrunk to 1920 px and stored on the HA server in `.storage/quint.background`). **Darken** and **Blur** keep text readable. The shared background is set by admins. Every user can also press the palette button in the bottom bar to choose a theme or their **own photo for this device only** (stored in the browser).
+Pick a colour theme, or upload your own photo (shrunk to 1920 px and stored on the HA server in `.storage/quint.background`). **Darken** and **Blur** keep text readable. The shared background is set by admins. Every user can also press the palette button in the bottom bar to choose a theme or their **own photo for this device only** (stored in the browser). Normal users can also do this in Settings → Background.
 
 ### More (admin)
 **More** is always shown to admins so they can add extra cards to any room (＋ Add card in every room). Other users only see it once it has cards.
