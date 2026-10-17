@@ -38,3 +38,11 @@ Only Home Assistant **administrators** see the Settings button, the **＋ Add ca
 
 ## Custom services (new home tiles)
 When you add a card to a **room**, the dialog has a **Service** field (default *More*). Every distinct service name becomes its own tile on the Home screen and in the bottom bar, with the name on it, e.g. *Pool*, *Gate*, *Irrigation*. Tapping the tile opens a page grouped by room; each room also gets a tab for that service. Optional **Service icon** (`mdi:…`) sets the tile icon. Cards placed on **Home** appear under *My cards* instead.
+
+## Screen layouts (phone / tablet / desktop)
+The dashboard measures its own width and picks a layout automatically:
+- **Phone** (< 600 px): 2-column tiles, compact hero, full-width bottom bar, bottom-sheet dialogs, single-column cameras.
+- **Tablet** (600–1199 px): larger tiles, floating bottom dock (portrait) or a side rail (landscape, ≥ 900 px).
+- **Desktop / wall panel** (≥ 1200 px): wide grid, large clock, side rail, multi-column cameras.
+
+Admins can force a layout per device in **Settings → Screen layout** (e.g. a wall tablet set to *Desktop / wall panel*).

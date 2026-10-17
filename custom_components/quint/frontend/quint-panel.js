@@ -31,7 +31,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.5.1";
+const VER = "1.6.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 
 const CSS = `
@@ -57,7 +57,7 @@ h1{font-weight:300;font-size:30px;margin:6px 0 10px}h2{font-weight:500;font-size
 .tile,.card{position:relative;background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid var(--bd);border-radius:28px;padding:20px}
 .card{border-radius:24px;padding:18px}
 .tile{cursor:pointer;min-height:180px;display:flex;flex-direction:column;justify-content:space-between;transition:transform .18s,box-shadow .18s}
-.tile:hover{transform:translateY(-3px)}.tile:active{transform:scale(.97)}
+@media(hover:hover){.tile:hover{transform:translateY(-3px)}}.tile:active{transform:scale(.97)}
 .tile.on{background:linear-gradient(150deg,color-mix(in srgb,var(--c) 42%,#0b1220),color-mix(in srgb,var(--c) 8%,#0b1220));border-color:color-mix(in srgb,var(--c) 60%,transparent);box-shadow:0 14px 40px -16px var(--c)}
 .bdg{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;font-size:24px;flex:none;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);transition:.2s}
 .tile.on .bdg,.card.on .bdg{background:var(--c);color:#10131c}
@@ -97,7 +97,54 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .moving{transform:scale(1.04);box-shadow:0 20px 50px -10px #000c,0 0 0 3px var(--ac);z-index:5;opacity:.93;transition:transform .15s}
 .hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:100;white-space:nowrap}
 ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:96px}.tv{font-size:30px;font-weight:300;line-height:1.15;margin:4px 0 2px;word-break:break-word}
-@media(max-width:600px){.clk{font-size:56px}main,header{padding-left:16px;padding-right:16px}.grid{grid-template-columns:repeat(2,1fr);gap:12px}.tile{min-height:150px}}
+/* ===== device profiles: phone / tablet / desktop (set by JS from the panel width) ===== */
+ha-icon{--mdc-icon-size:24px}nav button ha-icon{--mdc-icon-size:23px}
+:host([data-dev="phone"]) header{padding:10px 14px}
+:host([data-dev="phone"]) .brand{font-size:15px;letter-spacing:4px;gap:8px}
+:host([data-dev="phone"]) .brand .si{font-size:24px}
+:host([data-dev="phone"]) .hb .tm{display:none}
+:host([data-dev="phone"]) main{padding:2px 14px 18px}
+:host([data-dev="phone"]) .hero{flex-direction:column;align-items:flex-start;gap:12px;margin:4px 0 18px}
+:host([data-dev="phone"]) .clk{font-size:56px}
+:host([data-dev="phone"]) h1{font-size:24px}
+:host([data-dev="phone"]) .pills{flex-wrap:nowrap;overflow-x:auto;max-width:100%}
+:host([data-dev="phone"]) .pill{flex:none;white-space:nowrap}
+:host([data-dev="phone"]) .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+:host([data-dev="phone"]) .grid[data-grid^="list:cameras"]{grid-template-columns:minmax(0,1fr)!important}
+:host([data-dev="phone"]) .tile{min-height:128px;padding:14px;border-radius:22px}
+:host([data-dev="phone"]) .card{padding:14px;border-radius:20px}
+:host([data-dev="phone"]) .num{font-size:30px}
+:host([data-dev="phone"]) .bdg{width:42px;height:42px;font-size:21px}
+:host([data-dev="phone"]) .rh{flex-wrap:wrap;margin:20px 0 10px}
+:host([data-dev="phone"]) .rn{font-size:19px}
+:host([data-dev="phone"]) .btns button{padding:13px}
+:host([data-dev="phone"]) .tpl{min-height:84px}
+:host([data-dev="phone"]) .ov{place-items:end center;padding:0}
+:host([data-dev="phone"]) .dlg{width:100%;max-height:92vh;border-radius:28px 28px 0 0}
+:host([data-dev="phone"]) .hint{bottom:78px}
+:host([data-dev="tablet"]) main{padding:6px 24px 24px}
+:host([data-dev="tablet"]) .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+:host([data-dev="tablet"]) .clk{font-size:72px}
+:host([data-dev="tablet"]) .tile{min-height:170px}
+:host([data-dev="desktop"]) header{padding:20px 40px}
+:host([data-dev="desktop"]) main{max-width:1560px;padding:10px 40px 40px}
+:host([data-dev="desktop"]) .grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px}
+:host([data-dev="desktop"]) .grid[data-grid^="list:cameras"]{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))!important}
+:host([data-dev="desktop"]) .clk{font-size:104px}
+:host([data-dev="desktop"]) h1{font-size:36px}
+:host([data-dev="desktop"]) .tile{min-height:200px}
+:host([data-dev="desktop"]) .num{font-size:44px}
+:host([data-dev="desktop"]) .rn{font-size:26px}
+:host([data-nav="bar"]) nav{position:sticky;bottom:0;margin:0;max-width:none;width:100%;border-radius:0;border-width:1px 0 0;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:2px;box-shadow:none}
+:host([data-nav="bar"]) nav button{min-width:58px;padding:7px 8px;font-size:10px}
+:host([data-nav="bar"]) nav button .si{font-size:22px}
+:host([data-nav="rail"]) .app{display:grid;grid-template-columns:104px minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"nav hdr" "nav main"}
+:host([data-dev="desktop"][data-nav="rail"]) .app{grid-template-columns:124px minmax(0,1fr)}
+:host([data-nav="rail"]) header{grid-area:hdr}
+:host([data-nav="rail"]) main{grid-area:main}
+:host([data-nav="rail"]) nav{grid-area:nav;position:sticky;top:0;align-self:start;height:100vh;flex-direction:column;justify-content:flex-start;margin:0;max-width:none;width:auto;border-radius:0 30px 30px 0;border-width:0 1px 0 0;padding:16px 8px;gap:6px;overflow-x:hidden;overflow-y:auto;box-shadow:none}
+:host([data-nav="rail"]) nav button{min-width:0;width:100%;padding:12px 4px;font-size:11px}
+:host([data-nav="rail"]) .hint{bottom:30px}
 `;
 
 class QuintDashboard extends HTMLElement {
@@ -224,9 +271,18 @@ class QuintDashboard extends HTMLElement {
       t.onload = () => { img.src = u; }; t.src = u;
     });
   }
+  _layout() {
+    const w = this.clientWidth || window.innerWidth || 1024, auto = w < 600 ? "phone" : w < 1200 ? "tablet" : "desktop";
+    let dev = localStorage.getItem("quint_dev") || "auto";
+    if (!["phone", "tablet", "desktop"].includes(dev)) dev = auto;
+    const nav = dev === "phone" ? "bar" : dev === "desktop" || w >= 900 ? "rail" : "dock";
+    if (this.getAttribute("data-dev") !== dev) this.setAttribute("data-dev", dev);
+    if (this.getAttribute("data-nav") !== nav) this.setAttribute("data-nav", nav);
+    if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; }
+  }
   _time() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
-  connectedCallback() { this._iv2 = setInterval(() => this._refreshCams(), 5000); this._iv = setInterval(() => { const r = this.shadowRoot; [".clk", ".tm"].forEach((q) => { const e = r.querySelector(q); if (e) e.textContent = this._time(); }); }, 15000); }
-  disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
+  connectedCallback() { this._layout(); if (typeof ResizeObserver !== "undefined") { this._ro = new ResizeObserver(() => this._layout()); this._ro.observe(this); } this._iv2 = setInterval(() => this._refreshCams(), 5000); this._iv = setInterval(() => { const r = this.shadowRoot; [".clk", ".tm"].forEach((q) => { const e = r.querySelector(q); if (e) e.textContent = this._time(); }); }, 15000); }
+  disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
   set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
   set route(r) {}
@@ -353,6 +409,7 @@ class QuintDashboard extends HTMLElement {
   }
   _change(e) {
     const t = e.target, d = t.dataset, adm = this._admin();
+    if (d.devsel !== undefined) { localStorage.setItem("quint_dev", t.value); this._layout(); this._draw(true); return; }
     if (d.slider) { const [dom, srv, key, div] = d.slider.split("|"); this._h.callService(dom, srv, { entity_id: d.e, [key]: +t.value / +div }); }
     if (adm && d.rname !== undefined) { this._c.rooms[+d.rname].name = t.value; this._save(); }
     if (adm && d.map) { this._c.map[d.map] = t.value; this._save(); }
@@ -622,6 +679,7 @@ class QuintDashboard extends HTMLElement {
     return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>Settings</h1><div class="lbl" style="margin-bottom:10px">Quint v${VER} · screen updates since opening: ${this._rn || 0}</div>
     <div class="card"><div class="nm">Greeting name</div><input type=text data-uname value="${this._c.name}" placeholder="${(this._h.user && this._h.user.name) || ""}"></div>
     <div class="card" style="margin-top:12px"><div class="row"><div class="grow"><div class="nm">Fullscreen</div><div class="st">Hide the Home Assistant sidebar on this device</div></div><button class="sw ${localStorage.getItem("quint_full") === "1" ? "on" : ""}" data-tog="full:0"></button></div></div>
+    <div class="card" style="margin-top:12px"><div class="row"><div class="grow"><div class="nm">Screen layout</div><div class="st">Detected: ${this._auto || "–"} · ${this._w || 0}px wide. Pick a layout to force it on this device.</div></div><select data-devsel="1" style="width:150px">${[["auto", "Auto"], ["phone", "Phone"], ["tablet", "Tablet"], ["desktop", "Desktop / wall panel"]].map(([v, l]) => `<option value="${v}" ${(localStorage.getItem("quint_dev") || "auto") === v ? "selected" : ""}>${l}</option>`).join("")}</select></div></div>
     <h2>Rooms</h2><div class="card">${this._c.rooms.map((r, i) => `<div class="row" style="margin:6px 0"><input type=text data-rname="${i}" value="${r.name}"><button class="sw ${r.on !== false ? "on" : ""}" data-tog="room:${i}"></button><button class="ib" data-tog="del:${i}">✕</button></div>`).join("")}
     <div class="btns"><button data-tog="add:0">＋ Add room</button><button data-tog="import:0">Re-import from HA areas</button></div></div>
     <h2>Devices → room &amp; visibility</h2><div class="card"><table>${all.map((id) => `<tr><td>${SV[this._svcOf(id)].i} ${this._nm(id)}<div class="lbl">${id}</div></td><td><select data-map="${id}"><option value="">(none)</option>${this._c.rooms.map((r) => `<option value="${r.id}" ${this._roomOf(id) === r.id ? "selected" : ""}>${r.name}</option>`).join("")}</select></td><td><button class="sw ${this._c.hide.includes(id) ? "" : "on"}" data-tog="hide:${id}"></button></td></tr>`).join("")}</table></div>`;
