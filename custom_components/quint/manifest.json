@@ -4,10 +4,10 @@
   "codeowners": [],
   "config_flow": true,
   "dependencies": ["http", "frontend", "panel_custom"],
-  "documentation": "https://github.com/YOUR-USER/quint-dashboard",
+  "documentation": "https://github.com/Moiz6649/quint-dashboard",
   "integration_type": "service",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/YOUR-USER/quint-dashboard/issues",
+  "issue_tracker": "https://github.com/Moiz6649/quint-dashboard/issues",
   "requirements": [],
   "version": "1.3.0"
 }
