@@ -3,6 +3,7 @@ const ic = (p) => `<svg class="si" viewBox="0 0 24 24">${p}</svg>`;
 const SV = {
   security:{ n: "Security", c: "#34c98b", i: ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>') },
   cameras: { n: "Cameras",  c: "#4aa3ff", i: ic('<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>') },
+  intercom: { n: "Intercom", c: "#4ade80", i: ic('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>') },
   lights:  { n: "Lighting", c: "#f5a623", i: ic('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>') },
   climate: { n: "Climate",  c: "#ff7a59", i: ic('<path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/>') },
   media:   { n: "Media",    c: "#b388ff", i: ic('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>') },
@@ -21,6 +22,12 @@ const PREV_I = ic('<path d="M19 20L9 12l10-8z"/><path d="M5 19V5"/>');
 const NEXT_I = ic('<path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/>');
 const PLAY_I = ic('<path d="M7 4l13 8-13 8z" fill="currentColor"/>');
 const PAUSE_I = ic('<path d="M8 5v14M16 5v14" stroke-width="3"/>');
+const PHONE_I = SV.intercom.i;
+const VIDEO_I = SV.cameras.i;
+const KEY_I = ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-1.5"/>');
+const PALETTE_I = ic('<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 1 0 0 20 2 2 0 0 0 2-2 2 2 0 0 1 2-2h2a4 4 0 0 0 4-4A10 10 0 0 0 12 2z"/>');
+const TILES_I = ic('<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="11" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/>');
+const SCENE_I = ic('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.7 1.8L21.5 18.5l-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/>');
 const VOL_I = ic('<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>');
 const WX = { "clear-night": "Clear night", cloudy: "Cloudy", exceptional: "Exceptional", fog: "Foggy", hail: "Hail", lightning: "Thunderstorm", "lightning-rainy": "Thunderstorm", partlycloudy: "Partly cloudy", pouring: "Heavy rain", rainy: "Rain", snowy: "Snow", "snowy-rainy": "Sleet", sunny: "Sunny", windy: "Windy", "windy-variant": "Windy" };
 (() => {
@@ -53,11 +60,12 @@ const SET_I = {
   rooms: ICONS.door, devices: ICONS.plug, home: ICONS.home,
   cards: ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'),
 };
+SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
 const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.8.0";
+const VER = "1.9.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -104,7 +112,8 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .home{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding:26px 18px 22px;flex:1;align-content:start}
 .hl{display:flex;flex-direction:column;min-width:0}
 .hr{min-width:0;display:flex;flex-direction:column}
-.clk{font-family:var(--serif);font-size:84px;font-weight:400;line-height:.95;margin-top:26px;letter-spacing:-1px;white-space:nowrap}
+.clk{font-family:var(--serif);font-size:84px;font-weight:400;line-height:.95;margin-top:26px;letter-spacing:-1px;white-space:nowrap;max-width:100%}
+.clk small{font-family:"Inter",sans-serif;font-size:.2em;font-weight:600;letter-spacing:2px;margin-left:.45em;color:#c3cbdb;vertical-align:.85em}
 .dt{font-size:16px;color:#d3d9e6;margin-top:8px}
 .wx{display:flex;align-items:center;gap:10px;margin-top:16px;color:#d3d9e6;font-size:15px}.wx .si{font-size:20px;color:var(--ac);flex:none}
 .gr{font-family:var(--serif);font-style:italic;font-size:34px;margin-top:26px;font-weight:400;line-height:1.1}
@@ -115,7 +124,13 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .scb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .scb.on{background:#f1efec;color:#12151c;border-color:#f1efec}.scb.on i{background:#12151c;border-color:#12151c}
 .scb:active{transform:scale(.98)}
-.bento{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-content:start}
+.bento{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:16px;align-items:start}
+.bcol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.bwide{margin-top:16px}
+.bc.cam1{padding:8px}
+.cam1 .cvw{aspect-ratio:16/9;min-height:0;flex:none}
+.scb{width:100%}
+.cvw .xp{position:absolute;right:12px;bottom:8px;z-index:1;font-size:18px;text-shadow:0 1px 4px #000a;opacity:.9}
 .bc{background:var(--cd);border:1px solid var(--bd);border-radius:20px;padding:20px 22px 20px;position:relative;min-width:0;display:flex;flex-direction:column}
 .bc.wide{grid-column:1/-1}
 .bh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600;color:#aeb8cc;cursor:pointer}
@@ -130,7 +145,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .seg button{flex:1;padding:11px 0;border:0;background:none;border-radius:9px;font-weight:600;font-size:14px;color:#dfe4ee}
 .seg button.on{background:#f1efec;color:#12151c}
 .bc>.rows{margin-bottom:12px}
-.cvw{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:16/9;background:linear-gradient(135deg,#2b2016,#14100c);cursor:pointer;display:grid;place-items:center;color:#8b7d6c}
+.cvw{position:relative;border-radius:14px;overflow:hidden;flex:1 1 auto;min-height:190px;background:linear-gradient(135deg,#2b2016,#14100c);cursor:pointer;display:grid;place-items:center;color:#8b7d6c}
 .cvw img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cvw .cn{position:absolute;left:12px;top:10px;font-size:12px;font-weight:600;text-shadow:0 1px 4px #000a;z-index:1}
 .cvw .live{position:absolute;right:12px;top:10px;z-index:1;text-shadow:0 1px 4px #000a}
@@ -218,20 +233,62 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .span2{grid-column:1/-1}
 .tall{grid-row:span 2}
 :host([data-dev="phone"]) .tall{grid-row:auto}
+
+/* ===== lighting tile ===== */
+.lts{display:flex;flex-direction:column;gap:16px}
+.lt1{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ltn{min-width:0}.ltn b{font-weight:500;font-size:15px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ltn small{color:var(--mu);font-size:12px}
+.lt input[type=range]{margin-top:10px}
+.btn2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:16px}
+.btn2 button{padding:11px 6px;border-radius:9px;border:1px solid rgba(255,255,255,.26);background:none;font-size:13px;font-weight:600}.btn2 button:active{background:var(--ac);color:#000}
+.seg.sm{margin-top:12px;padding:3px}.seg.sm button{padding:8px 4px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ===== intercom ===== */
+.icr{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.icb{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);font-size:12px;font-weight:600;line-height:1.1;text-align:center;transition:transform .15s,background .2s}
+.icb .si{font-size:22px}.icb:active{transform:scale(.95)}
+.icb.door{background:rgba(95,211,154,.16);border-color:rgba(95,211,154,.5);color:#a8f0cd}
+.icb.door.armed{background:var(--warn);border-color:var(--warn);color:#1a1205;animation:armed .6s ease-in-out infinite alternate}
+@keyframes armed{from{transform:scale(1)}to{transform:scale(1.04)}}
+.bc.ringing{border-color:var(--ok);animation:ringg 1.1s ease-in-out infinite}
+@keyframes ringg{0%,100%{box-shadow:0 0 0 0 rgba(95,211,154,.45)}50%{box-shadow:0 0 0 8px rgba(95,211,154,0)}}
+.rg{color:var(--ok);font-weight:700;animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:.35}}
+.bc.icm .cvw{min-height:150px}
+.bigic .cvw{min-height:340px}
+.vic{display:flex;gap:10px;justify-content:center;padding:0 20px 6px}.vic .icb{flex-direction:row;gap:8px;padding:11px 20px;font-size:13px}
+/* ===== scenes ===== */
+.capr{display:flex;justify-content:space-between;align-items:center}
+.caps{display:flex;gap:6px}
+.mini{width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);font-size:14px;line-height:1;padding:0;color:#dfe4ee;display:grid;place-items:center}
+.mini.on{background:var(--ac);color:#000;border-color:var(--ac)}
+.scw{position:relative;min-width:0}
+.scx{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:12px;padding:0;z-index:2}.scx.r{right:34px}
+.scg{max-height:240px;overflow-y:auto;scrollbar-width:thin}
+.scn .hintx{font-size:13px;color:var(--mu);line-height:1.4}
+.srow2{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.04)}
+.srow2 .nm2{font-size:14px;font-weight:500}
+.dlg .gtl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin:14px 0 6px;font-weight:600}
+.swrow{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
+.dlg .shd{margin-bottom:10px}
 /* ===== bottom bar ===== */
 .rl .rcap{margin:18px 0 10px}
 :host([data-wide="1"]) .rl .rcap{margin:40px 0 12px}
 :host([data-wide="1"]) .cr{display:block}
 :host([data-wide="1"]) .crm{display:none}
-nav{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:10px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(8,11,18,.97);border-top:1px solid var(--bd)}
-.tabs2{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}.tabs2::-webkit-scrollbar{display:none}
-nav button.t{flex:1 1 0;min-width:58px;padding:7px 4px;border-radius:10px;border:0;background:none;color:#cfd5e2;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}
-nav button.t .si{font-size:22px}nav button.t ha-icon{--mdc-icon-size:22px}
+nav{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:10px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(14,19,30,.78),rgba(7,10,17,.9));-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);border-top:1px solid rgba(255,255,255,.12);box-shadow:0 -12px 40px -18px #000}
+.tabs2{position:relative;display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;padding:2px 0}.tabs2::-webkit-scrollbar{display:none}
+.tind{position:absolute;left:0;top:2px;bottom:2px;width:0;border-radius:12px;background:linear-gradient(180deg,#fbfaf8,#e9e6e1);box-shadow:0 6px 22px -6px var(--gl,#fff6),0 0 0 1px rgba(255,255,255,.35) inset;transition:transform .5s cubic-bezier(.25,1.25,.4,1),width .5s cubic-bezier(.25,1.25,.4,1),box-shadow .4s;pointer-events:none;z-index:0;will-change:transform,width}
+nav button.t{position:relative;z-index:1;flex:1 1 0;min-width:58px;padding:7px 4px;border-radius:12px;border:0;background:none;color:#cfd5e2;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap;transition:color .3s,transform .15s}
+nav button.t:active{transform:scale(.93)}
+nav button.t .si{font-size:22px;transition:transform .3s}nav button.t ha-icon{--mdc-icon-size:22px}
 nav button.t span{overflow:hidden;text-overflow:ellipsis;max-width:100%}
-nav button.t.act{background:#f1efec;color:#12151c}
+nav button.t.act{color:#12151c;font-weight:600}
+nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1.7,.5,1)}
+@keyframes pop{0%{transform:scale(.5) translateY(4px)}100%{transform:none}}
+@media(hover:hover){nav button.t:not(.act):hover{color:#fff;background:rgba(255,255,255,.07)}}
 .nr{display:flex;align-items:center;gap:12px;flex:none}
 .cr{letter-spacing:2px;font-size:11px;text-transform:uppercase;color:var(--mu);white-space:nowrap;display:none}
-.gb{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:none;display:grid;place-items:center;font-size:19px;padding:0}
+.gb{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.04);display:grid;place-items:center;font-size:19px;padding:0;transition:background .2s,transform .15s,border-color .2s}.gb:active{transform:scale(.92)}
+@media(hover:hover){.gb:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.5)}}
 .crm{text-align:center;letter-spacing:2px;font-size:11px;text-transform:uppercase;color:var(--mu);padding:10px 0 4px}
 /* ===== camera viewer ===== */
 .camv{position:fixed;inset:0;z-index:120;background:rgba(3,5,10,.985);display:flex;flex-direction:column}
@@ -294,7 +351,7 @@ nav button.t.act{background:#f1efec;color:#12151c}
 :host([data-dev="tablet"]) .home,:host([data-dev="tablet"]) .area{padding:28px 28px 22px}
 :host([data-dev="tablet"]) .page{padding:28px 28px 24px}
 :host([data-dev="tablet"]) .clk{font-size:96px}
-:host([data-dev="tablet"]) .bento,:host([data-dev="tablet"]) .abody{grid-template-columns:repeat(2,minmax(0,1fr))}
+:host([data-dev="tablet"]) .abody{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-dev="phone"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-dev="tablet"]) .scg{grid-template-columns:repeat(3,minmax(0,1fr))}
 :host([data-dev="tablet"]) nav{padding:10px 20px calc(10px + env(safe-area-inset-bottom))}
@@ -302,14 +359,14 @@ nav button.t.act{background:#f1efec;color:#12151c}
 :host([data-dev="tablet"]) nav button.t .si,:host([data-dev="desktop"]) nav button.t .si,:host([data-dev="tablet"]) nav button.t ha-icon,:host([data-dev="desktop"]) nav button.t ha-icon{display:none}
 :host([data-dev="desktop"]) nav{padding:12px 44px calc(12px + env(safe-area-inset-bottom))}
 :host([data-dev="desktop"]) .home,:host([data-dev="desktop"]) .area{padding:40px 44px 28px}
-:host([data-dev="desktop"]) .bento,:host([data-dev="desktop"]) .abody{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+:host([data-dev="desktop"]) .abody{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 :host([data-dev="desktop"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-dev="desktop"]) .camv .vh,:host([data-dev="desktop"]) .camv .vb,:host([data-dev="desktop"]) .camv .vf{padding-left:44px;padding-right:44px}
-:host([data-wide="1"]) .home{grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:40px}
+:host([data-wide="1"]) .home{grid-template-columns:minmax(300px,390px) minmax(0,1fr);gap:40px}
 :host([data-wide="1"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-wide="1"]) .hl{position:sticky;top:28px;align-self:start;height:max(calc(var(--vh) - 116px),540px)}
 :host([data-dev="desktop"][data-wide="1"]) .hl{top:40px;height:max(calc(var(--vh) - 132px),540px)}
-:host([data-wide="1"]) .clk{font-size:clamp(88px,9.4vw,150px);margin-top:56px}
+:host([data-wide="1"]) .clk{font-size:clamp(80px,8vw,124px);margin-top:48px}
 :host([data-wide="1"]) .gr{font-size:36px;margin-top:34px}
 :host([data-wide="1"]) .scn{margin-top:auto;padding-top:26px}
 :host([data-wide="1"]) .area{grid-template-columns:minmax(220px,270px) minmax(0,1fr);gap:40px}
@@ -396,12 +453,13 @@ class QuintDashboard extends HTMLElement {
   }
   _attrs(o, n) {
     const keepSrc = o.tagName === "IMG" && o.getAttribute("data-src") === n.getAttribute("data-src");
+    const ks = o.hasAttribute("data-ks");
     for (const a of Array.from(n.attributes)) {
-      if (keepSrc && a.name === "src") continue;
+      if ((keepSrc && a.name === "src") || (ks && a.name === "style")) continue;
       if (o.getAttribute(a.name) !== a.value) o.setAttribute(a.name, a.value);
     }
     for (const a of Array.from(o.attributes)) {
-      if (keepSrc && a.name === "src") continue;
+      if ((keepSrc && a.name === "src") || (ks && a.name === "style")) continue;
       if (!n.hasAttribute(a.name)) o.removeAttribute(a.name);
     }
   }
@@ -455,7 +513,19 @@ class QuintDashboard extends HTMLElement {
     if (this.getAttribute("data-dev") !== dev) this.setAttribute("data-dev", dev);
     if (this.getAttribute("data-wide") !== wide) this.setAttribute("data-wide", wide);
     if (this.getAttribute("data-nav") !== "bar") this.setAttribute("data-nav", "bar");
-    if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; }
+    if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; this._slide(); if (this._loaded && this._v.p === "home" && this._cols() !== this._colsN) this._draw(true); }
+  }
+  _slide() {
+    try {
+      const tb = this.shadowRoot.querySelector(".tabs2"), ind = tb && tb.querySelector(".tind"), a = tb && tb.querySelector("button.t.act");
+      if (!ind) return;
+      if (!a || !a.offsetWidth) { ind.style.opacity = "0"; return; }
+      const first = !this._slid; this._slid = true;
+      if (first) ind.style.transition = "none";
+      ind.style.opacity = "1"; ind.style.width = a.offsetWidth + "px"; ind.style.transform = `translateX(${a.offsetLeft}px)`; ind.style.setProperty("--gl", (a.dataset.c || "#e8c98f") + "99");
+      if (first) { void ind.offsetWidth; ind.style.transition = ""; }
+      if (tb.scrollWidth > tb.clientWidth + 2) tb.scrollTo({ left: Math.max(0, a.offsetLeft - (tb.clientWidth - a.offsetWidth) / 2), behavior: first ? "auto" : "smooth" });
+    } catch (e) {}
   }
   _time() { return this._clock(); }
   connectedCallback() {
@@ -463,14 +533,15 @@ class QuintDashboard extends HTMLElement {
     if (typeof ResizeObserver !== "undefined") { this._ro = new ResizeObserver(() => this._layout()); this._ro.observe(this); }
     this._kd = (e) => { if (e.key === "Escape" && this._cam) { this._cam = null; this._camFb = false; this._draw(true); } };
     window.addEventListener("keydown", this._kd);
-    this._iv2 = setInterval(() => this._refreshCams(), 5000);
+    this._iv2 = setInterval(() => { this._refreshCams(); const b = (this._c.intercom || {}).bell; if (b && b.startsWith("event.") && this._h) this._draw(); }, 5000);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._slide());
     this._iv3 = setInterval(() => {
       if (!this._cam || !this._camFb || document.hidden) return;
       const img = this.shadowRoot.querySelector("img.camx"); if (!img || !img.dataset.snap) return;
       const b = img.dataset.snap, u = b + (b.includes("?") ? "&" : "?") + "t=" + Date.now(), t = new Image();
       t.onload = () => { img.src = u; }; t.src = u;
     }, 1500);
-    this._iv = setInterval(() => { const r = this.shadowRoot; [".clk", ".tm"].forEach((q) => { const e = r.querySelector(q); if (e) e.textContent = this._time(); }); }, 10000);
+    this._iv = setInterval(() => { const r = this.shadowRoot; const c = r.querySelector(".clk"); if (c) c.innerHTML = this._clockHtml(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 10000);
   }
   disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
@@ -509,15 +580,24 @@ class QuintDashboard extends HTMLElement {
     this._dirty = false; this._applyBg(); this._syncTpl();
   }
   _toast(t) { this._hint(t); clearTimeout(this._tt); this._tt = setTimeout(() => this._hint(""), 1800); }
+  _bgu() { try { return JSON.parse(localStorage.getItem("quint_bgu") || "null"); } catch (e) { return null; } }
   _applyBg() {
-    const b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(this._c.bg || {}) };
-    const img = b.mode === "image" && this._bgData ? `url("${this._bgData}")` : BG[b.preset] || BG.midnight;
+    const u = this._bgu(), b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(u || this._c.bg || {}) }, data = u ? u.data : this._bgData;
+    const img = b.mode === "image" && data ? `url("${data}")` : BG[b.preset] || BG.midnight;
     this.style.setProperty("--qbg-img", img);
     this.style.setProperty("--qbg-dim", String(Math.max(0, Math.min(80, +b.dim || 0)) / 100));
     this.style.setProperty("--qbg-blur", Math.max(0, Math.min(20, +b.blur || 0)) + "px");
   }
   _loadBg() {
     this._h.callApi("GET", "quint/background").then((d) => { this._bgData = (d && d.data) || ""; this._applyBg(); this._draw(); }).catch(() => {});
+  }
+  _bgLocal(patch) {
+    try {
+      let u = this._bgu();
+      if (!u) { const b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(this._c.bg || {}) }; u = { ...b }; if (b.mode === "image" && this._bgData) u.data = this._bgData; else u.mode = "preset"; }
+      localStorage.setItem("quint_bgu", JSON.stringify({ ...u, ...patch }));
+    } catch (e) { this._toast("Not enough space to save the picture"); }
+    this._applyBg();
   }
   async _pickBg(file) {
     try {
@@ -542,6 +622,9 @@ class QuintDashboard extends HTMLElement {
     c.order = { ...(c.order || {}), ...(o.order || {}) };
     ["name", "title", "bg", "pills"].forEach((k) => { if (o[k]) c[k] = o[k]; });
     if (typeof o.credit === "string") c.credit = o.credit;
+    if (o.tiles) c.tiles = { ...(c.tiles || {}), ...o.tiles };
+    if (o.intercom) c.intercom = o.intercom;
+    if (Array.isArray(o.scenes)) o.scenes.forEach((x) => { if (x && x.id && !(c.scenes || []).some((y) => y.id === x.id)) (c.scenes = c.scenes || []).push(x); });
     ["noClock", "noScenes", "noWeather", "noRooms"].forEach((k) => { if (typeof o[k] === "boolean") c[k] = o[k]; });
     c.svcTitle = { ...(c.svcTitle || {}), ...(o.svcTitle || {}) };
     c.svcHide = [...new Set([...(c.svcHide || []), ...(o.svcHide || [])])];
@@ -568,6 +651,9 @@ class QuintDashboard extends HTMLElement {
     else if (a === "svcup" || a === "svcdn") { const l = this._svcsAll(); this._swap(l, l.indexOf(v), a === "svcup" ? -1 : 1); c.svcOrder = l; }
     else if (a === "rup" || a === "rdn") this._swap(c.rooms, +v, a === "rup" ? -1 : 1);
     else if (a === "pill") { const P = c.pills || ["lights", "climate", "security"]; c.pills = P.includes(v) ? P.filter((x) => x !== v) : [...P, v]; }
+    else if (a === "tile") { const i = v.indexOf("|"), k = v.slice(0, i), id = v.slice(i + 1); c.tiles = c.tiles || {}; const cur = new Set(this._tileIds(k)); cur.has(id) ? cur.delete(id) : cur.add(id); c.tiles[k] = [...cur]; }
+    else if (a === "tileauto") { if (c.tiles) delete c.tiles[v]; }
+    else if (a === "icflag") { c.intercom = c.intercom || {}; c.intercom[v] = !c.intercom[v]; }
     else if (a === "clk") c.noClock = !c.noClock;
     else if (a === "flag" && ["noClock", "noScenes", "noWeather", "noRooms"].includes(v)) c[v] = !c[v];
     else return;
@@ -576,6 +662,8 @@ class QuintDashboard extends HTMLElement {
   _input(e) {
     const t = e.target, d = t.dataset;
     if (d.bg && this._admin()) { this._c.bg = { ...(this._c.bg || {}), [d.bg]: +t.value }; this._applyBg(); }
+    if (d.sdq !== undefined && this._sd) { this._sd.q = t.value.toLowerCase(); this._draw(true); }
+    if (d.pbr) { this._bgLocal({ [d.pbr]: +t.value }); }
     if (d.dfilter !== undefined) { this._dflt = t.value; this._draw(true); }
   }
   async _loadCfg() {
@@ -626,7 +714,7 @@ class QuintDashboard extends HTMLElement {
   }
   _nm(id) { return this._h.states[id].attributes.friendly_name || id; }
   _svcsAll() {
-    const o = this._c.svcOrder || [], keys = Object.keys(SV).filter((x) => (isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
+    const o = this._c.svcOrder || [], keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
     const r = (k) => { const i = o.indexOf(k); return i < 0 ? 1000 + keys.indexOf(k) : i; };
     return keys.slice().sort((p, q) => r(p) - r(q));
   }
@@ -657,15 +745,25 @@ class QuintDashboard extends HTMLElement {
     if (p === "settings" && this._v.p !== "settings") { this._snap = JSON.stringify(this._c); this._dirty = false; }
     this._v = { p, ...x }; this._draw(true);
   }
-  _tileGo(s) { return s === "cameras" || s === "security" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
+  _tileGo(s) { return s === "cameras" || s === "security" || s === "intercom" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
 
   /* ---------- events ---------- */
   _click(e) {
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.pb || n.dataset.pick));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
+    if (d.sc !== undefined) { const i = d.sc.indexOf("|"); return this._scAct(d.sc.slice(0, i), d.sc.slice(i + 1)); }
+    if (d.ic) return this._icAct(d.ic);
+    if (d.pick) { const i = d.pick.indexOf("|"); (this._pick = this._pick || {})[d.pick.slice(0, i)] = d.pick.slice(i + 1); return this._draw(true); }
+    if (d.pers) { if (d.pers === "bg" && e.composedPath()[0] !== t) return; this._pers = d.pers === "open"; return this._draw(true); }
+    if (d.pb) {
+      const i = d.pb.indexOf("|"), a = d.pb.slice(0, i), v = d.pb.slice(i + 1);
+      if (a === "preset") this._bgLocal({ preset: v, mode: "preset" });
+      else if (a === "shared") { try { localStorage.removeItem("quint_bgu"); } catch (er) {} this._applyBg(); }
+      return this._draw(true);
+    }
     if (d.cam) {
       const v = d.cam, cams = this._ents("cameras").filter((i) => this._h.states[i].attributes.entity_picture);
       if (v === "keep") return;
@@ -698,6 +796,9 @@ class QuintDashboard extends HTMLElement {
   }
   _change(e) {
     const t = e.target, d = t.dataset, adm = this._admin();
+    if (d.pbfile !== undefined) { const fl = t.files && t.files[0]; if (fl) this._pickBgLocal(fl); t.value = ""; return; }
+    if (d.sdf !== undefined && this._sd) { this._sd[d.sdf] = t.value; this._draw(true); return; }
+    if (adm && d.icf) { const ic = (this._c.intercom = this._c.intercom || {}), [a, b] = d.icf.split("."); if (b) { ic[a] = ic[a] || {}; ic[a][b] = t.value.trim(); } else ic[a] = t.value.trim(); this._save(); this._draw(true); return; }
     if (d.devsel !== undefined) { localStorage.setItem("quint_dev", t.value); this._layout(); this._draw(true); return; }
     if (adm && d.bgfile !== undefined) { const fl = t.files && t.files[0]; if (fl) this._pickBg(fl); t.value = ""; return; }
     if (adm && d.import !== undefined) {
@@ -944,15 +1045,15 @@ class QuintDashboard extends HTMLElement {
     if (f === "24") o.hourCycle = "h23"; else if (f === "12") o.hour12 = true;
     try { return dt.toLocaleTimeString((L && L.language) || [], o); } catch (e) { return dt.toLocaleTimeString([], o); }
   }
+  _clockHtml() {
+    const L = this._h && this._h.locale, f = L && L.time_format, o = { hour: "2-digit", minute: "2-digit" };
+    if (f === "24") o.hourCycle = "h23"; else if (f === "12") o.hour12 = true;
+    let p; try { p = new Intl.DateTimeFormat((L && L.language) || undefined, o).formatToParts(new Date()); } catch (e) { p = new Intl.DateTimeFormat(undefined, o).formatToParts(new Date()); }
+    const main = p.filter((x) => x.type !== "dayPeriod").map((x) => x.value).join("").trim(), dp = p.find((x) => x.type === "dayPeriod");
+    return this._esc(main) + (dp ? `<small>${this._esc(dp.value)}</small>` : "");
+  }
   _fmt(n) { const v = Math.round(+n * 10) / 10; return Number.isInteger(v) ? String(v) : v.toFixed(1); }
   _sw(on, act, ids) { return `<button class="sw ${on ? "on" : ""}" data-act="${act}" data-e="${ids.join(",")}"></button>`; }
-  _groups(svc) {
-    const out = [], seen = new Set();
-    this._rooms().forEach((r) => { const ids = this._ents(svc, r.id); if (ids.length) out.push({ id: r.id, name: r.name, ids }); ids.forEach((i) => seen.add(i)); });
-    const rest = this._ents(svc).filter((i) => !seen.has(i));
-    if (rest.length) { if (!out.length) rest.forEach((i) => out.push({ id: i, name: this._nm(i), ids: [i] })); else out.push({ id: "other", name: "Other", ids: rest }); }
-    return out;
-  }
   _wx() {
     const S = this._h.states, id = Object.keys(S).find((i) => i.startsWith("weather."));
     if (!id) return null;
@@ -964,12 +1065,6 @@ class QuintDashboard extends HTMLElement {
     if (sun) { const below = sun.state === "below_horizon", iso = below ? sun.attributes.next_rising : sun.attributes.next_setting; if (iso && !isNaN(Date.parse(iso))) t += ` · ${below ? "Sunrise" : "Sunset"} ${this._clock(new Date(iso))}`; }
     return { ic, t: this._esc(t), s: this._esc(`${Math.round(a.temperature)}° ${cond.toLowerCase()}`) };
   }
-  _scenes() {
-    const ids = Object.keys(this._h.states).filter((i) => i.startsWith("scene.") && !this._c.hide.includes(i)).slice(0, 6);
-    let best = "", bt = 0;
-    ids.forEach((i) => { const t = Date.parse(this._h.states[i].state); if (t > bt) { bt = t; best = i; } });
-    return ids.map((i) => ({ id: i, nm: this._nm(i), on: i === best && Date.now() - bt < 6 * 3600e3 }));
-  }
   _sec(i) {
     const s = this._h.states[i], d = i.split(".")[0], dc = s.attributes.device_class, v = s.state, cap = (x) => x.charAt(0).toUpperCase() + x.slice(1).replace(/_/g, " ");
     if (v === "unavailable" || v === "unknown") return ["Unavailable", ""];
@@ -980,66 +1075,278 @@ class QuintDashboard extends HTMLElement {
     if (dc === "tamper") return v === "on" ? ["Tampered", "w"] : ["OK", ""];
     return v === "on" ? ["Open", "w"] : ["Closed", ""];
   }
-  _bento(k) {
-    const H = this._h.states, st = (i) => H[i].state, S = SV[k], go = this._tileGo(k), E = (t) => this._esc(t);
+  /* ---------- tiles, intercom, scenes ---------- */
+  _groups(svc, ids) {
+    const list = ids || this._ents(svc), set = new Set(list), out = [], seen = new Set();
+    this._rooms().forEach((r) => { const g = list.filter((i) => this._roomOf(i) === r.id); if (g.length) out.push({ id: r.id, name: r.name, ids: g }); g.forEach((i) => seen.add(i)); });
+    const rest = list.filter((i) => !seen.has(i) && set.has(i));
+    if (rest.length) { if (!out.length) rest.forEach((i) => out.push({ id: i, name: this._nm(i), ids: [i] })); else out.push({ id: "other", name: "Other lights", ids: rest }); }
+    return out;
+  }
+  _tileIds(svc) {
+    const sel = (this._c.tiles || {})[svc], all = this._ents(svc), ic = this._c.intercom || {};
+    if (Array.isArray(sel)) return all.filter((i) => sel.includes(i));
+    return svc === "cameras" ? all.filter((i) => i !== ic.camera).slice(0, 2) : all;
+  }
+  _icOn() { const ic = this._c.intercom; return !!(ic && (ic.camera || (ic.door && ic.door.a) || (ic.audio && ic.audio.a))); }
+  _ringing() {
+    const ic = this._c.intercom || {}, s = ic.bell && this._h.states[ic.bell]; if (!s) return false;
+    if (ic.bell.startsWith("event.")) { const t = Date.parse(s.state); return !isNaN(t) && Date.now() - t < 30000; }
+    return ["on", "ringing", "pressed", "true"].includes(s.state);
+  }
+  _run(o) {
+    o = o || {}; const a = (o.a || "").trim(), tgt = (o.e || "").trim(), S = this._h.states; let data = {};
+    if (!a) return false;
+    if (o.d) { try { data = JSON.parse(o.d); } catch (e) { this._toast("Action data is not valid JSON"); return false; } }
+    if (/^(https?:|tel:|sip:|sips:|facetime:|mailto:|intent:)/i.test(a)) { if (/^https?:/i.test(a)) window.open(a, "_blank"); else window.location.href = a; return true; }
+    if (a.startsWith("/")) { history.pushState(null, "", a); window.dispatchEvent(new CustomEvent("location-changed")); return true; }
+    if (S[a]) {
+      const d = a.split(".")[0], M = { lock: (S[a].attributes.supported_features || 0) & 1 ? "open" : "unlock", button: "press", input_button: "press", script: "turn_on", scene: "turn_on", automation: "trigger", cover: "open_cover", valve: "open_valve" };
+      this._h.callService(d, M[d] || "turn_on", { entity_id: a, ...data }); return true;
+    }
+    const m = /^([a-z_]+)\.([a-z0-9_]+)$/i.exec(a);
+    if (m) { this._h.callService(m[1], m[2], { ...(tgt ? { entity_id: tgt } : {}), ...data }); return true; }
+    this._toast("Action not recognised: " + a); return false;
+  }
+  _icAct(kind) {
+    const ic = this._c.intercom || {};
+    if (kind === "video") {
+      if (ic.video && ic.video.a) this._run(ic.video);
+      if (ic.camera) { this._cam = ic.camera; this._camFb = false; return this._draw(true); }
+      return this._toast("Choose the intercom camera in Settings → Intercom");
+    }
+    if (kind === "audio") { if (!(ic.audio && ic.audio.a)) return this._toast("Set the audio call in Settings → Intercom"); if (this._run(ic.audio)) this._toast("Calling…"); return; }
+    if (kind === "door") {
+      if (!(ic.door && ic.door.a)) return this._toast("Set the open-door action in Settings → Intercom");
+      if (this._arm !== "door") { this._arm = "door"; clearTimeout(this._armT); this._armT = setTimeout(() => { this._arm = null; this._draw(true); }, 3500); return this._draw(true); }
+      clearTimeout(this._armT); this._arm = null; if (this._run(ic.door)) this._toast("Door opened"); this._draw(true);
+    }
+  }
+  _icCard(big) {
+    const ic = this._c.intercom || {}, H = this._h.states, E = (t) => this._esc(t), cam = ic.camera && H[ic.camera], ring = this._ringing(), door = this._arm === "door";
+    const pic = cam && cam.attributes.entity_picture && !["unavailable", "unknown"].includes(cam.state) ? this._h.hassUrl(cam.attributes.entity_picture) : "";
+    const view = pic ? `<div class="cvw" data-cam="${ic.camera}"><img class="cam" data-src="${pic}" src="${pic}"><span class="cn">${E(this._nm(ic.camera))}</span><span class="live">${ring ? "Ringing" : "Live"}</span><span class="xp">⤢</span></div>` : `<div class="cvw" style="cursor:default;font-size:44px">${PHONE_I}</div>`;
+    const b = (kind, ico, t, cls) => `<button class="icb ${cls || ""}" data-ic="${kind}">${ico}<span>${t}</span></button>`;
+    return `<div class="bc icm ${ring ? "ringing" : ""} ${big ? "bigic" : ""}" data-id="b:intercom"><div class="bh" ${this._tileGo("intercom")}><span>${E(ic.name || SV.intercom.n)}</span><span class="bs">${ring ? '<b class="rg">Ringing</b>' : "Ready"}</span></div>${view}<div class="icr">${b("video", VIDEO_I, "Video call")}${b("audio", PHONE_I, "Audio call")}${b("door", KEY_I, door ? "Tap again to open" : "Open door", "door " + (door ? "armed" : ""))}</div></div>`;
+  }
+  _icPage() {
+    const ic = this._c.intercom || {}, hint = this._admin() && !(ic.door && ic.door.a && ic.audio && ic.audio.a && ic.camera) ? `<div class="lbl" style="margin-top:14px">Finish the set-up in Settings → Intercom (camera, door-open action, audio call).</div>` : "";
+    return `${this._top()}<h1>${SV.intercom.i} ${this._esc(ic.name || SV.intercom.n)}</h1><div style="max-width:780px;margin-top:10px">${this._icCard(true)}${hint}</div>`;
+  }
+  /* --- scenes: your own scenes are saved as a snapshot of device states --- */
+  _lsc() { try { return JSON.parse(localStorage.getItem("quint_scenes") || "[]"); } catch (e) { return []; } }
+  _lscSave(l) { try { localStorage.setItem("quint_scenes", JSON.stringify(l)); } catch (e) {} }
+  _myScenes() { return [...(this._c.scenes || []).map((s) => ({ ...s, sc: "s" })), ...this._lsc().map((s) => ({ ...s, sc: "l" }))]; }
+  _snapOf(id) {
+    const s = this._h.states[id]; if (!s) return null;
+    const a = s.attributes, d = id.split(".")[0], it = { e: id, st: s.state };
+    if (d === "light" && s.state === "on") { if (a.brightness != null) it.b = a.brightness; if (a.color_mode === "color_temp" && a.color_temp_kelvin) it.k = a.color_temp_kelvin; else if (["hs", "rgb", "rgbw", "rgbww", "xy"].includes(a.color_mode) && a.rgb_color) it.rgb = a.rgb_color; }
+    else if (d === "cover" && a.current_position != null) it.p = a.current_position;
+    else if (d === "climate" && a.temperature != null) it.t = a.temperature;
+    else if (d === "media_player" && a.volume_level != null) it.v = a.volume_level;
+    else if (d === "fan" && a.percentage != null) it.p = a.percentage;
+    return it;
+  }
+  _applyScene(sc) {
+    const cs = (d, sv, x) => this._h.callService(d, sv, x);
+    (sc.items || []).forEach((it) => {
+      if (!this._h.states[it.e]) return;
+      const d = it.e.split(".")[0], on = !["off", "closed", "standby", "unavailable", "unknown"].includes(it.st);
+      if (d === "light") return it.st === "off" ? cs("light", "turn_off", { entity_id: it.e }) : cs("light", "turn_on", { entity_id: it.e, ...(it.b != null ? { brightness: it.b } : {}), ...(it.k ? { color_temp_kelvin: it.k } : it.rgb ? { rgb_color: it.rgb } : {}) });
+      if (d === "cover") return it.p != null ? cs("cover", "set_cover_position", { entity_id: it.e, position: it.p }) : cs("cover", it.st === "closed" ? "close_cover" : "open_cover", { entity_id: it.e });
+      if (d === "climate") { if (it.st === "off") return cs("climate", "turn_off", { entity_id: it.e }); cs("climate", "set_hvac_mode", { entity_id: it.e, hvac_mode: it.st }); if (it.t != null) cs("climate", "set_temperature", { entity_id: it.e, temperature: it.t }); return; }
+      if (d === "media_player") { if (!on) return cs("media_player", "turn_off", { entity_id: it.e }); if (it.v != null) cs("media_player", "volume_set", { entity_id: it.e, volume_level: it.v }); return; }
+      if (d === "fan") return on ? cs("fan", "turn_on", { entity_id: it.e, ...(it.p != null ? { percentage: it.p } : {}) }) : cs("fan", "turn_off", { entity_id: it.e });
+      cs("homeassistant", on ? "turn_on" : "turn_off", { entity_id: it.e });
+    });
+    this._toast(sc.name + " ✓");
+  }
+  _sceneOn(sc) {
+    const H = this._h.states, items = sc.items || [];
+    if (!items.length) return false;
+    return items.every((it) => {
+      const s = H[it.e]; if (!s) return false;
+      const a = s.attributes, d = it.e.split(".")[0], offIt = ["off", "closed", "standby"].includes(it.st);
+      if (d === "light") return it.st === "off" ? s.state === "off" : s.state === "on" && (it.b == null || Math.abs((a.brightness || 0) - it.b) <= 13);
+      if (d === "cover") return it.p != null ? Math.abs((a.current_position == null ? -99 : a.current_position) - it.p) <= 5 : s.state === it.st;
+      if (d === "climate") return s.state === it.st && (it.t == null || a.temperature === it.t);
+      if (d === "media_player") return (["off", "standby"].includes(s.state) === offIt) && (it.v == null || Math.abs((a.volume_level || 0) - it.v) < 0.06);
+      return (["off", "closed", "standby"].includes(s.state)) === offIt;
+    });
+  }
+  _scenes() {
+    const H = this._h.states, out = this._myScenes().map((s) => ({ key: s.sc + ":" + s.id, nm: s.name, on: this._sceneOn(s), mine: s, ha: "" }));
+    const ids = Object.keys(H).filter((i) => i.startsWith("scene.") && !this._c.hide.includes(i));
+    let best = "", bt = 0;
+    ids.forEach((i) => { const t = Date.parse(H[i].state); if (t > bt) { bt = t; best = i; } });
+    ids.forEach((i) => out.push({ key: i, nm: this._nm(i), on: i === best && Date.now() - bt < 6 * 3600e3, ha: i }));
+    return out.slice(0, 12);
+  }
+  _scAct(a, v) {
+    const find = (key) => { const [k, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)]; return this._myScenes().find((s) => s.sc === k && s.id === id); };
+    if (a === "run") { const s = find(v); if (s) this._applyScene(s); return; }
+    if (a === "edit") { this._sedit = !this._sedit; return this._draw(true); }
+    if (a === "new") { this._sd = { name: "", scope: this._admin() ? "s" : "l", room: "", q: "", sel: new Set(Object.keys(this._h.states).filter((i) => ["lights", "shades", "climate"].includes(this._svcOf(i)) && !this._c.hide.includes(i))) }; return this._draw(true); }
+    if (a === "re") { const s = find(v); if (!s) return; this._sd = { name: s.name, scope: s.sc, room: "", q: "", edit: v, sel: new Set((s.items || []).map((x) => x.e)) }; return this._draw(true); }
+    if (a === "del") {
+      const s = find(v); if (!s) return;
+      if (s.sc === "s" && !this._admin()) return this._toast("Only an admin can remove shared scenes");
+      if (!confirm(`Delete scene "${s.name}"?`)) return;
+      if (s.sc === "s") { this._c.scenes = (this._c.scenes || []).filter((x) => x.id !== s.id); this._save(); } else this._lscSave(this._lsc().filter((x) => x.id !== s.id));
+      return this._draw(true);
+    }
+    const D = this._sd; if (!D) return;
+    if (a === "cancel") { this._sd = null; return this._draw(true); }
+    if (a === "tog") { D.sel.has(v) ? D.sel.delete(v) : D.sel.add(v); return this._draw(true); }
+    if (a === "none") { D.sel.clear(); return this._draw(true); }
+    if (a === "shown") { this._scList().forEach((i) => D.sel.add(i)); return this._draw(true); }
+    if (a === "save") {
+      const q = this.shadowRoot.getElementById("sc-name"), name = ((q && q.value) || D.name || "").trim().replace(/[<>"']/g, "").slice(0, 24), err = (t) => { const e = this.shadowRoot.getElementById("sc-err"); if (e) e.textContent = t; };
+      if (!name) return err("Give the scene a name");
+      const items = [...D.sel].map((i) => this._snapOf(i)).filter(Boolean);
+      if (!items.length) return err("Pick at least one device");
+      if (D.edit) {
+        const [k, id] = [D.edit.slice(0, D.edit.indexOf(":")), D.edit.slice(D.edit.indexOf(":") + 1)];
+        if (k === "s") { const x = (this._c.scenes || []).find((s) => s.id === id); if (x) { x.name = name; x.items = items; this._save(); } }
+        else { const l = this._lsc(), x = l.find((s) => s.id === id); if (x) { x.name = name; x.items = items; this._lscSave(l); } }
+      } else if (D.scope === "s" && this._admin()) { (this._c.scenes = this._c.scenes || []).push({ id: this._uid(), name, items }); this._save(); }
+      else { const l = this._lsc(); l.push({ id: this._uid(), name, items }); this._lscSave(l); }
+      this._sd = null; this._toast("Scene saved"); return this._draw(true);
+    }
+  }
+  _scList() {
+    const D = this._sd, ok = ["lights", "shades", "climate", "media"];
+    return Object.keys(this._h.states).filter((i) => (ok.includes(this._svcOf(i)) || ["switch", "fan", "input_boolean"].includes(i.split(".")[0])) && !this._c.hide.includes(i) && (!D.room || this._roomOf(i) === D.room) && (!D.q || (i + " " + this._nm(i)).toLowerCase().includes(D.q)));
+  }
+  _scDialog() {
+    const D = this._sd; if (!D) return "";
+    const E = (t) => this._esc(t), H = this._h.states, ids = this._scList().slice(0, 150), adm = this._admin();
+    const grp = {};
+    ids.forEach((i) => { const k = this._svcOf(i) || "other"; (grp[k] = grp[k] || []).push(i); });
+    const rows = Object.keys(grp).map((k) => `<div class="gtl">${E(k === "other" ? "Switches" : SV[k].n)}</div>` + grp[k].map((i) => {
+      const s = H[i], a = s.attributes, extra = a.brightness != null && s.state === "on" ? " · " + Math.round(a.brightness / 2.55) + "%" : a.current_position != null ? " · " + a.current_position + "%" : a.temperature != null ? " · " + a.temperature + "°" : "";
+      return `<div class="srow2" data-id="sd:${i}"><div class="grow"><div class="nm2">${E(this._nm(i))}</div><div class="lbl">${E(s.state + extra)}</div></div><button class="sw ${D.sel.has(i) ? "on" : ""}" data-sc="tog|${i}"></button></div>`;
+    }).join("")).join("");
+    return `<div class="ov"><div class="dlg"><h1 style="font-size:28px">${D.edit ? "Update scene" : "New scene"}</h1>
+      <div class="lbl" style="margin:6px 0 10px">Set your devices the way you want first, then save: the scene remembers their current state.</div>
+      <input type="text" id="sc-name" placeholder="Scene name, e.g. Movie night" value="${E(D.name)}" maxlength="24">
+      ${adm && !D.edit ? `<div class="lbl" style="margin:12px 0 4px">Who can use it</div><select data-sdf="scope"><option value="s" ${D.scope === "s" ? "selected" : ""}>Everyone</option><option value="l" ${D.scope === "l" ? "selected" : ""}>Only this device</option></select>` : ""}
+      <div class="lbl" style="margin:12px 0 4px">Room</div><select data-sdf="room"><option value="">All rooms</option>${this._rooms().map((r) => `<option value="${E(r.id)}" ${D.room === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>
+      <div class="lbl" style="margin:12px 0 4px">Devices · ${D.sel.size} selected</div><input type="text" data-sdq placeholder="Search" value="${E(D.q)}">
+      <div class="btns" style="margin:8px 0"><button data-sc="shown|">Select shown</button><button data-sc="none|">Clear</button></div>
+      <div style="max-height:34vh;overflow:auto">${rows || '<div class="lbl">No devices found.</div>'}</div>
+      <div class="err" id="sc-err"></div><div class="btns"><button data-sc="cancel|">Cancel</button><button class="pri" data-sc="save|">Save scene</button></div></div></div>`;
+  }
+  /* --- background for this device only (any user) --- */
+  async _pickBgLocal(file) {
+    try {
+      const url = URL.createObjectURL(file), img = new Image();
+      await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
+      const sc = Math.min(1, 1280 / Math.max(img.width, img.height)), cv = document.createElement("canvas");
+      cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+      this._bgLocal({ mode: "image", data: cv.toDataURL("image/jpeg", 0.75), ...(this._bgu() ? {} : { dim: 30 }) });
+      this._draw(true);
+    } catch (e) { this._toast("Could not use that photo"); }
+  }
+  _persDialog() {
+    if (!this._pers) return "";
+    const u = this._bgu(), b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(u || this._c.bg || {}) };
+    return `<div class="ov" data-pers="bg"><div class="dlg"><div class="shd"><span>Background</span><small>${u ? "this device only" : "shared by everyone"}</small></div>
+      <div class="swrow">${Object.keys(BG).map((k) => `<button class="swt ${b.mode !== "image" && b.preset === k ? "sel" : ""}" style="background:${SWATCH[k]}" title="${k}" data-pb="preset|${k}"></button>`).join("")}</div>
+      <div class="lbl" style="margin-bottom:4px">Your own photo</div><input type="file" accept="image/*" data-pbfile="1" style="color:var(--mu);font-size:13px;max-width:100%">
+      <div class="lbl" style="margin:14px 0 4px">Darken</div><input type="range" min="0" max="80" value="${+b.dim || 0}" data-pbr="dim">
+      <div class="lbl" style="margin:10px 0 4px">Blur</div><input type="range" min="0" max="20" value="${+b.blur || 0}" data-pbr="blur">
+      <div class="btns" style="margin-top:16px">${u ? `<button data-pb="shared|">Use shared look</button>` : ""}<button class="pri" data-pers="close">Done</button></div></div></div>`;
+  }
+  _bento(k) { const r = this._bentoOne(k); return Array.isArray(r) ? r : [r]; }
+  _bentoOne(k) {
+    const c = this._c, H = this._h.states, st = (i) => H[i].state, S = SV[k], go = this._tileGo(k), E = (t) => this._esc(t), tiles = c.tiles || {};
+    if (k === "intercom") return { h: this._icCard(false), w: 4.4 };
     const hd = (r, ic) => `<div class="bh" ${go}><span>${S.n}</span><span class="bs">${r || ""}${ic || ""}</span></div>`;
-    const wrap = (cls, inner) => `<div class="bc ${cls}" data-id="b:${E(k)}">${inner}</div>`;
+    const WT = { security: 5, cameras: 2.5, climate: 3, media: 3, shades: 3.4 }, wrap = (cls, inner, id, w) => ({ h: `<div class="bc ${cls}" data-id="${E(id || "b:" + k)}">${inner}</div>`, w: w || WT[k] || 2.4, wide: /(^| )wide( |$)/.test(cls) });
+    const none = `<div class="lbl" style="padding:6px 0">No devices selected. Choose them in Settings → Tiles.</div>`;
+    const ids = isCs(k) ? [] : this._tileIds(k), isOff = (i) => ["off", "unavailable", "unknown"].includes(st(i));
+    this._pick = this._pick || {};
+    const pickSeg = (svc, list, pk) => list.length > 1 ? `<div class="seg sm">${list.slice(0, 4).map((i) => `<button class="${i === pk ? "on" : ""}" data-pick="${svc}|${i}">${E(this._nm(i))}</button>`).join("")}</div>` : "";
     if (k === "lights") {
-      const gr = this._groups("lights"), all = gr.flatMap((g) => g.ids), onN = all.filter((i) => st(i) === "on").length, rooms = gr.filter((g) => g.ids.some((i) => st(i) === "on")).length;
+      const explicit = Array.isArray(tiles.lights), gr = explicit && ids.length <= 5 ? ids.map((i) => ({ id: i, name: this._nm(i), ids: [i] })) : this._groups("lights", ids);
+      const onN = ids.filter((i) => st(i) === "on").length, dimOf = (g) => g.ids.some((i) => !(H[i].attributes.supported_color_modes || []).every((m) => m === "onoff"));
       const rows = gr.slice(0, 5).map((g) => {
-        const on = g.ids.filter((i) => st(i) === "on"), br = on.map((i) => H[i].attributes.brightness).filter((b) => b != null);
-        const lab = !on.length ? "Off" : br.length ? Math.round(br.reduce((a, b) => a + b, 0) / br.length / 2.55) + "%" : "On";
-        return `<div class="rw" data-id="lr:${E(g.id)}"><span class="nmx">${E(g.name)}</span><span class="rr"><span class="mu">${lab}</span>${this._sw(on.length > 0, on.length ? "light.turn_off" : "light.turn_on", g.ids)}</span></div>`;
+        const on = g.ids.filter((i) => st(i) === "on"), br = on.map((i) => H[i].attributes.brightness).filter((b) => b != null), pct = br.length ? Math.round(br.reduce((a, b) => a + b, 0) / br.length / 2.55) : 0;
+        const sub = !on.length ? "Off" : g.ids.length > 1 ? `${on.length} of ${g.ids.length} on${br.length ? " · " + pct + "%" : ""}` : br.length ? pct + "%" : "On";
+        return `<div class="lt" data-id="lr:${E(g.id)}"><div class="lt1"><div class="ltn"><b>${E(g.name)}</b><small>${sub}</small></div>${this._sw(on.length > 0, on.length ? "light.turn_off" : "light.turn_on", g.ids)}</div>${dimOf(g) ? `<input type=range min=1 max=100 value=${Math.max(1, pct)} data-slider="light|turn_on|brightness_pct|1" data-e="${g.ids.join(",")}">` : ""}</div>`;
       }).join("");
-      const r = gr.length > 1 && this._rooms().length ? `${rooms} room${rooms === 1 ? "" : "s"} on` : `${onN} of ${all.length} on`;
-      return wrap("", `${hd(r)}<div class="rows">${rows}</div>${gr.length > 5 ? `<div class="lbl" ${go} style="cursor:pointer">+ ${gr.length - 5} more ›</div>` : ""}`);
+      const ent = ids.join(",");
+      return wrap("", `${hd(ids.length ? `${onN} of ${ids.length} on` : "")}${ids.length ? `<div class="lts">${rows}</div>${gr.length > 5 ? `<div class="lbl" ${go} style="cursor:pointer;margin-top:10px">+ ${gr.length - 5} more ›</div>` : ""}<div class="btn2"><button data-act="light.turn_on" data-e="${ent}">All on</button><button data-act="light.turn_off" data-e="${ent}">All off</button></div>` : none}`, "", 1.6 + Math.min(5, gr.length) * 1.5);
     }
     if (k === "cameras") {
-      const cams = this._ents("cameras"), live = cams.filter((i) => H[i].attributes.entity_picture && !["unavailable", "unknown"].includes(st(i))), id = live[0];
-      if (!id) return wrap("", `${hd(`${cams.length} camera${cams.length === 1 ? "" : "s"}`)}<div class="cvw" style="cursor:default"><span>No camera online</span></div>`);
-      const src = this._h.hassUrl(H[id].attributes.entity_picture);
-      return wrap("", `<div class="cvw" data-cam="${id}"><img class="cam" data-src="${src}" src="${src}"><span class="cn">${E(this._nm(id))}</span><span class="live">Live</span></div><div class="cb"><button class="wb" data-cam="${id}">Open</button><button class="ob" ${go}>All cameras · ${cams.length}</button></div>`);
+      const out = ids.map((id) => {
+        const a = H[id].attributes, off = ["unavailable", "unknown"].includes(st(id)) || !a.entity_picture, src = off ? "" : this._h.hassUrl(a.entity_picture);
+        return wrap("cam1", off ? `<div class="cvw" style="cursor:default"><span class="cn">${E(this._nm(id))}</span><span>Offline</span></div>` : `<div class="cvw" data-cam="${id}"><img class="cam" data-src="${src}" src="${src}"><span class="cn">${E(this._nm(id))}</span><span class="live">Live</span><span class="xp">⤢</span></div>`, "b:cam:" + id);
+      });
+      return out.length ? out : wrap("", `${hd("")}${none}`);
     }
     if (k === "security") {
-      const ids = this._ents("security"), dom = (i) => i.split(".")[0], isM = (i) => ["motion", "occupancy", "presence"].includes(H[i].attributes.device_class);
+      if (!ids.length) return wrap("", `${hd("", SHIELD_I)}${none}`);
+      const dom = (i) => i.split(".")[0], isM = (i) => ["motion", "occupancy", "presence"].includes(H[i].attributes.device_class), lim = Array.isArray(tiles.security) ? 6 : 4;
       const al = ids.filter((i) => dom(i) === "alarm_control_panel"), lk = ids.filter((i) => dom(i) === "lock"), oth = ids.filter((i) => !al.includes(i) && !lk.includes(i));
-      const rows = [...al, ...lk, ...oth.filter((i) => !isM(i)), ...oth.filter(isM)].slice(0, 4).map((i) => { const [t, c] = this._sec(i); return `<div class="rw" data-id="sr:${i}"><span class="nmx">${E(this._nm(i))}</span><span class="v ${c}">${E(t)}</span></div>`; }).join("");
+      const rows = [...al, ...lk, ...oth.filter((i) => !isM(i)), ...oth.filter(isM)].slice(0, lim).map((i) => { const [t, cl] = this._sec(i); return `<div class="rw" data-id="sr:${i}"><span class="nmx">${E(this._nm(i))}</span><span class="v ${cl}">${E(t)}</span></div>`; }).join("");
       const lv = ids.map((i) => this._sec(i)[1]), nb = lv.filter((x) => x === "b").length, nw = lv.filter((x) => x === "w").length, cls = nb ? "b" : nw ? "w" : "";
       const ap = al[0], seg = ap ? `<div class="seg">${[["Off", "alarm_disarm", "disarmed"], ["Home", "alarm_arm_home", "armed_home"], ["Night", "alarm_arm_night", "armed_night"], ["Away", "alarm_arm_away", "armed_away"]].map(([l, s, x]) => `<button class="${st(ap) === x ? "on" : ""}" data-act="alarm_control_panel.${s}" data-e="${ap}">${l}</button>`).join("")}</div>` : "";
       return wrap("", `${hd("", SHIELD_I)}<div class="st2"><span class="sd ${cls}"></span>${nb ? "Alarm triggered" : nw ? `${nw} open` : "All secure"}</div><div class="rows">${rows}</div>${seg}`);
     }
     if (k === "climate") {
-      const cl = this._ents("climate"), isOff = (i) => ["off", "unavailable", "unknown"].includes(st(i)), id = cl.find((i) => !isOff(i)) || cl[0], a = H[id].attributes, off = isOff(id);
+      if (!ids.length) return wrap("", `${hd("")}${none}`);
+      const id = ids.includes(this._pick.climate) ? this._pick.climate : ids.find((i) => !isOff(i)) || ids[0], a = H[id].attributes, off = isOff(id);
       const cur = a.current_temperature != null ? a.current_temperature : a.temperature, tg = a.temperature, step = a.target_temp_step || 0.5, rm = this._rooms().find((r) => r.id === this._roomOf(id));
       const verb = a.hvac_action === "heating" ? "Heating to " : a.hvac_action === "cooling" ? "Cooling to " : "Set to ";
       const cap = (off ? "Off" : tg != null ? verb + this._fmt(tg) + "°" : st(id)) + (a.current_humidity != null ? ` · humidity ${a.current_humidity}%` : "");
       const x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
       const bt = tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : "";
-      return wrap("", `${hd(E(rm ? rm.name : this._nm(id)))}<div class="cl"><div><div class="sbig">${cur != null ? this._fmt(cur) : "–"}<sup>°</sup></div><div class="cap2">${E(cap)}</div></div>${bt}</div>`);
+      return wrap("", `${hd(E(rm ? rm.name : this._nm(id)))}<div class="cl"><div><div class="sbig">${cur != null ? this._fmt(cur) : "–"}<sup>°</sup></div><div class="cap2">${E(cap)}</div></div>${bt}</div>${pickSeg("climate", ids, id)}`);
     }
     if (k === "media") {
-      const pl = this._ents("media"), pick = ["playing", "paused", "on", "idle"].map((s) => pl.find((i) => st(i) === s)).find(Boolean) || pl[0], a = H[pick].attributes, playing = pl.filter((i) => st(i) === "playing");
+      if (!ids.length) return wrap("wide", `${hd("")}${none}`);
+      const pick = ids.includes(this._pick.media) ? this._pick.media : ["playing", "paused", "on", "idle"].map((s) => ids.find((i) => st(i) === s)).find(Boolean) || ids[0], a = H[pick].attributes, playing = ids.filter((i) => st(i) === "playing");
       const art = a.entity_picture ? this._h.hassUrl(a.entity_picture) : "", names = (playing.length ? playing : [pick]).map((i) => this._nm(i));
       const joined = names.length > 1 ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1] : names[0], isP = st(pick) === "playing";
       const cap = (playing.length ? "Playing on " : st(pick) === "paused" ? "Paused on " : "") + joined;
       const ctl = (act, ic, cls) => `<button ${cls ? `class="${cls}"` : ""} data-act="media_player.${act}" data-e="${pick}">${ic}</button>`;
-      return wrap("wide", `<div class="md"><div class="art">${art ? `<img src="${art}">` : MUSIC_I}</div><div class="mt"><div class="pc" ${go} style="cursor:pointer">${E(cap)}</div><div class="tt">${E(a.media_title || (isP ? "Playing" : "Nothing playing"))}</div>${a.media_artist ? `<div class="ar">${E(a.media_artist)}</div>` : ""}</div><div class="mc">${ctl("media_previous_track", PREV_I)}${ctl("media_play_pause", isP ? PAUSE_I : PLAY_I, "pp")}${ctl("media_next_track", NEXT_I)}</div><div class="vol">${VOL_I}<input type=range min=0 max=100 value=${Math.round((a.volume_level || 0) * 100)} data-slider="media_player|volume_set|volume_level|100" data-e="${pick}"></div></div>`);
+      return wrap("wide", `<div class="md"><div class="art">${art ? `<img src="${art}">` : MUSIC_I}</div><div class="mt"><div class="pc" ${go} style="cursor:pointer">${E(cap)}</div><div class="tt">${E(a.media_title || (isP ? "Playing" : "Nothing playing"))}</div>${a.media_artist ? `<div class="ar">${E(a.media_artist)}</div>` : ""}</div><div class="mc">${ctl("media_previous_track", PREV_I)}${ctl("media_play_pause", isP ? PAUSE_I : PLAY_I, "pp")}${ctl("media_next_track", NEXT_I)}</div><div class="vol">${VOL_I}<input type=range min=0 max=100 value=${Math.round((a.volume_level || 0) * 100)} data-slider="media_player|volume_set|volume_level|100" data-e="${pick}"></div></div>${pickSeg("media", ids, pick)}`);
     }
     if (k === "shades") {
-      const sh = this._ents("shades"), pos = sh.map((i) => H[i].attributes.current_position).filter((p) => p != null), avg = pos.length ? Math.round(pos.reduce((a, b) => a + b, 0) / pos.length) : null;
-      const open = sh.filter((i) => ["open", "opening"].includes(st(i))).length, all = sh.join(",");
-      return wrap("", `${hd(`${sh.length} window${sh.length === 1 ? "" : "s"}`)}<div class="cen"><div class="shv"><i style="height:${avg != null ? 100 - avg : open ? 0 : 100}%"></i></div><div class="bigs">${avg != null ? avg + "%" : `${open}/${sh.length}`}<small>${avg != null ? "open" : "open / total"}</small></div></div><div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div>`);
+      if (!ids.length) return wrap("", `${hd("")}${none}`);
+      const pos = ids.map((i) => H[i].attributes.current_position).filter((p) => p != null), avg = pos.length ? Math.round(pos.reduce((a, b) => a + b, 0) / pos.length) : null;
+      const open = ids.filter((i) => ["open", "opening"].includes(st(i))).length, all = ids.join(",");
+      return wrap("", `${hd(`${ids.length} window${ids.length === 1 ? "" : "s"}`)}<div class="cen"><div class="shv"><i style="height:${avg != null ? 100 - avg : open ? 0 : 100}%"></i></div><div class="bigs">${avg != null ? avg + "%" : `${open}/${ids.length}`}<small>${avg != null ? "open" : "open / total"}</small></div></div><div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div>`);
     }
     const t = this._stats(k);
     return wrap("", `${hd("", S.i)}<div class="cnt">${t.big}</div><div class="cap2">${t.big ? t.lbl : "No cards yet · tap to open"}</div>`);
   }
+  _cols() {
+    const w = this._w || 1024, wide = this.getAttribute("data-wide") === "1", area = wide ? w - Math.min(390, w * 0.3) - 40 - 88 : w - 56;
+    return Math.max(1, Math.min(3, Math.floor((area + 16) / 316)));
+  }
   _home() {
     const c = this._c, hr = new Date().getHours(), g = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening";
-    const who = c.name || (this._h.user && this._h.user.name) || "", L = this._svcs(), wx = c.noWeather ? null : this._wx(), sc = c.noScenes ? [] : this._scenes();
+    const who = c.name || (this._h.user && this._h.user.name) || "", L = this._svcs(), wx = c.noWeather ? null : this._wx(), sc = c.noScenes ? [] : this._scenes(), E = (t) => this._esc(t);
     const date = new Date().toLocaleDateString((this._h.locale && this._h.locale.language) || undefined, { weekday: "long", day: "numeric", month: "long" });
-    const left = `<div class="hl">${this._brand()}${c.noClock ? "" : `<div class="clk">@@T@@</div>`}<div class="dt">${this._esc(date)}</div>${wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : ""}<div class="gr">${g}${who ? ", " + this._esc(who) : ""}</div>${sc.length ? `<div class="scn"><div class="cap">Scenes</div><div class="scg">${sc.map((s) => `<button class="scb ${s.on ? "on" : ""}" data-id="sc:${s.id}" data-act="scene.turn_on" data-e="${s.id}"><i></i><span>${this._esc(s.nm)}</span></button>`).join("")}</div></div>` : ""}</div>`;
-    const cards = L.map((k) => this._bento(k)).join(""), cr = this._credit();
-    return `<div class="home">${left}<div class="hr"><div class="bento">${cards || '<div class="bc wide">No supported devices found.</div>'}</div>${this._homeCards()}${cr ? `<div class="crm">${cr}</div>` : ""}</div></div>`;
+    const ed = this._sedit, mineN = sc.filter((s) => s.mine).length;
+    const scBtn = (s) => {
+      if (s.ha) return `<div class="scw" data-id="sc:${E(s.key)}"><button class="scb ${s.on ? "on" : ""}" data-act="scene.turn_on" data-e="${s.ha}"><i></i><span>${E(s.nm)}</span></button></div>`;
+      const canDel = s.mine.sc === "l" || this._admin();
+      return `<div class="scw" data-id="sc:${E(s.key)}"><button class="scb ${s.on ? "on" : ""}" ${ed ? "" : `data-sc="run|${E(s.key)}"`}><i></i><span>${E(s.nm)}</span></button>${ed && canDel ? `<button class="scx r" data-sc="re|${E(s.key)}" title="Update from current state">↻</button><button class="scx" data-sc="del|${E(s.key)}" title="Delete">✕</button>` : ""}</div>`;
+    };
+    const scn = c.noScenes ? "" : `<div class="scn"><div class="cap capr"><span>Scenes</span><span class="caps">${mineN ? `<button class="mini ${ed ? "on" : ""}" data-sc="edit|" title="Edit scenes">✎</button>` : ""}<button class="mini" data-sc="new|" title="New scene">＋</button></span></div>${sc.length ? `<div class="scg">${sc.map(scBtn).join("")}</div>` : `<div class="hintx">Tap ＋ to save your lights, shades and more as a scene.</div>`}</div>`;
+    const left = `<div class="hl">${this._brand()}${c.noClock ? "" : `<div class="clk">@@C@@</div>`}<div class="dt">${E(date)}</div>${wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : ""}<div class="gr">${g}${who ? ", " + E(who) : ""}</div>${scn}</div>`;
+    const parts = L.flatMap((k) => this._bento(k)), n = this._cols(), cr = this._credit();
+    this._colsN = n;
+    const cols = Array.from({ length: n }, () => ({ h: "", w: 0 }));
+    parts.filter((p) => !p.wide).forEach((p) => { const m = cols.reduce((a, b) => (b.w < a.w ? b : a)); m.h += p.h; m.w += p.w; });
+    const wideH = parts.filter((p) => p.wide).map((p) => p.h).join("");
+    const bento = parts.length ? `<div class="bento" style="--cols:${n}">${cols.map((x, i) => `<div class="bcol" data-id="col:${i}">${x.h}</div>`).join("")}</div>${wideH ? `<div class="bwide">${wideH}</div>` : ""}` : '<div class="bc">No supported devices found.</div>';
+    return `<div class="home">${left}<div class="hr">${bento}${this._homeCards()}${cr ? `<div class="crm">${cr}</div>` : ""}</div></div>`;
   }
   _areaPage() {
     const rs = this._rooms(), L = this._svcs(), adm = this._admin(), H = this._h.states, st = (i) => H[i].state, E = (t) => this._esc(t);
@@ -1085,8 +1392,10 @@ class QuintDashboard extends HTMLElement {
     if (!s || !s.attributes.entity_picture) return "";
     const E = (t) => this._esc(t), cams = this._ents("cameras").filter((i) => this._h.states[i].attributes.entity_picture);
     const snap = this._h.hassUrl(s.attributes.entity_picture), stream = snap.replace("/camera_proxy/", "/camera_proxy_stream/");
+    const ic = this._c.intercom || {}, armed = this._arm === "door";
+    const ictl = id === ic.camera && this._icOn() ? `<div class="vic"><button class="icb" data-ic="audio">${PHONE_I}<span>Audio call</span></button><button class="icb door ${armed ? "armed" : ""}" data-ic="door">${KEY_I}<span>${armed ? "Tap again to open" : "Open door"}</span></button></div>` : "";
     const arrows = cams.length > 1 ? `<button class="ib" data-cam="prev">‹</button><button class="ib" data-cam="next">›</button>` : "";
-    return `<div class="camv" data-cam="bg"><div class="vh"><span class="live">Live</span><span class="vt">${E(this._nm(id))}</span><span class="grow"></span>${arrows}<button class="ib" data-cam="close">✕</button></div><div class="vb"><img class="camx" data-cam="keep" data-src="${stream}" data-snap="${snap}" src="${this._camFb ? snap : stream}"></div><div class="vf">${cams.map((i) => `<button class="cc2 ${i === id ? "on" : ""}" data-id="cc:${i}" data-cam="${i}">${E(this._nm(i))}</button>`).join("")}</div></div>`;
+    return `<div class="camv" data-cam="bg"><div class="vh"><span class="live">Live</span><span class="vt">${E(this._nm(id))}</span><span class="grow"></span>${arrows}<button class="ib" data-cam="close">✕</button></div><div class="vb"><img class="camx" data-cam="keep" data-src="${stream}" data-snap="${snap}" src="${this._camFb ? snap : stream}"></div>${ictl}<div class="vf">${cams.map((i) => `<button class="cc2 ${i === id ? "on" : ""}" data-id="cc:${i}" data-cam="${i}">${E(this._nm(i))}</button>`).join("")}</div></div>`;
   }
   _roomsPage() {
     const s = this._v.svc;
@@ -1115,7 +1424,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "which ones and in which order"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "clock, weather, scenes, services"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "which ones and in which order"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercom", "camera, door, calls"], ["scenes", "Scenes", "your own and Home Assistant"], ["cards", "Cards", "custom cards you added"]];
     let body = "";
     if (tab === "general") {
       const bg = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(c.bg || {}) }, dv = localStorage.getItem("quint_dev") || "auto";
@@ -1149,15 +1458,42 @@ class QuintDashboard extends HTMLElement {
       body = sec("Devices", `${Math.min(list.length, 200)} of ${list.length} shown`, row("Search", "filter by name or entity id", `<input type="text" data-dfilter value="${E(this._dflt || "")}" placeholder="light.kitchen">`) +
         list.slice(0, 200).map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<select data-map="${E(id)}"><option value="">(no room)</option>${c.rooms.map((r) => `<option value="${E(r.id)}" ${this._roomOf(id) === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>${tg(!H.includes(id), `data-tog="hide:${E(id)}"`)}`)).join(""));
     } else if (tab === "home") {
-      const all = this._svcsAll(), H = c.svcHide || [], hid = c.hide || [], sc = Object.keys(this._h.states).filter((i) => i.startsWith("scene.")).slice(0, 40);
+      const all = this._svcsAll(), H = c.svcHide || [];
       body = sec("Home screen", "what the home page shows",
         row("Clock", "the big clock on the left", tg(!c.noClock, 'data-s="flag|noClock"')) +
         row("Weather line", "temperature, condition and sunset", tg(!c.noWeather, 'data-s="flag|noWeather"')) +
-        row("Scenes", "buttons under the greeting (your Home Assistant scenes)", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
+        row("Scenes", "the scene buttons under the greeting", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
         row("Rooms tab", "the page with the list of rooms", tg(!c.noRooms, 'data-s="flag|noRooms"'))) +
-      sec("Services", "show or hide a card on the home page and its tab in the bottom bar",
-        all.map((k) => row(`${SV[k].i} ${E(SV[k].n)}`, H.includes(k) ? "hidden" : "shown", tg(!H.includes(k), `data-s="svcvis|${E(k)}"`))).join("")) +
-      (sc.length ? sec("Scenes", "choose which scenes are shown (the first 6 are used)", sc.map((id) => row(E(this._nm(id)), E(id), tg(!hid.includes(id), `data-tog="hide:${E(id)}"`))).join("")) : "");
+      sec("Services", "show or hide a tile on the home page and its tab in the bottom bar",
+        all.map((k) => row(`${SV[k].i} ${E(SV[k].n)}`, H.includes(k) ? "hidden" : "shown", tg(!H.includes(k), `data-s="svcvis|${E(k)}"`))).join(""));
+    } else if (tab === "tiles") {
+      const keys = ["security", "cameras", "lights", "climate", "media", "shades"].filter((k) => this._ents(k).length);
+      body = `<div class="lbl" style="margin:0 4px 14px">Choose which devices appear on each home tile. Every chosen camera becomes its own tile. Until you change a tile it stays automatic.</div>` +
+        (keys.map((k) => {
+          const all = this._ents(k).slice(0, 150), sel = new Set(this._tileIds(k)), explicit = Array.isArray((c.tiles || {})[k]);
+          return sec(`${E(SV[k].n)} tile`, explicit ? `${sel.size} chosen` : "automatic",
+            all.map((id) => { const r = this._rooms().find((x) => x.id === this._roomOf(id)); return row(E(this._nm(id)), `${E(r ? r.name + " · " : "")}${E(id)}`, tg(sel.has(id), `data-s="tile|${k}|${E(id)}"`)); }).join("") +
+            (explicit ? `<div class="btns"><button data-s="tileauto|${k}">Back to automatic</button></div>` : ""));
+        }).join("") || sec("Tiles", "", '<div class="lbl">No devices found yet.</div>'));
+    } else if (tab === "intercom") {
+      const ic = c.intercom || {}, cams = Object.keys(this._h.states).filter((i) => i.startsWith("camera."));
+      const txt = (p, ph) => { const [a, b] = p.split("."), v = b ? (ic[a] || {})[b] : ic[a]; return `<input type="text" data-icf="${p}" value="${E(v || "")}" placeholder="${E(ph)}" list="ic-ents">`; };
+      const act = (k, t) => row("Action", t, txt(k + ".a", "button.open_door  /  lock.front_door  /  script.call_me")) + row("Target entity", "only if the action above is a service such as light.turn_on", txt(k + ".e", "optional")) + row("Data", "optional JSON for a service", txt(k + ".d", '{"brightness": 200}'));
+      body = sec("Intercom tile", "adds an Intercom tile and tab with video call, audio call and open-door buttons",
+        row("Name", "", txt("name", "Intercom")) +
+        row("Camera", "the video of your door station", `<select data-icf="camera"><option value="">(none)</option>${cams.map((i) => `<option value="${E(i)}" ${ic.camera === i ? "selected" : ""}>${E(this._nm(i))}</option>`).join("")}</select>`) +
+        row("Doorbell sensor", "optional: a binary_sensor or event that rings", txt("bell", "binary_sensor.doorbell")) +
+        row("Open video on ring", "show the big camera by itself when the bell rings", tg(!!ic.auto, 'data-s="icflag|auto"'))) +
+      sec("Open door", "needs two taps to confirm. Use an entity (lock, switch, button, script…) or a service", act("door", "")) +
+      sec("Audio call", "an entity or service that starts the call, or a link like sip:101@pbx or tel:+974…", act("audio", "")) +
+      sec("Video call (optional)", "extra action when Video call is tapped; the big camera always opens", act("video", "")) +
+      `<datalist id="ic-ents">${Object.keys(this._h.states).sort().map((i) => `<option value="${E(i)}">`).join("")}</datalist>`;
+    } else if (tab === "scenes") {
+      const mine = this._myScenes(), has = Object.keys(this._h.states).filter((i) => i.startsWith("scene.")).slice(0, 60), hid = c.hide || [];
+      body = sec("Your scenes", "saved from the current state of your devices; the Update button re-saves them",
+        (mine.map((x) => row(E(x.name), `${(x.items || []).length} devices · ${x.sc === "s" ? "everyone" : "this device only"}`, `<button class="sbtn" data-sc="re|${E(x.sc + ":" + x.id)}">Update</button><button class="ib2" data-sc="del|${E(x.sc + ":" + x.id)}">✕</button>`)).join("") || '<div class="lbl" style="padding:6px 4px 12px">No scenes yet.</div>') +
+        '<div class="btns"><button class="pri" data-sc="new|">＋ New scene</button></div>') +
+        (has.length ? sec("Home Assistant scenes", "choose which are shown on the home page", has.map((id) => row(E(this._nm(id)), E(id), tg(!hid.includes(id), `data-tog="hide:${E(id)}"`))).join("")) : "");
     } else {
       const items = Object.entries(c.custom).flatMap(([pl, arr]) => arr.map((it, i) => ({ pl, it, i })));
       body = sec("Cards", "custom cards you added", (items.map(({ pl, it, i }) => {
@@ -1177,29 +1513,37 @@ class QuintDashboard extends HTMLElement {
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "settings" && !this._admin()) this._v = { p: "home" };
+    if (this._v.p === "intercom" && !this._icOn()) this._v = { p: "home" };
+    const c = this._c, ic = c.intercom || {};
     this._track = new Set(Object.keys(this._h.states).filter((i) => this._svcOf(i) || i.startsWith("scene.") || i.startsWith("weather.") || i === "sun.sun"));
-    Object.values(this._c.custom).flat().forEach((x) => x.entity && this._track.add(x.entity));
+    Object.values(c.custom).flat().forEach((x) => x.entity && this._track.add(x.entity));
+    [ic.camera, ic.bell].forEach((i) => i && this._track.add(i));
+    this._myScenes().forEach((x) => (x.items || []).forEach((y) => this._track.add(y.e)));
     this._seen = {}; this._track.forEach((i) => (this._seen[i] = this._h.states[i]));
     this._n = Object.keys(this._h.states).length;
-    const p = this._v.p, V = this._v, c = this._c;
+    const ring = this._icOn() && this._ringing();
+    if (ring && !this._ringPrev && ic.auto && ic.camera && !this._cam && this._h.states[ic.camera]) this._cam = ic.camera;
+    this._ringPrev = ring;
+    const p = this._v.p, V = this._v;
     if (this._cam && !(this._h.states[this._cam] && this._h.states[this._cam].attributes.entity_picture)) this._cam = null;
-    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : this._settings();
+    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : p === "intercom" ? this._icPage() : this._settings();
     if (p !== "home" && p !== "room") body = `<div class="page">${body}</div>`;
-    const tab = (cls, go, ic, t, st) => `<button class="t ${cls}" ${st || ""} ${go}>${ic}<span>${t}</span></button>`;
-    const tabs = tab(p === "home" ? "act" : "", `data-go='{"p":"home"}'`, HOME_I, "Home") +
-      (c.noRooms || !this._rooms().length ? "" : tab(p === "room" ? "act" : "", `data-go='{"p":"room"}'`, ICONS.door, "Rooms")) +
-      this._svcs().map((s) => tab((p === "rooms" && V.svc === s) || p === s ? "act" : "", this._tileGo(s), SV[s].i, SV[s].n)).join("");
+    const tab = (cls, go, ico, t, col) => `<button class="t ${cls}" data-c="${col}" style="--c:${col}" ${go}>${ico}<span>${t}</span></button>`;
+    const tabs = `<span class="tind" data-id="tind" data-ks="1"></span>` + tab(p === "home" ? "act" : "", `data-go='{"p":"home"}'`, HOME_I, "Home", "#e8c98f") +
+      (c.noRooms || !this._rooms().length ? "" : tab(p === "room" ? "act" : "", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", "#7dd3fc")) +
+      this._svcs().map((s) => tab((p === "rooms" && V.svc === s) || p === s ? "act" : "", this._tileGo(s), SV[s].i, SV[s].n, SV[s].c)).join("");
     const cr = this._credit(), adm = this._admin();
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="bgl"><i></i></div><div class="app"><main class="${changed ? "anim" : ""}">${body}</main><nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}${adm ? `<button class="gb" data-go='{"p":"settings"}'>${GEAR_I}</button>` : ""}</div></nav></div>${this._dialog()}${this._camView()}`;
+    const html = `<div class="bgl"><i></i></div><div class="app"><main class="${changed ? "anim" : ""}">${body}</main><nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button>${adm ? `<button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button>` : ""}</div></nav></div>${this._dialog()}${this._scDialog()}${this._persDialog()}${this._camView()}`;
     if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
-    tpl.innerHTML = html.replaceAll("@@T@@", this._time());
+    tpl.innerHTML = html.replaceAll("@@T@@", this._time()).replaceAll("@@C@@", this._clockHtml());
     this._morph(this._root, tpl.content);
     this._rn = (this._rn || 0) + 1;
     this.scrollTop = changed ? 0 : sy;
+    this._slide(); if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => this._slide());
     this._mountLv();
   }
 }
