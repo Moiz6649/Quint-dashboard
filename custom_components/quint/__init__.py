@@ -10,7 +10,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, PANEL_PATH, STATIC_URL, VERSION
-from .util import valid_image
+from .updater import QuintUpdater, read_disk_version
+from .util import is_newer, valid_image
 
 
 class QuintConfigView(HomeAssistantView):
@@ -32,6 +33,56 @@ class QuintConfigView(HomeAssistantView):
             return self.json_message("Admin required", 403)
         await self._store.async_save(await request.json())
         return self.json({"ok": True})
+
+
+class QuintVersionView(HomeAssistantView):
+    """Running / installed version (the browser reloads itself when it is out of date)."""
+
+    url = "/api/quint/version"
+    name = "api:quint:version"
+    requires_auth = True
+
+    def __init__(self, hass: HomeAssistant, updater: QuintUpdater) -> None:
+        self._hass = hass
+        self._updater = updater
+
+    async def get(self, request):
+        user = request.get("hass_user")
+        if user is not None and user.is_admin and request.query.get("full"):
+            return self.json(await self._updater.status())
+        disk = await self._hass.async_add_executor_job(read_disk_version)
+        return self.json({"running": VERSION, "disk": disk, "pending": is_newer(disk, VERSION)})
+
+
+class QuintUpdateView(HomeAssistantView):
+    """Admin actions: check now, install now, restart now."""
+
+    url = "/api/quint/update"
+    name = "api:quint:update"
+    requires_auth = True
+
+    def __init__(self, updater: QuintUpdater) -> None:
+        self._updater = updater
+
+    async def post(self, request):
+        user = request.get("hass_user")
+        if user is None or not user.is_admin:
+            return self.json_message("Admin required", 403)
+        body = await request.json()
+        action = body.get("action") if isinstance(body, dict) else ""
+        up = self._updater
+        up.last_error = ""
+        if action == "check":
+            await up.refresh()
+        elif action == "install":
+            await up.refresh()
+            if not await up.install():
+                up.last_action = "nothing to install"
+        elif action == "restart":
+            await up.restart("restart requested")
+        else:
+            return self.json_message("Unknown action", 400)
+        return self.json(await up.status())
 
 
 class QuintBackgroundView(HomeAssistantView):
@@ -109,12 +160,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not data.get("static"):
         store = Store(hass, 1, f"{DOMAIN}.config")
         hass.http.register_view(QuintConfigView(store))
+        updater = QuintUpdater(hass, store)
+        data["updater"] = updater
+        hass.http.register_view(QuintVersionView(hass, updater))
+        hass.http.register_view(QuintUpdateView(updater))
         hass.http.register_view(QuintBackgroundView(Store(hass, 1, f"{DOMAIN}.background")))
         hass.http.register_view(QuintRoomImageView(Store(hass, 1, f"{DOMAIN}.roomimg")))
         await hass.http.async_register_static_paths(
             [StaticPathConfig(STATIC_URL, str(Path(__file__).parent / "frontend"), False)]
         )
         data["static"] = True
+    data["updater"].start()
     title = entry.data.get("title", "Quint")
     js = Path(__file__).parent / "frontend" / "quint-panel.js"
     stamp = int((await hass.async_add_executor_job(js.stat)).st_mtime)
@@ -136,6 +192,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend.async_remove_panel(hass, PANEL_PATH)
+    updater = hass.data.get(DOMAIN, {}).get("updater")
+    if updater:
+        updater.stop()
     guard = hass.data.get(DOMAIN, {}).pop("guard", None)
     if guard:
         frontend.remove_extra_js_url(hass, guard)

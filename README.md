@@ -3,6 +3,7 @@
 Standalone Savant-style dashboard for Home Assistant. Installs as an integration and adds its own **sidebar panel**. No Lovelace setup, no token, no YAML.
 
 - Home page (wall-panel style): client name top left, big clock, date, weather + sunset, greeting, scene buttons, and one live card per service – Security (status, doors/locks, alarm mode), Cameras (live picture), Lighting (rooms with on/off), Climate, Media (now playing + controls), Shades
+- **v1.12.0**: **automatic updates** – publish on GitHub and everything else happens by itself: a GitHub release is created when the version number changes, HACS notices it, Quint installs it, restarts Home Assistant, and every open screen reloads itself. New *Settings → Updates* page (version, *Check now*, *Update now*, *Restart now* and switches for each automatic step)
 - **v1.11.0**: new **shutter / curtain / roller / awning cards**: a drawn window that shows the real position (slats for shutters and blinds, fabric panels for curtains, a striped canopy for awnings, night sky after sunset), **drag the window** to set the position, presets (Open · 75 · 50 · 25 · Closed), ▲ ■ ▼ buttons and a tilt slider when the blind supports tilt. Used on the home tile (a small window per shade), room pages and the Shades page
 - **v1.10.0**: **several intercoms** (Settings → Intercoms: add one per door station, each with its own tile, camera, bell and buttons); **Automations** (choose automations and scripts in Settings → Automations: a home tile and tab with an on/off switch and ▶ run button); **Access** (Settings → Access: *Open Quint first* and *Lock to Quint* for normal users, for all of them or only chosen ones)
 - **v1.9.3**: the room photo now fills the **whole screen** behind that room's page (slightly darkened so text stays readable); the normal background returns when you leave the room
@@ -70,6 +71,16 @@ Left menu, right panels, with **Save / Reset everything / Close** at the top. Ch
 
 ### Scenes
 Scenes are added in **Settings → Scenes** (the home page only shows and runs them). Set your devices the way you want, press **＋ New scene**, pick a room (optional), choose the devices and save. A scene with a room also shows on that room's page. Admins can save a scene for **everyone** (stored on the server) or **only this device**. Normal users also have the Settings button, but only with **Scenes** and **Background**, and everything they save stays on their own device.
+
+### Automatic updates
+The whole chain runs without you:
+1. You push a new version to `main` (the version number in `manifest.json` goes up). The workflow `.github/workflows/release.yml` creates the GitHub release `vX.Y.Z` by itself.
+2. HACS notices the release (it looks about every two hours). **Settings → Updates → Check now** asks HACS right away.
+3. Quint asks HACS to install it (switch *Install new versions*).
+4. About a minute after the files change, Quint restarts Home Assistant (switch *Restart Home Assistant*). A notification tells you what is happening. If the configuration is invalid Home Assistant refuses to restart and nothing is lost.
+5. Every open Quint screen notices the new version and reloads itself: no hard refresh.
+
+Both switches are on by default. This also works when you update by hand in HACS: as soon as Quint sees newer files than the running version, it restarts Home Assistant. It needs HACS only for step 3; without HACS, install the files yourself and Quint still does steps 4 and 5.
 
 ### Shutter, curtain and roller cards
 Every cover that Home Assistant calls a shutter, blind, shade, curtain, awning or window gets a drawn window card. The kind is chosen from the device class, or from words in its name (*curtain*, *drape*, *awning*, *pergola*). **Drag** the window up/down (curtains: from the side) to set the position; nothing is sent until you let go. Covers that cannot report a position only show the ▲ ■ ▼ buttons.

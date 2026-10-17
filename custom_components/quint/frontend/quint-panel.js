@@ -61,12 +61,12 @@ const SET_I = {
   rooms: ICONS.door, devices: ICONS.plug, home: ICONS.home,
   cards: ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'),
 };
-SET_I.access = ICONS.door; SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
+SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
 const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.11.0";
+const VER = "1.12.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -585,7 +585,7 @@ class QuintDashboard extends HTMLElement {
     }, 1500);
     this._iv = setInterval(() => { const r = this.shadowRoot; const c = r.querySelector(".clk"); if (c) c.innerHTML = this._clockHtml(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 10000);
   }
-  disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
+  disconnectedCallback() { clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
   set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
   set route(r) {}
@@ -678,6 +678,8 @@ class QuintDashboard extends HTMLElement {
   _swap(arr, i, d) { const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
   _sact(a, v) {
     const c = this._c;
+    if (a === "upd") return this._upAct(v);
+    if (a === "upflag") { c.upInstall = v === "install" ? c.upInstall === false : c.upInstall; c.upRestart = v === "restart" ? c.upRestart === false : c.upRestart; this._save(); return this._draw(true); }
     if (a === "icsel") { this._icSel = +v; return this._draw(true); }
     if (a === "save") { this._push(); this._dirty = false; this._snap = JSON.stringify(c); this._toast("Saved"); this._draw(true); return; }
     if (a === "close") { if (this._dirty && !confirm("Discard unsaved changes?")) return; if (this._dirty) this._revert(); return this._nav("home"); }
@@ -730,8 +732,36 @@ class QuintDashboard extends HTMLElement {
     if (this._h && !this._c.rooms.length) this._importRooms(false);
     this._loaded = true;
     this._conn = this._h.connection; this._syncTpl();
+    this._verCheck(); clearInterval(this._iv4); this._iv4 = setInterval(() => this._verCheck(), 300000);
+    try { this._conn.addEventListener("ready", () => setTimeout(() => this._verCheck(), 1500)); } catch (e) {}
     this._applyBg(); this._loadBg();
     this._applyFull(); this._draw(true);
+  }
+  /* ---------- updates ---------- */
+  _verCheck() {
+    if (!this._h || !this._h.callApi) return;
+    this._h.callApi("GET", "quint/version").then((d) => {
+      if (!d || !d.running || d.running === VER) { try { sessionStorage.removeItem("quint_rl"); } catch (e) {} return; }
+      let tried = ""; try { tried = sessionStorage.getItem("quint_rl") || ""; } catch (e) {}
+      if (tried === d.running) return;
+      try { sessionStorage.setItem("quint_rl", d.running); } catch (e) {}
+      this._toast("Quint " + d.running + " is ready, reloading…");
+      setTimeout(() => this._reload(), 1200);
+    }).catch(() => {});
+  }
+  _reload() { location.reload(); }
+  _upLoad(force) {
+    if (this._upBusy || (this._up && !force)) return;
+    this._upBusy = true;
+    this._h.callApi("GET", "quint/version?full=1").then((d) => { this._up = d || null; }).catch(() => { this._up = { error: true }; }).finally(() => { this._upBusy = false; this._draw(true); });
+  }
+  _upAct(a) {
+    if (this._upBusy) return;
+    if (a === "restart" && !confirm("Restart Home Assistant now?")) return;
+    this._upBusy = true; this._upMsg = a === "check" ? "Checking GitHub through HACS…" : a === "install" ? "Asking HACS to install…" : "Restarting Home Assistant…"; this._draw(true);
+    this._h.callApi("POST", "quint/update", { action: a }).then((d) => { this._up = d || this._up; this._upMsg = ""; if (a === "restart") this._upMsg = "Home Assistant is restarting. This page reloads when it is back."; })
+      .catch((e) => { this._upMsg = a === "restart" ? "Home Assistant is restarting. This page reloads when it is back." : "That did not work: " + ((e && e.body && e.body.message) || (e && e.message) || "error"); })
+      .finally(() => { this._upBusy = false; this._draw(true); if (a !== "restart") setTimeout(() => this._upLoad(true), 4000); });
   }
   _locked() {
     const c = this._c, u = this._h && this._h.user; if (!c || !c.lock || !u || u.is_admin) return false;
@@ -1605,7 +1635,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["access", "Access", "default page and lock users"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     let tab2 = tab;
     if (!adm) tab2 = tab === "bg" || tab === "rphoto" ? tab : "scenes";
@@ -1693,6 +1723,21 @@ class QuintDashboard extends HTMLElement {
         sec("Video call (optional)", "extra action when Video call is tapped; the big camera always opens", act("video", "")) +
         `<datalist id="ic-ents">${Object.keys(this._h.states).sort().map((i) => `<option value="${E(i)}">`).join("")}</datalist>`;
       }
+    } else if (tab === "updates") {
+      this._upLoad();
+      const U = this._up, H = U && U.hacs, cfgOn = (k) => c[k] !== false, btn = (a, t, off, pri) => `<button class="${pri ? "pri" : ""}" data-s="upd|${a}" ${off || this._upBusy ? "disabled" : ""}>${t}</button>`;
+      const avail = !!(H && H.state === "on"), pend = !!(U && U.pending);
+      const line = !U ? "Loading…" : U.error ? "Could not read the update status." : pend ? `Version ${E(U.disk)} is installed. Home Assistant must restart to run it.` : avail ? `A new version ${E(H.latest || "")} is available.` : H ? "Quint is up to date." : "HACS was not found, so new versions cannot be installed automatically.";
+      body = sec("Quint version", "", row("Running now", "", `<b>v${E(VER)}</b>`) +
+        (U && U.disk && U.disk !== VER ? row("Installed on disk", "waiting for a restart", `<b>v${E(U.disk)}</b>`) : "") +
+        (H && H.latest ? row("Latest in HACS", H.release_url ? `<a href="${E(H.release_url)}" target="_blank" rel="noopener" style="color:var(--ac)">release notes</a>` : "", `<b>v${E(String(H.latest).replace(/^v/, ""))}</b>`) : "") +
+        `<div class="lbl" style="padding:8px 4px 4px">${line}</div>${this._upMsg ? `<div class="lbl" style="padding:2px 4px 8px;color:var(--ac)">${E(this._upMsg)}</div>` : ""}${U && U.last_error ? `<div class="lbl" style="padding:2px 4px 8px;color:var(--bad)">${E(U.last_error)}</div>` : ""}` +
+        `<div class="btns">${btn("check", "Check now")}${btn("install", "Update now", !avail, avail)}${btn("restart", "Restart Home Assistant", false, pend)}</div>`) +
+      sec("Automatic", "everything below happens by itself; switch a step off to keep control",
+        row("Install new versions", "when HACS finds a new Quint release, install it without asking", tg(cfgOn("upInstall"), 'data-s="upflag|install"')) +
+        row("Restart Home Assistant", "restart automatically after an update has been installed (about a minute later)", tg(cfgOn("upRestart"), 'data-s="upflag|restart"')) +
+        row("Reload open screens", "always on: every open Quint screen reloads itself after the restart", '<b>On</b>')) +
+      sec("How it works", "", '<div class="lbl" style="padding:6px 4px 12px">You publish the new version on GitHub (a release is created automatically when the version number changes). HACS notices it within about two hours; <b>Check now</b> asks HACS right away. Quint then installs it, restarts Home Assistant and every open screen reloads itself. The two switches are saved with <b>Save</b>.</div>');
     } else if (tab === "access") {
       if (!this._users && !this._usersBusy) { this._usersBusy = true; this._h.callWS({ type: "config/auth/list" }).then((l) => { this._users = (l || []).filter((x) => !x.system_generated && x.is_active !== false && !(x.group_ids || []).includes("system-admin")); }).catch(() => { this._users = []; }).finally(() => { this._usersBusy = false; this._draw(true); }); }
       const U = this._users || [], sel = new Set(c.lockUsers || []);
