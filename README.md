@@ -98,6 +98,8 @@ Every cover that Home Assistant calls a shutter, blind, shade, curtain, awning o
 - **Limits** – for each user switch services (Lights, Cameras, Intercom, Rooms page, …) and rooms off. A hidden room hides its devices and any scene that uses them. Limits are saved right away (no Save button) and apply the next time that user opens Quint.
 - New users start with everything allowed. Home Assistant admins are never limited.
 
+- **Updates** – the Quint admin also gets the **Updates** tab: check for a new version, install it, restart Home Assistant, and switch the automatic steps on or off (saved right away).
+
 Limits hide things inside Quint; they are **not a security wall**. Also use **Access → Lock to Quint** so users cannot open Home Assistant itself.
 
 ### Access (default page and lock)

@@ -35,8 +35,8 @@ class QuintConfigView(HomeAssistantView):
         if not isinstance(data, dict):
             return self.json_message("Bad settings", 400)
         old = await self._store.async_load() or {}
-        # who the Quint admin is and what each user may use are changed only through /api/quint/users
-        for key in ("perms", "manager"):
+        # the Quint admin, user limits and update switches are changed only through their own endpoints
+        for key in ("perms", "manager", "upInstall", "upRestart"):
             if key in old:
                 data[key] = old[key]
             else:
@@ -158,14 +158,14 @@ class QuintVersionView(HomeAssistantView):
 
     async def get(self, request):
         user = request.get("hass_user")
-        if user is not None and user.is_admin and request.query.get("full"):
+        if request.query.get("full") and await self._updater.can_manage(user):
             return self.json(await self._updater.status())
         disk = await self._hass.async_add_executor_job(read_disk_version)
         return self.json({"running": VERSION, "disk": disk, "pending": is_newer(disk, VERSION)})
 
 
 class QuintUpdateView(HomeAssistantView):
-    """Admin actions: check now, install now, restart now."""
+    """Admin and Quint admin actions: check now, install now, restart now, automatic-update switches."""
 
     url = "/api/quint/update"
     name = "api:quint:update"
@@ -176,13 +176,15 @@ class QuintUpdateView(HomeAssistantView):
 
     async def post(self, request):
         user = request.get("hass_user")
-        if user is None or not user.is_admin:
+        if not await self._updater.can_manage(user):
             return self.json_message("Admin required", 403)
         body = await request.json()
         action = body.get("action") if isinstance(body, dict) else ""
         up = self._updater
         up.last_error = ""
-        if action == "check":
+        if action == "settings":
+            await up.set_settings(body.get("install"), body.get("restart"))
+        elif action == "check":
             await up.refresh()
         elif action == "install":
             await up.refresh()

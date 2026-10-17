@@ -66,6 +66,24 @@ class QuintUpdater:
         cfg = await self._store.async_load() or {}
         return {"install": cfg.get("upInstall") is not False, "restart": cfg.get("upRestart") is not False}
 
+    async def can_manage(self, user) -> bool:
+        """Home Assistant admins and the Quint admin may check, install and restart."""
+        if user is None:
+            return False
+        if user.is_admin:
+            return True
+        cfg = await self._store.async_load() or {}
+        return bool(cfg.get("manager")) and cfg.get("manager") == user.id
+
+    async def set_settings(self, install: object, restart: object) -> dict:
+        cfg = await self._store.async_load() or {}
+        if isinstance(install, bool):
+            cfg["upInstall"] = install
+        if isinstance(restart, bool):
+            cfg["upRestart"] = restart
+        await self._store.async_save(cfg)
+        return await self.settings()
+
     def hacs_entity(self) -> str | None:
         """entity_id of the HACS update entity of this integration, if HACS is used."""
         reg = er.async_get(self.hass)
