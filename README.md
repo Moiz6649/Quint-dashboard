@@ -2,9 +2,12 @@
 
 Standalone Savant-style dashboard for Home Assistant. Installs as an integration and adds its own **sidebar panel**. No Lovelace setup, no token, no YAML.
 
-- Home page: greeting, clock, one tile per service (only services with devices appear)
-- Lighting / Shades / Climate / Media → room list → room page with custom cards
-- Cameras and Security pages (door / lock / intercom status)
+- Home page (wall-panel style): client name top left, big clock, date, weather + sunset, greeting, scene buttons, and one live card per service – Security (status, doors/locks, alarm mode), Cameras (live picture), Lighting (rooms with on/off), Climate, Media (now playing + controls), Shades
+- **Tap a camera to open it big** (live stream, with snapshot fallback); switch cameras with the arrows or the name buttons
+- **Rooms** tab: pick a room on the left and see all its lights (with dimmers), shades, climate, media, cameras and custom cards
+- Bottom bar: Home, Rooms, one tab per service, and **your own text + the settings button** on the right (text is editable)
+- Every service can be shown or hidden in Settings → Home page
+- Lighting / Shades / Climate / Media pages are grouped by room; Cameras and Security have their own pages
 - **More**: add any entity or any Lovelace card (JSON) to any room
 - Settings: rooms (from HA Areas), device → room assignment, hide devices, fullscreen mode
 - Settings are stored on the HA server and shared by all devices (only admins can change them)
@@ -41,19 +44,19 @@ When you add a card to a **room**, the dialog has a **Service** field (default *
 
 ## Screen layouts (phone / tablet / desktop)
 The dashboard measures its own width and picks a layout automatically:
-- **Phone** (< 600 px): 2-column tiles, compact hero, full-width bottom bar, bottom-sheet dialogs, single-column cameras.
-- **Tablet** (600–1199 px): larger tiles, floating bottom dock (portrait) or a side rail (landscape, ≥ 900 px).
-- **Desktop / wall panel** (≥ 1200 px): wide grid, large clock, side rail, multi-column cameras.
+- **Phone** (< 600 px): one column, icon tabs in the bottom bar, bottom-sheet dialogs.
+- **Tablet** (600–899 px): clock and greeting on top, two columns of cards.
+- **Wide screens / wall panels** (≥ 900 px): clock, greeting and scenes in a fixed left column, cards on the right, rooms list on the left of the Rooms page.
 
-Admins can force a layout per device in **Settings → Screen layout** (e.g. a wall tablet set to *Desktop / wall panel*).
+Admins can force a layout per device in **Settings → Screen layout**.
 
 ## Settings page (admin only)
 Left menu, right panels, with **Save / Reset everything / Close** at the top. Changes are staged: nothing is stored on the server until you press **Save**, and **Close** (or leaving the page) asks before discarding.
-- **General** – settings file (export / import JSON), title, greeting name, **Background**, and per-device screen layout and fullscreen.
+- **General** – settings file (export / import JSON), **Client name** (top left), **Bottom text** (next to the settings button, default *By Quinteca*, empty hides it), greeting name, **Background**, and per-device screen layout and fullscreen.
 - **Pages** – rename, show/hide and re-order the services (home tiles and bottom bar).
 - **Rooms** – rename, show/hide, re-order, add, delete, re-import from HA areas.
 - **Devices** – search, assign a room, hide.
-- **Home page** – clock and which status pills show next to the greeting.
+- **Home page** – turn the clock, weather line, scenes and Rooms tab on/off; **show or hide each service** (card + tab); choose which scenes appear.
 - **Cards** – every custom card you added, with delete and add.
 
 ### Background

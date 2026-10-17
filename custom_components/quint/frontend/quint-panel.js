@@ -1,17 +1,36 @@
 /* Quint Dashboard – Savant-style full-page dashboard for Home Assistant (HACS plugin) */
 const ic = (p) => `<svg class="si" viewBox="0 0 24 24">${p}</svg>`;
 const SV = {
-  lights:  { n: "Lighting", c: "#f5a623", i: ic('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>') },
+  security:{ n: "Security", c: "#34c98b", i: ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>') },
   cameras: { n: "Cameras",  c: "#4aa3ff", i: ic('<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>') },
-  shades:  { n: "Shades",   c: "#2dd4bf", i: ic('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M3 13h18M12 13v6"/>') },
+  lights:  { n: "Lighting", c: "#f5a623", i: ic('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>') },
   climate: { n: "Climate",  c: "#ff7a59", i: ic('<path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/>') },
   media:   { n: "Media",    c: "#b388ff", i: ic('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>') },
-  security:{ n: "Security", c: "#34c98b", i: ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>') },
+  shades:  { n: "Shades",   c: "#2dd4bf", i: ic('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M3 13h18M12 13v6"/>') },
   more:    { n: "More",     c: "#ff6fae", i: ic('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>') },
 };
 const SV_DEF = Object.fromEntries(Object.entries(SV).map(([k, v]) => [k, v.n]));
 const HOME_I = ic('<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>');
-const GEAR_I = ic('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>');
+const GEAR_I = ic('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>');
+const SHIELD_I = ic('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>');
+const SUN_I = ic('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>');
+const MOON_I = ic('<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>');
+const CLOUD_I = ic('<path d="M18 18H7a4 4 0 1 1 .9-7.9A6 6 0 0 1 19 11a3.5 3.5 0 0 1-1 7z"/>');
+const MUSIC_I = ic('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>');
+const PREV_I = ic('<path d="M19 20L9 12l10-8z"/><path d="M5 19V5"/>');
+const NEXT_I = ic('<path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/>');
+const PLAY_I = ic('<path d="M7 4l13 8-13 8z" fill="currentColor"/>');
+const PAUSE_I = ic('<path d="M8 5v14M16 5v14" stroke-width="3"/>');
+const VOL_I = ic('<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>');
+const WX = { "clear-night": "Clear night", cloudy: "Cloudy", exceptional: "Exceptional", fog: "Foggy", hail: "Hail", lightning: "Thunderstorm", "lightning-rainy": "Thunderstorm", partlycloudy: "Partly cloudy", pouring: "Heavy rain", rainy: "Rain", snowy: "Snow", "snowy-rainy": "Sleet", sunny: "Sunny", windy: "Windy", "windy-variant": "Windy" };
+(() => {
+  try {
+    if (document.getElementById("quint-fonts")) return;
+    const l = document.createElement("link"); l.id = "quint-fonts"; l.rel = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap";
+    document.head.appendChild(l);
+  } catch (e) {}
+})();
 const ICONS = {
   bulb: SV.lights.i, plug: ic('<path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/>'),
   fan: ic('<circle cx="12" cy="12" r="2"/><path d="M12 10C12 4 17 3 17 6s-3 4-5 4zM14 12c6 0 7 5 4 5s-4-3-4-5zM12 14c0 6-5 7-5 4s3-4 5-4zM10 12C4 12 3 7 6 7s4 3 4 5z"/>'),
@@ -38,10 +57,10 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.7.1";
+const VER = "1.8.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
-  midnight: "radial-gradient(900px 520px at 88% -8%,rgba(245,166,35,.16),transparent),radial-gradient(800px 520px at -10% 108%,rgba(74,163,255,.15),transparent),linear-gradient(160deg,#080d19,#131c34)",
+  midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
   graphite: "linear-gradient(160deg,#15171c,#2b2f38)",
   aurora: "radial-gradient(900px 600px at 20% 0%,rgba(52,201,139,.30),transparent),radial-gradient(800px 600px at 90% 100%,rgba(179,136,255,.26),transparent),linear-gradient(160deg,#07121a,#10202c)",
   sunset: "radial-gradient(900px 600px at 80% 0%,rgba(255,122,89,.36),transparent),radial-gradient(800px 600px at 0% 100%,rgba(179,136,255,.26),transparent),linear-gradient(160deg,#1a0f1f,#2a1a2e)",
@@ -49,7 +68,7 @@ const BG = {
   forest: "radial-gradient(900px 600px at 90% 0%,rgba(52,201,139,.30),transparent),linear-gradient(160deg,#07140f,#10261c)",
 };
 const SWATCH = {
-  midnight: "linear-gradient(135deg,#25365f,#080d19 62%,#f5a623)",
+  midnight: "linear-gradient(135deg,#2e6896,#0c1220 55%,#b07a4a)",
   graphite: "linear-gradient(135deg,#454b58,#15171c)",
   aurora: "linear-gradient(135deg,#34c98b,#07121a 58%,#b388ff)",
   sunset: "linear-gradient(135deg,#ff7a59,#2a1a2e 58%,#b388ff)",
@@ -59,7 +78,7 @@ const SWATCH = {
 const FRESH = () => ({ rooms: [], map: {}, hide: [], name: "", custom: {}, order: {} });
 
 const CSS = `
-:host{display:block;--vh:100vh;height:var(--vh);overflow-y:auto;--ac:#f5a623;--ok:#34c98b;--bad:#ff5d6c;--mu:#8d9ab8;--bd:rgba(255,255,255,.10);color:#eef2fa;font-family:"Inter",-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
+:host{display:block;--vh:100vh;height:var(--vh);overflow-y:auto;--ac:#e8c98f;--ok:#5fd39a;--warn:#f0b35a;--bad:#ff6b6b;--mu:#9aa6bd;--tx:#eef1f6;--bd:rgba(255,255,255,.10);--cd:rgba(12,16,26,.55);--serif:"Cormorant Garamond","Quint Serif",Georgia,"Times New Roman",serif;color:var(--tx);font-family:"Inter","Quint Sans",-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
 @supports (height:100dvh){:host{--vh:100dvh}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .si{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.12em}
@@ -68,111 +87,197 @@ const CSS = `
 .bgl{flex:none;position:sticky;top:0;height:var(--vh,100vh);margin-bottom:calc(var(--vh,100vh) * -1);overflow:hidden;pointer-events:none;z-index:0;background:#0b1220}
 .bgl i{position:absolute;inset:-30px;background-image:var(--qbg-img,none);background-size:cover;background-position:center;filter:blur(var(--qbg-blur,0px))}
 .bgl::after{content:"";position:absolute;inset:0;background:rgba(5,8,16,var(--qbg-dim,0))}
-header{display:flex;justify-content:space-between;align-items:center;padding:18px 28px}
-.brand{display:flex;align-items:center;gap:12px;font-size:20px;letter-spacing:7px;font-weight:600;text-transform:uppercase}
-.brand .si{font-size:30px;color:var(--ac)}
-.hb{display:flex;gap:12px;align-items:center;color:var(--mu);font-size:15px}
 button{font:inherit;color:inherit;cursor:pointer}
-.ib{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:50%;width:42px;height:42px;font-size:20px;display:grid;place-items:center;padding:0}
-main{flex:1;padding:6px 28px 24px;max-width:1240px;width:100%;margin:0 auto}
-@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:8px 0 26px}
-.clk{font-size:76px;font-weight:200;line-height:1;letter-spacing:-2px}
-h1{font-weight:300;font-size:30px;margin:6px 0 10px}h2{font-weight:500;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin:28px 0 12px}
-.sub{color:var(--mu);font-size:16px;margin-top:6px}.lbl{color:var(--mu);font-size:13px}
-.pills{display:flex;gap:8px;flex-wrap:wrap}
-.pill{display:inline-flex;gap:7px;align-items:center;padding:8px 14px;border-radius:30px;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);color:var(--c);font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
-.tile,.card{position:relative;background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid var(--bd);border-radius:28px;padding:20px}
-.card{border-radius:24px;padding:18px}
-.tile{cursor:pointer;min-height:180px;display:flex;flex-direction:column;justify-content:space-between;transition:transform .18s,box-shadow .18s}
-@media(hover:hover){.tile:hover{transform:translateY(-3px)}}.tile:active{transform:scale(.97)}
-.tile.on{background:linear-gradient(150deg,color-mix(in srgb,var(--c) 42%,#0b1220),color-mix(in srgb,var(--c) 8%,#0b1220));border-color:color-mix(in srgb,var(--c) 60%,transparent);box-shadow:0 14px 40px -16px var(--c)}
-.bdg{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;font-size:24px;flex:none;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);transition:.2s}
-.tile.on .bdg,.card.on .bdg{background:var(--c);color:#10131c}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.serif{font-family:var(--serif)}
+.brand{display:flex;align-items:center;gap:12px;font-size:19px;letter-spacing:7px;font-weight:500;text-transform:uppercase;min-height:34px}
+.ib{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:50%;width:38px;height:38px;font-size:18px;display:grid;place-items:center;padding:0;flex:none;letter-spacing:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.page{padding:34px 44px 30px;max-width:1500px;width:100%;margin:0 auto;flex:1}
+h1{font-family:var(--serif);font-weight:400;font-size:46px;line-height:1.05;margin:6px 0 8px}
+.page>h1,.page>.top+h1{margin-bottom:14px}
+h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin:30px 0 12px}
+.sub{color:var(--mu);font-size:15px;margin-top:4px}.lbl{color:var(--mu);font-size:13px}
+.cap{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;color:#a9b4c9;margin-bottom:12px}
+.back{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:10px;color:#fff;padding:9px 16px;font-size:14px}
+/* ===== home ===== */
+.home{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding:26px 18px 22px;flex:1;align-content:start}
+.hl{display:flex;flex-direction:column;min-width:0}
+.hr{min-width:0;display:flex;flex-direction:column}
+.clk{font-family:var(--serif);font-size:84px;font-weight:400;line-height:.95;margin-top:26px;letter-spacing:-1px;white-space:nowrap}
+.dt{font-size:16px;color:#d3d9e6;margin-top:8px}
+.wx{display:flex;align-items:center;gap:10px;margin-top:16px;color:#d3d9e6;font-size:15px}.wx .si{font-size:20px;color:var(--ac);flex:none}
+.gr{font-family:var(--serif);font-style:italic;font-size:34px;margin-top:26px;font-weight:400;line-height:1.1}
+.scn{margin-top:26px}
+.scg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.scb{display:flex;align-items:center;gap:10px;text-align:left;padding:14px 14px;border-radius:8px;border:1px solid rgba(120,160,220,.22);background:rgba(28,52,90,.50);font-size:14px;font-weight:500;min-width:0;transition:background .15s}
+.scb i{width:8px;height:8px;border-radius:50%;border:1.5px solid #cfd8ea;flex:none}
+.scb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scb.on{background:#f1efec;color:#12151c;border-color:#f1efec}.scb.on i{background:#12151c;border-color:#12151c}
+.scb:active{transform:scale(.98)}
+.bento{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-content:start}
+.bc{background:var(--cd);border:1px solid var(--bd);border-radius:20px;padding:20px 22px 20px;position:relative;min-width:0;display:flex;flex-direction:column}
+.bc.wide{grid-column:1/-1}
+.bh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600;color:#aeb8cc;cursor:pointer}
+.bh .bs{letter-spacing:0;text-transform:none;font-weight:500;font-size:13px;color:#c3cbdb;display:flex;align-items:center;gap:6px}.bh .si{font-size:17px}
+.rw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0;font-size:15px;min-height:36px}
+.rw .nmx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dde2ec}
+.rw .rr{display:flex;align-items:center;gap:14px;flex:none}.rw .mu{color:#b7c0d1;font-size:14px}
+.rw .v{font-weight:600;color:#fff;text-align:right}.rw .v.w{color:var(--warn)}.rw .v.b{color:var(--bad)}
+.st2{font-family:var(--serif);font-size:34px;display:flex;align-items:center;gap:12px;margin:0 0 12px;line-height:1.1}
+.sd{width:14px;height:14px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(95,211,154,.18);flex:none}.sd.w{background:var(--warn);box-shadow:0 0 0 4px rgba(240,179,90,.2)}.sd.b{background:var(--bad);box-shadow:0 0 0 4px rgba(255,107,107,.22)}
+.seg{display:flex;background:rgba(0,0,0,.30);border:1px solid var(--bd);border-radius:12px;padding:4px;margin-top:auto}
+.seg button{flex:1;padding:11px 0;border:0;background:none;border-radius:9px;font-weight:600;font-size:14px;color:#dfe4ee}
+.seg button.on{background:#f1efec;color:#12151c}
+.bc>.rows{margin-bottom:12px}
+.cvw{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:16/9;background:linear-gradient(135deg,#2b2016,#14100c);cursor:pointer;display:grid;place-items:center;color:#8b7d6c}
+.cvw img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cvw .cn{position:absolute;left:12px;top:10px;font-size:12px;font-weight:600;text-shadow:0 1px 4px #000a;z-index:1}
+.cvw .live{position:absolute;right:12px;top:10px;z-index:1;text-shadow:0 1px 4px #000a}
+.live{display:inline-flex;gap:6px;align-items:center;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}.live::before{content:"";width:7px;height:7px;border-radius:50%;background:#ff5d5d}
+.cb{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.wb,.ob{padding:13px 10px;border-radius:9px;font-weight:600;font-size:14px;border:1px solid rgba(255,255,255,.28);background:none;color:#fff}.wb{background:#f1efec;color:#12151c;border-color:#f1efec}
+.cl{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:auto;padding-top:10px}
+.sbig{font-family:var(--serif);font-size:68px;line-height:.9;font-weight:400}.sbig sup{font-size:.5em;vertical-align:.75em;margin-left:2px}
+.cap2{font-size:13px;color:#c3cbdb;margin-top:8px}
+.rb2{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:none;font-size:22px;line-height:1;padding:0;display:grid;place-items:center;flex:none}.rb2:active{background:var(--ac);color:#000}
+.rbs{display:flex;gap:12px}
+.md{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.art{width:68px;height:68px;border-radius:9px;background:rgba(255,255,255,.1);display:grid;place-items:center;font-size:28px;color:var(--ac);flex:none;overflow:hidden}.art img{width:100%;height:100%;object-fit:cover}
+.mt{flex:1 1 200px;min-width:0}.mt .pc{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#aeb8cc;font-weight:600}
+.mt .tt{font-family:var(--serif);font-size:30px;line-height:1.1;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mt .ar{color:#b7c0d1;font-size:14px;margin-top:2px}
+.mc{display:flex;align-items:center;gap:14px}.mc button{background:none;border:0;padding:6px;font-size:22px;color:#e6eaf2;display:grid;place-items:center}
+.mc button.pp{width:54px;height:54px;border-radius:50%;background:#f1efec;color:#12151c;padding:0;font-size:22px}
+.vol{display:flex;align-items:center;gap:10px;flex:1 1 150px;min-width:130px;color:#b7c0d1;font-size:16px}
+.shv{width:62px;height:70px;border:1px solid rgba(255,255,255,.35);border-radius:6px;overflow:hidden;flex:none;background:rgba(255,255,255,.04)}
+.shv i{display:block;background:repeating-linear-gradient(#8f8f93 0 4px,#4f5157 4px 7px);transition:height .3s}
+.bigs{font-family:var(--serif);font-size:48px;line-height:1;font-weight:400}.bigs small{display:block;font-family:inherit;font-size:14px;color:#c3cbdb;margin-top:6px}
+.cen{display:flex;align-items:flex-start;gap:18px}
+.btn3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:auto;padding-top:14px}
+.btn3 button{padding:12px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.28);background:none;font-size:14px;font-weight:500}.btn3 button:active{background:var(--ac);color:#000}
+.cnt{font-family:var(--serif);font-size:56px;line-height:1}
+/* ===== common cards (service pages / custom cards) ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.tile,.card{position:relative;background:var(--cd);border:1px solid var(--bd);border-radius:18px;padding:18px}
+.tile{cursor:pointer;min-height:120px;display:flex;flex-direction:column;justify-content:space-between}
+.tile:active{transform:scale(.98)}
+.bdg{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;flex:none;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c);transition:.2s}
+.card.on .bdg{background:var(--c);color:#10131c}
 .num{font-size:38px;font-weight:300;line-height:1.05}.nm{font-weight:500;font-size:16px}
-.card.on{border-color:rgba(245,166,35,.45);box-shadow:0 10px 30px -16px var(--ac)}
+.card.on{border-color:rgba(232,201,143,.38)}
 .row{display:flex;align-items:center;gap:14px}.grow{flex:1;min-width:0}
 .st{color:var(--mu);font-size:13px;margin-top:2px;text-transform:capitalize}
 .btns{display:flex;gap:8px;margin-top:14px}
-.btns button{flex:1;background:rgba(255,255,255,.09);border:0;border-radius:14px;padding:11px;min-width:44px;transition:.15s}
+.btns button{flex:1;background:rgba(255,255,255,.09);border:0;border-radius:12px;padding:11px;min-width:44px;transition:.15s}
 .btns button:active{background:var(--ac);color:#000}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:12px;border-radius:6px;background:rgba(255,255,255,.14);margin-top:16px;outline:0}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 10px #0009}
-input[type=range]::-moz-range-thumb{width:26px;height:26px;border:0;border-radius:50%;background:#fff}
-.sw{width:50px;height:30px;border-radius:15px;background:#37425e;position:relative;border:0;flex:none;transition:.2s}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
-.sw.on{background:var(--ac)}.sw.on::after{left:23px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;margin:0;outline:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:rgba(255,255,255,.2)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-8px;border-radius:50%;background:var(--ac);border:2px solid #14110c;box-shadow:0 1px 6px #0008}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ac);border:2px solid #14110c}
+.card input[type=range]{margin-top:14px}
+.sw{width:46px;height:28px;border-radius:14px;background:#4b505b;position:relative;border:0;flex:none;transition:.2s;padding:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#d7dae1;transition:.2s}
+.sw.on{background:var(--ac)}.sw.on::after{left:21px;background:#15120d}
 .big{font-size:44px;font-weight:200;margin-top:10px}
-img.cam{width:100%;border-radius:16px;margin-top:12px;background:#000;aspect-ratio:16/9;object-fit:cover}
-nav{position:sticky;bottom:16px;margin:0 auto 16px;display:flex;gap:4px;padding:8px;border-radius:36px;background:rgba(18,26,46,.94);border:1px solid var(--bd);max-width:calc(100% - 24px);overflow-x:auto;box-shadow:0 18px 50px -10px #000c}
-nav button{background:none;border:0;padding:9px 16px;border-radius:28px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--mu);min-width:74px;transition:.2s}
-nav button .si{font-size:23px}
-nav button.act{background:color-mix(in srgb,var(--c,#fff) 20%,transparent);color:var(--c,#fff)}
-.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}.tabs button{display:flex;gap:7px;align-items:center;background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:30px;padding:9px 18px}.tabs button.act{background:var(--ac);color:#000;border-color:var(--ac)}
-.back{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:30px;color:#fff;padding:7px 16px;margin:6px 0 10px;font-size:14px}
-input[type=text],select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--bd);color:#eef2fa;border-radius:12px;padding:11px;font:inherit}
+img.cam{width:100%;border-radius:14px;margin-top:12px;background:#000;aspect-ratio:16/9;object-fit:cover;cursor:pointer}
+.cvw img.cam{margin:0;border-radius:0;aspect-ratio:auto}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}.tabs button{display:flex;gap:7px;align-items:center;background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:10px;padding:9px 18px}.tabs button.act{background:#f1efec;color:#12151c;border-color:#f1efec}
+input[type=text],select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--bd);color:#eef2fa;border-radius:10px;padding:11px;font:inherit}
 table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 6px;border-bottom:1px solid var(--bd)}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-right:6px}.dot.ok{background:var(--ok)}
 .cw{position:relative}.rm{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:12px;opacity:.55;z-index:2}.rm:hover{opacity:1;background:var(--bad)}
-.tile.add{min-height:120px;border-style:dashed;background:transparent;opacity:.85}.lvw{grid-column:span 2}
+.tile.add{min-height:96px;border-style:dashed;background:transparent;opacity:.85;align-items:flex-start}.lvw{grid-column:span 2}
 .ov{position:fixed;inset:0;background:rgba(5,8,16,.7);display:grid;place-items:center;z-index:99;padding:16px}
-.dlg{width:min(520px,100%);background:#141c33;border:1px solid var(--bd);border-radius:28px;padding:24px;max-height:90vh;overflow:auto}.dlg input{margin-top:4px}
-textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid var(--bd);color:#eef2fa;border-radius:12px;padding:11px;font:13px monospace;margin-top:4px}
+.dlg{width:min(520px,100%);background:#141c2e;border:1px solid var(--bd);border-radius:24px;padding:24px;max-height:90vh;overflow:auto}.dlg input{margin-top:4px}
+textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid var(--bd);color:#eef2fa;border-radius:10px;padding:11px;font:13px monospace;margin-top:4px}
 .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:6px}.pri{background:var(--ac)!important;color:#000!important;font-weight:600}
-.rh{display:flex;align-items:center;gap:12px;margin:28px 0 12px}.rh .grow{cursor:pointer}.rn{font-size:22px;font-weight:500}.rb{margin:0}.rb button{flex:none;padding:8px 14px;font-size:13px}
-.kw{position:relative}.kw,.cw{border-radius:24px;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.rh{display:flex;align-items:center;gap:12px;margin:26px 0 12px}.rh .grow{cursor:pointer}.rn{font-family:var(--serif);font-size:30px;font-weight:400}.rb{margin:0}.rb button{flex:none;padding:8px 14px;font-size:13px}
+.kw{position:relative}.kw,.cw{border-radius:18px;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .holding{animation:hold 5s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
 .moving{transform:scale(1.04);box-shadow:0 20px 50px -10px #000c,0 0 0 3px var(--ac);z-index:5;opacity:.93;transition:transform .15s}
-.hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:100;white-space:nowrap}
+.hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:130;white-space:nowrap}
 ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:96px}.tv{font-size:30px;font-weight:300;line-height:1.15;margin:4px 0 2px;word-break:break-word}
+/* ===== rooms page ===== */
+.area{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;padding:22px 16px 20px;flex:1;align-content:start}
+.rl{display:flex;flex-direction:column;min-width:0}
+.rlist{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.rli{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--bd);color:#e3e7ef;font-size:15px;text-align:left;flex:none;white-space:nowrap}
+.rli.act{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.18)}
+.rli small{color:var(--ac);font-weight:600;font-size:13px}.rli small.off{color:var(--mu)}
+.rl .ft{display:none;margin-top:auto;padding-top:20px;color:#b9c2d3;font-size:13px}
+.ah{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.ah h1{font-size:46px;margin:0}
+.ob2{padding:11px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.32);background:none;font-weight:600;font-size:14px;flex:none}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:16px 0}
+.abody{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.lr{display:grid;grid-template-columns:minmax(70px,30%) minmax(0,1fr) 52px;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--bd)}.lr:first-of-type{border-top:0}
+.lr .ln{background:none;border:0;text-align:left;padding:0;font-size:15px;font-weight:500;color:#e6eaf2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lr .lp{text-align:right;font-size:14px;color:#c3cbdb}
+.bc .grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}.bc .card{background:rgba(255,255,255,.05)}
+.span2{grid-column:1/-1}
+.tall{grid-row:span 2}
+:host([data-dev="phone"]) .tall{grid-row:auto}
+/* ===== bottom bar ===== */
+.rl .rcap{margin:18px 0 10px}
+:host([data-wide="1"]) .rl .rcap{margin:40px 0 12px}
+:host([data-wide="1"]) .cr{display:block}
+:host([data-wide="1"]) .crm{display:none}
+nav{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:10px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(8,11,18,.97);border-top:1px solid var(--bd)}
+.tabs2{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}.tabs2::-webkit-scrollbar{display:none}
+nav button.t{flex:1 1 0;min-width:58px;padding:7px 4px;border-radius:10px;border:0;background:none;color:#cfd5e2;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}
+nav button.t .si{font-size:22px}nav button.t ha-icon{--mdc-icon-size:22px}
+nav button.t span{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+nav button.t.act{background:#f1efec;color:#12151c}
+.nr{display:flex;align-items:center;gap:12px;flex:none}
+.cr{letter-spacing:2px;font-size:11px;text-transform:uppercase;color:var(--mu);white-space:nowrap;display:none}
+.gb{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:none;display:grid;place-items:center;font-size:19px;padding:0}
+.crm{text-align:center;letter-spacing:2px;font-size:11px;text-transform:uppercase;color:var(--mu);padding:10px 0 4px}
+/* ===== camera viewer ===== */
+.camv{position:fixed;inset:0;z-index:120;background:rgba(3,5,10,.985);display:flex;flex-direction:column}
+.camv .vh{display:flex;align-items:center;gap:14px;padding:16px 20px}
+.camv .vt{font-family:var(--serif);font-size:30px;line-height:1}
+.camv .vb{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 20px}
+.camv img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;border-radius:12px;background:#000}
+.camv .vf{display:flex;gap:8px;padding:14px 20px calc(16px + env(safe-area-inset-bottom));overflow-x:auto;justify-content:center;scrollbar-width:none}
+.cc2{flex:none;padding:10px 16px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:none;font-size:13px;font-weight:500}.cc2.on{background:#f1efec;color:#12151c;border-color:#f1efec}
 /* ===== settings page ===== */
-.sbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:14px 0 20px}
-.sbar h1{font-size:60px;font-weight:700;letter-spacing:-1.5px;margin:0;line-height:1}
+.sbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:6px 0 20px}
+.sbar h1{font-size:56px;margin:0;line-height:1}
 .sbar .sub{font-size:14px;margin:8px 0 0}
 .sbtns{display:flex;gap:10px;flex-wrap:wrap}
-.sbtn{border:0;border-radius:30px;padding:14px 24px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
+.sbtn{border:0;border-radius:10px;padding:13px 22px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
 .sbtn.pri2{background:var(--ac);color:#000}
 .sc .sbtn{padding:9px 16px;font-size:12px}
 .sg{display:grid;grid-template-columns:270px minmax(0,1fr);gap:18px;align-items:start}
 .snav{display:flex;flex-direction:column;gap:8px}
-.sti{display:flex;gap:14px;align-items:center;text-align:left;width:100%;padding:14px 16px;border-radius:18px;border:1px solid var(--bd);background:rgba(255,255,255,.06)}
-.sti.act{background:rgba(255,255,255,.22)}
+.sti{display:flex;gap:14px;align-items:center;text-align:left;width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--bd);background:rgba(255,255,255,.06)}
+.sti.act{background:rgba(255,255,255,.2)}
 .sti .si{font-size:22px;flex:none;color:#cfd6e6}
 .sti b{display:block;font-size:16px;font-weight:600}.sti small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
-.ssec{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:26px;padding:22px;margin-bottom:18px}
-.shd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
+.ssec{background:var(--cd);border:1px solid var(--bd);border-radius:20px;padding:22px;margin-bottom:18px}
+.shd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
 .shd small{letter-spacing:0;text-transform:none;font-weight:400;color:var(--mu);font-size:12px;text-align:right}
-.srow{display:grid;grid-template-columns:minmax(0,34%) minmax(0,1fr);gap:16px;align-items:center;background:rgba(255,255,255,.06);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;margin-bottom:8px}
+.srow{display:grid;grid-template-columns:minmax(0,34%) minmax(0,1fr);gap:16px;align-items:center;background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:14px;padding:12px 16px;margin-bottom:8px}
 .sn{font-weight:600}.ss{color:var(--mu);font-size:12px;margin-top:2px;overflow-wrap:anywhere}
 .sc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}.sc>input[type=text],.sc>select{flex:1;min-width:120px}
-.sc input[type=range]{margin-top:0;flex:1;min-width:140px}.sc input[type=file]{color:var(--mu);font-size:13px;max-width:100%}
+.sc input[type=range]{flex:1;min-width:140px}.sc input[type=file]{color:var(--mu);font-size:13px;max-width:100%}
 .ib2{background:rgba(255,255,255,.1);border:0;border-radius:10px;width:36px;height:36px;flex:none}.ib2:disabled{opacity:.3}
 .swt{width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.18);cursor:pointer;padding:0;flex:none}.swt.sel{border-color:#fff;box-shadow:0 0 0 2px var(--ac)}
-/* ===== device profiles: phone / tablet / desktop (set by JS from the panel width) ===== */
-ha-icon{--mdc-icon-size:24px}nav button ha-icon{--mdc-icon-size:23px}
-:host([data-dev="phone"]) header{padding:10px 14px}
-:host([data-dev="phone"]) .brand{font-size:15px;letter-spacing:4px;gap:8px}
-:host([data-dev="phone"]) .brand .si{font-size:24px}
-:host([data-dev="phone"]) .hb .tm{display:none}
-:host([data-dev="phone"]) main{padding:2px 14px 18px}
-:host([data-dev="phone"]) .hero{flex-direction:column;align-items:flex-start;gap:12px;margin:4px 0 18px}
-:host([data-dev="phone"]) .clk{font-size:56px}
-:host([data-dev="phone"]) h1{font-size:24px}
-:host([data-dev="phone"]) .pills{flex-wrap:nowrap;overflow-x:auto;max-width:100%}
-:host([data-dev="phone"]) .pill{flex:none;white-space:nowrap}
-:host([data-dev="phone"]) .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+/* ===== screen sizes (set by JS from the panel width): phone / tablet / desktop, plus data-wide for the two-column layouts ===== */
+:host([data-dev="phone"]) .brand{font-size:15px;letter-spacing:5px}
+:host([data-dev="phone"]) .page{padding:18px 14px 20px}
+:host([data-dev="phone"]) h1{font-size:36px}
+:host([data-dev="phone"]) .clk{font-size:72px}
+:host([data-dev="phone"]) .bc{padding:16px 16px 16px;border-radius:18px}
+:host([data-dev="phone"]) .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 :host([data-dev="phone"]) .grid[data-grid^="list:cameras"]{grid-template-columns:minmax(0,1fr)!important}
-:host([data-dev="phone"]) .tile{min-height:128px;padding:14px;border-radius:22px}
-:host([data-dev="phone"]) .card{padding:14px;border-radius:20px}
-:host([data-dev="phone"]) .num{font-size:30px}
-:host([data-dev="phone"]) .bdg{width:42px;height:42px;font-size:21px}
+:host([data-dev="phone"]) .bc .grid{grid-template-columns:minmax(0,1fr)}
+:host([data-dev="phone"]) .card{padding:14px;border-radius:16px}
+:host([data-dev="phone"]) .rn{font-size:24px}
 :host([data-dev="phone"]) .rh{flex-wrap:wrap;margin:20px 0 10px}
-:host([data-dev="phone"]) .rn{font-size:19px}
-:host([data-dev="phone"]) .btns button{padding:13px}
-:host([data-dev="phone"]) .tpl{min-height:84px}
 :host([data-dev="phone"]) .ov{place-items:end center;padding:0}
-:host([data-dev="phone"]) .dlg{width:100%;max-height:92vh;border-radius:28px 28px 0 0}
+:host([data-dev="phone"]) .dlg{width:100%;max-height:92vh;border-radius:24px 24px 0 0}
 :host([data-dev="phone"]) .hint{bottom:78px}
 :host([data-dev="phone"]) .sg{grid-template-columns:minmax(0,1fr)}
 :host([data-dev="phone"]) .snav{flex-direction:row;overflow-x:auto;padding-bottom:4px}
@@ -181,30 +286,39 @@ ha-icon{--mdc-icon-size:24px}nav button ha-icon{--mdc-icon-size:23px}
 :host([data-dev="phone"]) .srow{grid-template-columns:minmax(0,1fr);gap:8px}
 :host([data-dev="phone"]) .sbar h1{font-size:38px}
 :host([data-dev="phone"]) .sbtn{padding:11px 16px}
-:host([data-dev="phone"]) .ssec{padding:16px;border-radius:22px}
-:host([data-dev="tablet"]) main{padding:6px 24px 24px}
-:host([data-dev="tablet"]) .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
-:host([data-dev="tablet"]) .clk{font-size:72px}
-:host([data-dev="tablet"]) .tile{min-height:170px}
-:host([data-dev="desktop"]) header{padding:20px 40px}
-:host([data-dev="desktop"]) main{max-width:1560px;padding:10px 40px 40px}
-:host([data-dev="desktop"]) .grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px}
-:host([data-dev="desktop"]) .grid[data-grid^="list:cameras"]{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))!important}
-:host([data-dev="desktop"]) .clk{font-size:104px}
-:host([data-dev="desktop"]) h1{font-size:36px}
-:host([data-dev="desktop"]) .tile{min-height:200px}
-:host([data-dev="desktop"]) .num{font-size:44px}
-:host([data-dev="desktop"]) .rn{font-size:26px}
-:host([data-nav="bar"]) nav{position:sticky;bottom:0;margin:0;max-width:none;width:100%;border-radius:0;border-width:1px 0 0;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:2px;box-shadow:none}
-:host([data-nav="bar"]) nav button{min-width:0;flex:1 1 0;padding:7px 2px;font-size:10px}
-:host([data-nav="bar"]) nav button .si{font-size:22px}
-:host([data-nav="rail"]) .app{display:grid;grid-template-columns:104px minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"nav hdr" "nav main"}
-:host([data-dev="desktop"][data-nav="rail"]) .app{grid-template-columns:124px minmax(0,1fr)}
-:host([data-nav="rail"]) header{grid-area:hdr}
-:host([data-nav="rail"]) main{grid-area:main}
-:host([data-nav="rail"]) nav{grid-area:nav;position:sticky;top:0;align-self:start;height:var(--vh,100vh);flex-direction:column;justify-content:flex-start;margin:0;max-width:none;width:auto;border-radius:0 30px 30px 0;border-width:0 1px 0 0;padding:16px 8px;gap:6px;overflow-x:hidden;overflow-y:auto;box-shadow:none}
-:host([data-nav="rail"]) nav button{min-width:0;width:100%;padding:12px 4px;font-size:11px}
-:host([data-nav="rail"]) .hint{bottom:30px}
+:host([data-dev="phone"]) .ssec{padding:16px;border-radius:18px}
+:host([data-dev="phone"]) .ah h1{font-size:38px}
+:host([data-dev="phone"]) .gr{font-size:30px}
+:host([data-dev="phone"]) .lr{grid-template-columns:minmax(60px,28%) minmax(0,1fr) 44px;gap:10px}
+:host([data-dev="phone"]) .camv .vt{font-size:24px}
+:host([data-dev="tablet"]) .home,:host([data-dev="tablet"]) .area{padding:28px 28px 22px}
+:host([data-dev="tablet"]) .page{padding:28px 28px 24px}
+:host([data-dev="tablet"]) .clk{font-size:96px}
+:host([data-dev="tablet"]) .bento,:host([data-dev="tablet"]) .abody{grid-template-columns:repeat(2,minmax(0,1fr))}
+:host([data-dev="phone"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
+:host([data-dev="tablet"]) .scg{grid-template-columns:repeat(3,minmax(0,1fr))}
+:host([data-dev="tablet"]) nav{padding:10px 20px calc(10px + env(safe-area-inset-bottom))}
+:host([data-dev="tablet"]) nav button.t,:host([data-dev="desktop"]) nav button.t{flex:none;flex-direction:row;font-size:15px;font-weight:500;padding:12px 20px;gap:0}
+:host([data-dev="tablet"]) nav button.t .si,:host([data-dev="desktop"]) nav button.t .si,:host([data-dev="tablet"]) nav button.t ha-icon,:host([data-dev="desktop"]) nav button.t ha-icon{display:none}
+:host([data-dev="desktop"]) nav{padding:12px 44px calc(12px + env(safe-area-inset-bottom))}
+:host([data-dev="desktop"]) .home,:host([data-dev="desktop"]) .area{padding:40px 44px 28px}
+:host([data-dev="desktop"]) .bento,:host([data-dev="desktop"]) .abody{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+:host([data-dev="desktop"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
+:host([data-dev="desktop"]) .camv .vh,:host([data-dev="desktop"]) .camv .vb,:host([data-dev="desktop"]) .camv .vf{padding-left:44px;padding-right:44px}
+:host([data-wide="1"]) .home{grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:40px}
+:host([data-wide="1"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
+:host([data-wide="1"]) .hl{position:sticky;top:28px;align-self:start;height:max(calc(var(--vh) - 116px),540px)}
+:host([data-dev="desktop"][data-wide="1"]) .hl{top:40px;height:max(calc(var(--vh) - 132px),540px)}
+:host([data-wide="1"]) .clk{font-size:clamp(88px,9.4vw,150px);margin-top:56px}
+:host([data-wide="1"]) .gr{font-size:36px;margin-top:34px}
+:host([data-wide="1"]) .scn{margin-top:auto;padding-top:26px}
+:host([data-wide="1"]) .area{grid-template-columns:minmax(220px,270px) minmax(0,1fr);gap:40px}
+:host([data-wide="1"]) .rlist{flex-direction:column;overflow:visible}
+:host([data-wide="1"]) .rli{width:100%;padding:13px 14px;background:none;border-color:transparent;font-size:16px}
+:host([data-wide="1"]) .rli.act{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.12)}
+:host([data-wide="1"]) .rl .ft{display:block}
+:host([data-wide="1"]) .ah h1{font-size:clamp(46px,5vw,66px)}
+:host([data-wide="1"]) .chips{grid-template-columns:repeat(4,minmax(0,1fr))}
 `;
 
 class QuintDashboard extends HTMLElement {
@@ -230,6 +344,7 @@ class QuintDashboard extends HTMLElement {
     R.addEventListener("input", (e) => this._input(e));
     R.addEventListener("touchmove", (e) => { if (this._mv) e.preventDefault(); }, { passive: false });
     R.addEventListener("contextmenu", (e) => { if (this._hold || this._mv) e.preventDefault(); });
+    R.addEventListener("error", (e) => { const t = e.target; if (t && t.classList && t.classList.contains("camx") && !this._camFb) { this._camFb = true; if (t.dataset.snap) t.src = t.dataset.snap; } }, true);
   }
   _pdown(e) {
     if (e.button > 0 || e.target.type === "range" || this._mv) return;
@@ -336,14 +451,28 @@ class QuintDashboard extends HTMLElement {
     const w = this.clientWidth || window.innerWidth || 1024, auto = w < 600 ? "phone" : w < 1200 ? "tablet" : "desktop";
     let dev = localStorage.getItem("quint_dev") || "auto";
     if (!["phone", "tablet", "desktop"].includes(dev)) dev = auto;
-    const nav = dev === "phone" ? "bar" : dev === "desktop" || w >= 900 ? "rail" : "dock";
+    const wide = dev !== "phone" && w >= 900 ? "1" : "0";
     if (this.getAttribute("data-dev") !== dev) this.setAttribute("data-dev", dev);
-    if (this.getAttribute("data-nav") !== nav) this.setAttribute("data-nav", nav);
+    if (this.getAttribute("data-wide") !== wide) this.setAttribute("data-wide", wide);
+    if (this.getAttribute("data-nav") !== "bar") this.setAttribute("data-nav", "bar");
     if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; }
   }
-  _time() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
-  connectedCallback() { this._applyBg(); this._layout(); if (typeof ResizeObserver !== "undefined") { this._ro = new ResizeObserver(() => this._layout()); this._ro.observe(this); } this._iv2 = setInterval(() => this._refreshCams(), 5000); this._iv = setInterval(() => { const r = this.shadowRoot; [".clk", ".tm"].forEach((q) => { const e = r.querySelector(q); if (e) e.textContent = this._time(); }); }, 15000); }
-  disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
+  _time() { return this._clock(); }
+  connectedCallback() {
+    this._applyBg(); this._layout();
+    if (typeof ResizeObserver !== "undefined") { this._ro = new ResizeObserver(() => this._layout()); this._ro.observe(this); }
+    this._kd = (e) => { if (e.key === "Escape" && this._cam) { this._cam = null; this._camFb = false; this._draw(true); } };
+    window.addEventListener("keydown", this._kd);
+    this._iv2 = setInterval(() => this._refreshCams(), 5000);
+    this._iv3 = setInterval(() => {
+      if (!this._cam || !this._camFb || document.hidden) return;
+      const img = this.shadowRoot.querySelector("img.camx"); if (!img || !img.dataset.snap) return;
+      const b = img.dataset.snap, u = b + (b.includes("?") ? "&" : "?") + "t=" + Date.now(), t = new Image();
+      t.onload = () => { img.src = u; }; t.src = u;
+    }, 1500);
+    this._iv = setInterval(() => { const r = this.shadowRoot; [".clk", ".tm"].forEach((q) => { const e = r.querySelector(q); if (e) e.textContent = this._time(); }); }, 10000);
+  }
+  disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
   set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
   set route(r) {}
@@ -412,7 +541,8 @@ class QuintDashboard extends HTMLElement {
     Object.entries(o.custom || {}).forEach(([k, a]) => { c.custom[k] = c.custom[k] || []; (a || []).forEach((it) => { if (it && !c.custom[k].some((x) => x.uid && x.uid === it.uid)) c.custom[k].push(it); }); });
     c.order = { ...(c.order || {}), ...(o.order || {}) };
     ["name", "title", "bg", "pills"].forEach((k) => { if (o[k]) c[k] = o[k]; });
-    if (typeof o.noClock === "boolean") c.noClock = o.noClock;
+    if (typeof o.credit === "string") c.credit = o.credit;
+    ["noClock", "noScenes", "noWeather", "noRooms"].forEach((k) => { if (typeof o[k] === "boolean") c[k] = o[k]; });
     c.svcTitle = { ...(c.svcTitle || {}), ...(o.svcTitle || {}) };
     c.svcHide = [...new Set([...(c.svcHide || []), ...(o.svcHide || [])])];
     if (o.svcOrder) c.svcOrder = o.svcOrder;
@@ -439,6 +569,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "rup" || a === "rdn") this._swap(c.rooms, +v, a === "rup" ? -1 : 1);
     else if (a === "pill") { const P = c.pills || ["lights", "climate", "security"]; c.pills = P.includes(v) ? P.filter((x) => x !== v) : [...P, v]; }
     else if (a === "clk") c.noClock = !c.noClock;
+    else if (a === "flag" && ["noClock", "noScenes", "noWeather", "noRooms"].includes(v)) c[v] = !c[v];
     else return;
     this._save(); this._applyBg(); this._draw(true);
   }
@@ -531,10 +662,17 @@ class QuintDashboard extends HTMLElement {
   /* ---------- events ---------- */
   _click(e) {
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
+    if (d.cam) {
+      const v = d.cam, cams = this._ents("cameras").filter((i) => this._h.states[i].attributes.entity_picture);
+      if (v === "keep") return;
+      if (v === "prev" || v === "next") { const n = cams.length, i = cams.indexOf(this._cam); if (n) this._cam = cams[(i + (v === "next" ? 1 : -1) + n) % n]; }
+      else this._cam = v === "close" || v === "bg" ? null : v;
+      this._camFb = false; return this._draw(true);
+    }
     if (d.tpl) return this._tap(d.tpl);
     if (d.s) { const i = d.s.indexOf("|"); return this._sact(d.s.slice(0, i), d.s.slice(i + 1)); }
     if (d.go) { const { p, ...x } = JSON.parse(d.go); return this._nav(p, x); }
@@ -568,6 +706,7 @@ class QuintDashboard extends HTMLElement {
       t.value = ""; return;
     }
     if (adm && d.bg) { this._save(); return; }
+    if (adm && d.cred !== undefined) { this._c.credit = t.value.trim().slice(0, 30); this._save(); this._draw(true); return; }
     if (adm && d.ttl !== undefined) { this._c.title = t.value.trim().slice(0, 30); this._save(); this._draw(true); return; }
     if (adm && d.svct) { this._c.svcTitle = this._c.svcTitle || {}; this._c.svcTitle[d.svct] = t.value.trim().replace(/['"<>\\&]/g, "").slice(0, 24); this._save(); this._draw(true); return; }
     if (d.slider) { const [dom, srv, key, div] = d.slider.split("|"); this._h.callService(dom, srv, { entity_id: d.e, [key]: +t.value / +div }); }
@@ -601,7 +740,7 @@ class QuintDashboard extends HTMLElement {
     if (d === "camera") {
       const off = ["unavailable", "unknown"].includes(s.state);
       const src = a.entity_picture ? this._h.hassUrl(a.entity_picture) : "";
-      return `<div class="card">${hd(`<span class="dot ${off ? "" : "ok"}"></span>${off ? "Offline" : "Online"}`)}</div>${off || !src ? "" : `<img class="cam" data-src="${src}" src="${src}">`}</div>`;
+      return `<div class="card" ${off || !src ? "" : `data-cam="${id}"`}>${hd(`<span class="dot ${off ? "" : "ok"}"></span>${off ? "Offline" : "Online"}`)}</div>${off || !src ? "" : `<img class="cam" data-src="${src}" src="${src}">`}</div>`;
     }
     if (d === "lock") { const l = s.state === "locked"; return `<div class="card ${l ? "" : "on"}">${hd(l ? "🔒 Locked" : "🔓 " + s.state)}</div><div class="btns">${bt("lock.lock", "Lock")}${bt("lock.unlock", "Unlock")}</div></div>`; }
     if (d === "binary_sensor") { const o = s.state === "on"; return `<div class="card ${o ? "on" : ""}">${hd(o ? "Open / Active" : "Closed / Clear")}</div></div>`; }
@@ -638,7 +777,7 @@ class QuintDashboard extends HTMLElement {
       const add = adm ? `<div class="tile add" data-cc="open:${r.id}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : "";
       return `<section><div class="rh"><div class="grow" data-go='${JSON.stringify({ p: "room", room: r.id, svc: s })}'><div class="rn">${r.name}</div><div class="lbl">${n} active of ${e.length}</div></div></div><div class="grid" data-grid="room:${r.id}:${s}">${this._customCards(r.id, "room:" + r.id + ":" + s, s)}${add}</div></section>`;
     });
-    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${adm ? "Admin · add cards to any room with ＋" : "Grouped by room"}</div>${parts.join("") || '<div class="card">No cards yet.</div>'}`;
+    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${adm ? "Admin · add cards to any room with ＋" : "Grouped by room"}</div>${parts.join("") || '<div class="card">No cards yet.</div>'}`;
   }
   _homeCards() {
     const n = (this._c.custom.home || []).length, adm = this._admin();
@@ -794,18 +933,160 @@ class QuintDashboard extends HTMLElement {
   }
 
   /* ---------- pages ---------- */
-  _home() {
-    const h = new Date().getHours(), g = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-    const who = this._c.name || (this._h.user && this._h.user.name) || "";
-    const L = this._svcs();
-    const pill = (k) => { const t = this._stats(k); return `<span class="pill" style="--c:${SV[k].c}">${SV[k].i}${k === "security" ? t.big : t.big + " " + t.lbl}</span>`; };
-    return `<section class="hero"><div>${this._c.noClock ? "" : `<div class="clk">@@T@@</div>`}<div class="sub">${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</div></div>
-    <div><h1>${g}${who ? ", " + who : ""}</h1><div class="pills">${(this._c.pills || ["lights", "climate", "security"]).filter((k) => L.includes(k)).map(pill).join("")}</div></div></section>
-    <div class="grid">${L.map((k) => { const t = this._stats(k); return `<div class="tile ${t.on ? "on" : ""}" data-id="s:${k}" style="--c:${SV[k].c}" ${this._tileGo(k)}><div class="bdg">${SV[k].i}</div><div><div class="num">${t.big}</div><div class="nm">${SV[k].n}</div><div class="lbl">${t.lbl}</div></div></div>`; }).join("") || '<div class="card">No supported devices found.</div>'}</div>${this._homeCards()}`;
+  _brand() {
+    const menu = this._narrow || localStorage.getItem("quint_full") === "1" ? `<button class="ib" data-tog="menu:0">☰</button>` : "";
+    return `<div class="brand">${menu}<span>${this._esc(this._c.title || this._title || "Quint")}</span></div>`;
   }
-  _roomsTiles() {
-    const s = this._v.svc;
-    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">Select a room</div><div class="grid">${this._rooms().map((r) => { const c = this._roomCount(s, r.id); if (!c || (s === "more" && !c.t && !this._admin())) return ""; return `<div class="tile ${c.n ? "on" : ""}" style="--c:${SV[s].c}" data-go='${JSON.stringify({ p: "room", room: r.id, svc: s })}'><div class="bdg">${SV[s].i}</div><div><div class="num">${c.n}<span class="lbl"> / ${c.t}</span></div><div class="nm">${r.name}</div></div></div>`; }).join("")}</div>`;
+  _top(back = true) { return `<div class="top">${this._brand()}${back ? `<button class="back" data-go='{"p":"home"}'>‹ Home</button>` : ""}</div>`; }
+  _credit() { const t = this._c.credit; return this._esc(t === undefined ? "By Quinteca" : t); }
+  _clock(d) {
+    const L = this._h && this._h.locale, f = L && L.time_format, o = { hour: "2-digit", minute: "2-digit" }, dt = d || new Date();
+    if (f === "24") o.hourCycle = "h23"; else if (f === "12") o.hour12 = true;
+    try { return dt.toLocaleTimeString((L && L.language) || [], o); } catch (e) { return dt.toLocaleTimeString([], o); }
+  }
+  _fmt(n) { const v = Math.round(+n * 10) / 10; return Number.isInteger(v) ? String(v) : v.toFixed(1); }
+  _sw(on, act, ids) { return `<button class="sw ${on ? "on" : ""}" data-act="${act}" data-e="${ids.join(",")}"></button>`; }
+  _groups(svc) {
+    const out = [], seen = new Set();
+    this._rooms().forEach((r) => { const ids = this._ents(svc, r.id); if (ids.length) out.push({ id: r.id, name: r.name, ids }); ids.forEach((i) => seen.add(i)); });
+    const rest = this._ents(svc).filter((i) => !seen.has(i));
+    if (rest.length) { if (!out.length) rest.forEach((i) => out.push({ id: i, name: this._nm(i), ids: [i] })); else out.push({ id: "other", name: "Other", ids: rest }); }
+    return out;
+  }
+  _wx() {
+    const S = this._h.states, id = Object.keys(S).find((i) => i.startsWith("weather."));
+    if (!id) return null;
+    const s = S[id], a = s.attributes;
+    if (a.temperature == null) return null;
+    const cond = WX[s.state] || String(s.state).replace(/[-_]/g, " "), ic = s.state === "sunny" ? SUN_I : s.state === "clear-night" ? MOON_I : CLOUD_I;
+    let t = `${this._fmt(a.temperature)}° · ${cond}`;
+    const sun = S["sun.sun"];
+    if (sun) { const below = sun.state === "below_horizon", iso = below ? sun.attributes.next_rising : sun.attributes.next_setting; if (iso && !isNaN(Date.parse(iso))) t += ` · ${below ? "Sunrise" : "Sunset"} ${this._clock(new Date(iso))}`; }
+    return { ic, t: this._esc(t), s: this._esc(`${Math.round(a.temperature)}° ${cond.toLowerCase()}`) };
+  }
+  _scenes() {
+    const ids = Object.keys(this._h.states).filter((i) => i.startsWith("scene.") && !this._c.hide.includes(i)).slice(0, 6);
+    let best = "", bt = 0;
+    ids.forEach((i) => { const t = Date.parse(this._h.states[i].state); if (t > bt) { bt = t; best = i; } });
+    return ids.map((i) => ({ id: i, nm: this._nm(i), on: i === best && Date.now() - bt < 6 * 3600e3 }));
+  }
+  _sec(i) {
+    const s = this._h.states[i], d = i.split(".")[0], dc = s.attributes.device_class, v = s.state, cap = (x) => x.charAt(0).toUpperCase() + x.slice(1).replace(/_/g, " ");
+    if (v === "unavailable" || v === "unknown") return ["Unavailable", ""];
+    if (d === "alarm_control_panel") { const M = { disarmed: "Disarmed", armed_home: "Armed, home", armed_away: "Armed, away", armed_night: "Armed, night", armed_vacation: "Armed, vacation", armed_custom_bypass: "Armed, custom", arming: "Arming…", pending: "Pending", disarming: "Disarming…", triggered: "Triggered" }; return [M[v] || cap(v), v === "triggered" ? "b" : ""]; }
+    if (d === "lock") return v === "locked" ? ["Locked", ""] : [cap(v), "w"];
+    if (d === "cover") return v === "closed" ? ["Closed", ""] : [cap(v), "w"];
+    if (["motion", "occupancy", "presence"].includes(dc)) return [v === "on" ? "Detected" : "Clear", ""];
+    if (dc === "tamper") return v === "on" ? ["Tampered", "w"] : ["OK", ""];
+    return v === "on" ? ["Open", "w"] : ["Closed", ""];
+  }
+  _bento(k) {
+    const H = this._h.states, st = (i) => H[i].state, S = SV[k], go = this._tileGo(k), E = (t) => this._esc(t);
+    const hd = (r, ic) => `<div class="bh" ${go}><span>${S.n}</span><span class="bs">${r || ""}${ic || ""}</span></div>`;
+    const wrap = (cls, inner) => `<div class="bc ${cls}" data-id="b:${E(k)}">${inner}</div>`;
+    if (k === "lights") {
+      const gr = this._groups("lights"), all = gr.flatMap((g) => g.ids), onN = all.filter((i) => st(i) === "on").length, rooms = gr.filter((g) => g.ids.some((i) => st(i) === "on")).length;
+      const rows = gr.slice(0, 5).map((g) => {
+        const on = g.ids.filter((i) => st(i) === "on"), br = on.map((i) => H[i].attributes.brightness).filter((b) => b != null);
+        const lab = !on.length ? "Off" : br.length ? Math.round(br.reduce((a, b) => a + b, 0) / br.length / 2.55) + "%" : "On";
+        return `<div class="rw" data-id="lr:${E(g.id)}"><span class="nmx">${E(g.name)}</span><span class="rr"><span class="mu">${lab}</span>${this._sw(on.length > 0, on.length ? "light.turn_off" : "light.turn_on", g.ids)}</span></div>`;
+      }).join("");
+      const r = gr.length > 1 && this._rooms().length ? `${rooms} room${rooms === 1 ? "" : "s"} on` : `${onN} of ${all.length} on`;
+      return wrap("", `${hd(r)}<div class="rows">${rows}</div>${gr.length > 5 ? `<div class="lbl" ${go} style="cursor:pointer">+ ${gr.length - 5} more ›</div>` : ""}`);
+    }
+    if (k === "cameras") {
+      const cams = this._ents("cameras"), live = cams.filter((i) => H[i].attributes.entity_picture && !["unavailable", "unknown"].includes(st(i))), id = live[0];
+      if (!id) return wrap("", `${hd(`${cams.length} camera${cams.length === 1 ? "" : "s"}`)}<div class="cvw" style="cursor:default"><span>No camera online</span></div>`);
+      const src = this._h.hassUrl(H[id].attributes.entity_picture);
+      return wrap("", `<div class="cvw" data-cam="${id}"><img class="cam" data-src="${src}" src="${src}"><span class="cn">${E(this._nm(id))}</span><span class="live">Live</span></div><div class="cb"><button class="wb" data-cam="${id}">Open</button><button class="ob" ${go}>All cameras · ${cams.length}</button></div>`);
+    }
+    if (k === "security") {
+      const ids = this._ents("security"), dom = (i) => i.split(".")[0], isM = (i) => ["motion", "occupancy", "presence"].includes(H[i].attributes.device_class);
+      const al = ids.filter((i) => dom(i) === "alarm_control_panel"), lk = ids.filter((i) => dom(i) === "lock"), oth = ids.filter((i) => !al.includes(i) && !lk.includes(i));
+      const rows = [...al, ...lk, ...oth.filter((i) => !isM(i)), ...oth.filter(isM)].slice(0, 4).map((i) => { const [t, c] = this._sec(i); return `<div class="rw" data-id="sr:${i}"><span class="nmx">${E(this._nm(i))}</span><span class="v ${c}">${E(t)}</span></div>`; }).join("");
+      const lv = ids.map((i) => this._sec(i)[1]), nb = lv.filter((x) => x === "b").length, nw = lv.filter((x) => x === "w").length, cls = nb ? "b" : nw ? "w" : "";
+      const ap = al[0], seg = ap ? `<div class="seg">${[["Off", "alarm_disarm", "disarmed"], ["Home", "alarm_arm_home", "armed_home"], ["Night", "alarm_arm_night", "armed_night"], ["Away", "alarm_arm_away", "armed_away"]].map(([l, s, x]) => `<button class="${st(ap) === x ? "on" : ""}" data-act="alarm_control_panel.${s}" data-e="${ap}">${l}</button>`).join("")}</div>` : "";
+      return wrap("", `${hd("", SHIELD_I)}<div class="st2"><span class="sd ${cls}"></span>${nb ? "Alarm triggered" : nw ? `${nw} open` : "All secure"}</div><div class="rows">${rows}</div>${seg}`);
+    }
+    if (k === "climate") {
+      const cl = this._ents("climate"), isOff = (i) => ["off", "unavailable", "unknown"].includes(st(i)), id = cl.find((i) => !isOff(i)) || cl[0], a = H[id].attributes, off = isOff(id);
+      const cur = a.current_temperature != null ? a.current_temperature : a.temperature, tg = a.temperature, step = a.target_temp_step || 0.5, rm = this._rooms().find((r) => r.id === this._roomOf(id));
+      const verb = a.hvac_action === "heating" ? "Heating to " : a.hvac_action === "cooling" ? "Cooling to " : "Set to ";
+      const cap = (off ? "Off" : tg != null ? verb + this._fmt(tg) + "°" : st(id)) + (a.current_humidity != null ? ` · humidity ${a.current_humidity}%` : "");
+      const x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
+      const bt = tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : "";
+      return wrap("", `${hd(E(rm ? rm.name : this._nm(id)))}<div class="cl"><div><div class="sbig">${cur != null ? this._fmt(cur) : "–"}<sup>°</sup></div><div class="cap2">${E(cap)}</div></div>${bt}</div>`);
+    }
+    if (k === "media") {
+      const pl = this._ents("media"), pick = ["playing", "paused", "on", "idle"].map((s) => pl.find((i) => st(i) === s)).find(Boolean) || pl[0], a = H[pick].attributes, playing = pl.filter((i) => st(i) === "playing");
+      const art = a.entity_picture ? this._h.hassUrl(a.entity_picture) : "", names = (playing.length ? playing : [pick]).map((i) => this._nm(i));
+      const joined = names.length > 1 ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1] : names[0], isP = st(pick) === "playing";
+      const cap = (playing.length ? "Playing on " : st(pick) === "paused" ? "Paused on " : "") + joined;
+      const ctl = (act, ic, cls) => `<button ${cls ? `class="${cls}"` : ""} data-act="media_player.${act}" data-e="${pick}">${ic}</button>`;
+      return wrap("wide", `<div class="md"><div class="art">${art ? `<img src="${art}">` : MUSIC_I}</div><div class="mt"><div class="pc" ${go} style="cursor:pointer">${E(cap)}</div><div class="tt">${E(a.media_title || (isP ? "Playing" : "Nothing playing"))}</div>${a.media_artist ? `<div class="ar">${E(a.media_artist)}</div>` : ""}</div><div class="mc">${ctl("media_previous_track", PREV_I)}${ctl("media_play_pause", isP ? PAUSE_I : PLAY_I, "pp")}${ctl("media_next_track", NEXT_I)}</div><div class="vol">${VOL_I}<input type=range min=0 max=100 value=${Math.round((a.volume_level || 0) * 100)} data-slider="media_player|volume_set|volume_level|100" data-e="${pick}"></div></div>`);
+    }
+    if (k === "shades") {
+      const sh = this._ents("shades"), pos = sh.map((i) => H[i].attributes.current_position).filter((p) => p != null), avg = pos.length ? Math.round(pos.reduce((a, b) => a + b, 0) / pos.length) : null;
+      const open = sh.filter((i) => ["open", "opening"].includes(st(i))).length, all = sh.join(",");
+      return wrap("", `${hd(`${sh.length} window${sh.length === 1 ? "" : "s"}`)}<div class="cen"><div class="shv"><i style="height:${avg != null ? 100 - avg : open ? 0 : 100}%"></i></div><div class="bigs">${avg != null ? avg + "%" : `${open}/${sh.length}`}<small>${avg != null ? "open" : "open / total"}</small></div></div><div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div>`);
+    }
+    const t = this._stats(k);
+    return wrap("", `${hd("", S.i)}<div class="cnt">${t.big}</div><div class="cap2">${t.big ? t.lbl : "No cards yet · tap to open"}</div>`);
+  }
+  _home() {
+    const c = this._c, hr = new Date().getHours(), g = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening";
+    const who = c.name || (this._h.user && this._h.user.name) || "", L = this._svcs(), wx = c.noWeather ? null : this._wx(), sc = c.noScenes ? [] : this._scenes();
+    const date = new Date().toLocaleDateString((this._h.locale && this._h.locale.language) || undefined, { weekday: "long", day: "numeric", month: "long" });
+    const left = `<div class="hl">${this._brand()}${c.noClock ? "" : `<div class="clk">@@T@@</div>`}<div class="dt">${this._esc(date)}</div>${wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : ""}<div class="gr">${g}${who ? ", " + this._esc(who) : ""}</div>${sc.length ? `<div class="scn"><div class="cap">Scenes</div><div class="scg">${sc.map((s) => `<button class="scb ${s.on ? "on" : ""}" data-id="sc:${s.id}" data-act="scene.turn_on" data-e="${s.id}"><i></i><span>${this._esc(s.nm)}</span></button>`).join("")}</div></div>` : ""}</div>`;
+    const cards = L.map((k) => this._bento(k)).join(""), cr = this._credit();
+    return `<div class="home">${left}<div class="hr"><div class="bento">${cards || '<div class="bc wide">No supported devices found.</div>'}</div>${this._homeCards()}${cr ? `<div class="crm">${cr}</div>` : ""}</div></div>`;
+  }
+  _areaPage() {
+    const rs = this._rooms(), L = this._svcs(), adm = this._admin(), H = this._h.states, st = (i) => H[i].state, E = (t) => this._esc(t);
+    const has = (r, s) => (isCs(s) ? this._csItems(r.id, s).length : this._ents(s, r.id).length);
+    const room = rs.find((r) => r.id === this._v.room) || rs.find((r) => L.some((s) => has(r, s))) || rs[0];
+    if (!room) return `<div class="area"><div class="rl">${this._brand()}</div><div class="bc">No rooms yet. Add rooms in Settings.</div></div>`;
+    const rid = room.id, wx = this._c.noWeather ? null : this._wx();
+    const list = rs.map((r) => { const l = L.includes("lights") ? this._ents("lights", r.id) : [], on = l.filter((i) => st(i) === "on").length; return `<button class="rli ${r.id === rid ? "act" : ""}" data-id="rl:${E(r.id)}" data-go='${JSON.stringify({ p: "room", room: r.id })}'><span>${E(r.name)}</span><small class="${on ? "" : "off"}">${l.length ? (on ? on + " on" : "Off") : ""}</small></button>`; }).join("");
+    const lights = L.includes("lights") ? this._ents("lights", rid) : [], onL = lights.filter((i) => st(i) === "on");
+    const cl = L.includes("climate") ? this._ents("climate", rid) : [], sh = L.includes("shades") ? this._ents("shades", rid) : [];
+    const pos = sh.map((i) => H[i].attributes.current_position).filter((p) => p != null), avg = pos.length ? Math.round(pos.reduce((a, b) => a + b, 0) / pos.length) : null;
+    const sub = [lights.length ? `${onL.length} of ${lights.length} lights on` : "", cl.length && H[cl[0]].attributes.current_temperature != null ? this._fmt(H[cl[0]].attributes.current_temperature) + "°" : "", avg != null ? `${SV.shades.n.toLowerCase()} ${avg}% open` : ""].filter(Boolean).join(" · ");
+    const scenes = Object.keys(H).filter((i) => i.startsWith("scene.") && !this._c.hide.includes(i) && this._roomOf(i) === rid);
+    const chips = scenes.length ? `<div class="chips">${scenes.map((i) => `<button class="scb" data-id="sc:${i}" data-act="scene.turn_on" data-e="${i}"><i></i><span>${E(this._nm(i))}</span></button>`).join("")}</div>` : "";
+    const sec = [];
+    [...L.filter((x) => ["lights", "shades", "climate"].includes(x)).sort((p, q) => ["lights", "shades", "climate"].indexOf(p) - ["lights", "shades", "climate"].indexOf(q)), ...L.filter((x) => !["lights", "shades", "climate"].includes(x))].forEach((s) => {
+      if (!has(room, s)) return;
+      if (s === "lights") {
+        const rows = lights.map((i) => {
+          const a = H[i].attributes, isOn = st(i) === "on", b = a.brightness || 0, dim = !(a.supported_color_modes || []).every((m) => m === "onoff") && st(i) !== "unavailable";
+          return `<div class="lr" data-id="l:${i}"><button class="ln" data-act="light.toggle" data-e="${i}">${E(this._nm(i))}</button>${dim ? `<input type=range min=1 max=255 value=${b} data-slider="light|turn_on|brightness|1" data-e="${i}"><span class="lp">${isOn ? Math.round(b / 2.55) + "%" : "Off"}</span>` : `<span></span>${this._sw(isOn, "light.toggle", [i])}`}</div>`;
+        }).join("");
+        sec.push(`<div class="bc tall" data-id="a:lights"><div class="bh" ${this._tileGo(s)}><span>${SV.lights.n}</span><span class="bs">${onL.length} on</span></div>${rows}</div>`);
+      } else if (s === "shades") {
+        const all = sh.join(","), open = sh.filter((i) => ["open", "opening"].includes(st(i))).length;
+        sec.push(`<div class="bc" data-id="a:shades"><div class="bh" ${this._tileGo(s)}><span>${SV.shades.n}</span><span class="bs">${sh.length} window${sh.length === 1 ? "" : "s"}</span></div><div class="cen"><div class="shv"><i style="height:${avg != null ? 100 - avg : open ? 0 : 100}%"></i></div><div class="bigs">${avg != null ? avg + "%" : `${open}/${sh.length}`}<small>${avg != null ? "open" : "open / total"}</small></div></div><div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div></div>`);
+      } else if (s === "climate") {
+        const id = cl[0], a = H[id].attributes, off = ["off", "unavailable", "unknown"].includes(st(id)), tg = a.temperature, step = a.target_temp_step || 0.5, x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
+        const verb = a.hvac_action === "heating" ? "heating to " : a.hvac_action === "cooling" ? "cooling to " : "set to ";
+        const txt = `${a.current_temperature != null ? this._fmt(a.current_temperature) + "° now" : st(id)}${off ? " · off" : tg != null ? " · " + verb + this._fmt(tg) + "°" : ""}`;
+        sec.push(`<div class="bc" data-id="a:climate"><div class="bh" ${this._tileGo(s)}><span>${SV.climate.n}</span></div><div class="cl"><div class="cap2" style="margin:0;font-size:15px">${E(txt)}</div>${tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : ""}</div></div>`);
+      } else {
+        const inner = isCs(s) ? this._customCards(rid, "room:" + rid + ":" + s, s) : this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s);
+        sec.push(`<div class="bc ${s === "media" || s === "cameras" ? "span2" : ""}" data-id="a:${E(s)}"><div class="bh" ${this._tileGo(s)}><span>${SV[s].n}</span></div><div class="grid" data-grid="room:${rid}:${s}">${inner}</div></div>`);
+      }
+    });
+    if (!sec.length) sec.push(`<div class="bc span2" data-id="a:none"><div class="lbl">Nothing in this room yet.</div></div>`);
+    if (adm) sec.push(`<div class="tile add span2" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
+    return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div><div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button>` : ""}</div>${chips}<div class="abody">${sec.join("")}</div></div></div>`;
+  }
+  _camView() {
+    const id = this._cam, s = id && this._h.states[id];
+    if (!s || !s.attributes.entity_picture) return "";
+    const E = (t) => this._esc(t), cams = this._ents("cameras").filter((i) => this._h.states[i].attributes.entity_picture);
+    const snap = this._h.hassUrl(s.attributes.entity_picture), stream = snap.replace("/camera_proxy/", "/camera_proxy_stream/");
+    const arrows = cams.length > 1 ? `<button class="ib" data-cam="prev">‹</button><button class="ib" data-cam="next">›</button>` : "";
+    return `<div class="camv" data-cam="bg"><div class="vh"><span class="live">Live</span><span class="vt">${E(this._nm(id))}</span><span class="grow"></span>${arrows}<button class="ib" data-cam="close">✕</button></div><div class="vb"><img class="camx" data-cam="keep" data-src="${stream}" data-snap="${snap}" src="${this._camFb ? snap : stream}"></div><div class="vf">${cams.map((i) => `<button class="cc2 ${i === id ? "on" : ""}" data-id="cc:${i}" data-cam="${i}">${E(this._nm(i))}</button>`).join("")}</div></div>`;
   }
   _roomsPage() {
     const s = this._v.svc;
@@ -823,18 +1104,10 @@ class QuintDashboard extends HTMLElement {
     const other = this._ents(s).filter((i) => !known.has(this._roomOf(i)));
     if (other.length) parts.push(sec("Other", other, ""));
     const total = this._ents(s).filter(act).length;
-    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${total} active · grouped by room</div>${parts.join("")}`;
-  }
-  _roomPage() {
-    const rid = this._v.room, r = this._rooms().find((x) => x.id === rid) || { name: rid };
-    const av = this._svcs().filter((s) => (isCs(s) ? this._csItems(rid, s).length : this._ents(s, rid).length));
-    const s = av.includes(this._v.svc) ? this._v.svc : av[0];
-    return `<button class="back" data-go='${JSON.stringify({ p: "rooms", svc: this._v.svc })}'>‹ Rooms</button><h1>${r.name}</h1>
-    <div class="tabs">${av.map((x) => `<button class="${x === s ? "act" : ""}" data-go='${JSON.stringify({ p: "room", room: rid, svc: x })}'>${SV[x].i} ${SV[x].n}</button>`).join("")}</div>
-    <div class="grid" data-grid="room:${rid}:${s}">${isCs(s) ? this._customCards(rid, "room:" + rid + ":" + s, s) : s ? this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s) : ""}${this._admin() ? `<div class="tile add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : ""}</div>`;
+    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${total} active · grouped by room</div>${parts.join("")}`;
   }
   _list(s) {
-    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(${s === "cameras" ? 320 : 200}px,1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
+    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(${s === "cameras" ? 320 : 200}px,1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
   }
   _settings() {
     const E = (t) => this._esc(t), c = this._c, tab = this._v.tab || "general";
@@ -842,7 +1115,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "which ones and in which order"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "greeting, status pills, clock"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "which ones and in which order"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "clock, weather, scenes, services"], ["cards", "Cards", "custom cards you added"]];
     let body = "";
     if (tab === "general") {
       const bg = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(c.bg || {}) }, dv = localStorage.getItem("quint_dev") || "auto";
@@ -850,7 +1123,8 @@ class QuintDashboard extends HTMLElement {
         row("Export", "download all settings as JSON", `<button class="sbtn" data-s="export|">Download</button>`) +
         row("Import", "an export; merged with what is already there", `<input type="file" accept=".json,application/json" data-import="1">`)) +
       sec("Appearance", "",
-        row("Title", "top left in the navigation", `<input type="text" data-ttl value="${E(c.title || "")}" placeholder="${E(this._title || "Quint")}">`) +
+        row("Client name", "written top left on every page", `<input type="text" data-ttl value="${E(c.title || "")}" placeholder="${E(this._title || "Quint")}">`) +
+        row("Bottom text", "written next to the settings button, bottom right (empty = hide)", `<input type="text" data-cred value="${E(c.credit === undefined ? "By Quinteca" : c.credit)}" placeholder="By Quinteca">`) +
         row("Greeting name", "shown on the home page", `<input type="text" data-uname value="${E(c.name || "")}" placeholder="${E((this._h.user && this._h.user.name) || "")}">`)) +
       sec("Background", "everything sits on top of this",
         row("Theme", "colour themes", Object.keys(BG).map((k) => `<button class="swt ${bg.mode !== "image" && bg.preset === k ? "sel" : ""}" style="background:${SWATCH[k]}" title="${k}" data-s="bgp|${k}"></button>`).join("")) +
@@ -875,9 +1149,15 @@ class QuintDashboard extends HTMLElement {
       body = sec("Devices", `${Math.min(list.length, 200)} of ${list.length} shown`, row("Search", "filter by name or entity id", `<input type="text" data-dfilter value="${E(this._dflt || "")}" placeholder="light.kitchen">`) +
         list.slice(0, 200).map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<select data-map="${E(id)}"><option value="">(no room)</option>${c.rooms.map((r) => `<option value="${E(r.id)}" ${this._roomOf(id) === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>${tg(!H.includes(id), `data-tog="hide:${E(id)}"`)}`)).join(""));
     } else if (tab === "home") {
-      const P = c.pills || ["lights", "climate", "security"], all = this._svcsAll();
-      body = sec("Home page", "", row("Clock", "the big clock on the home screen", tg(!c.noClock, 'data-s="clk|"')) +
-        ["lights", "climate", "security", "media", "shades", "cameras"].filter((k) => all.includes(k)).map((k) => row(`${SV[k].i} ${E(SV[k].n)}`, "status pill next to the greeting", tg(P.includes(k), `data-s="pill|${k}"`))).join(""));
+      const all = this._svcsAll(), H = c.svcHide || [], hid = c.hide || [], sc = Object.keys(this._h.states).filter((i) => i.startsWith("scene.")).slice(0, 40);
+      body = sec("Home screen", "what the home page shows",
+        row("Clock", "the big clock on the left", tg(!c.noClock, 'data-s="flag|noClock"')) +
+        row("Weather line", "temperature, condition and sunset", tg(!c.noWeather, 'data-s="flag|noWeather"')) +
+        row("Scenes", "buttons under the greeting (your Home Assistant scenes)", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
+        row("Rooms tab", "the page with the list of rooms", tg(!c.noRooms, 'data-s="flag|noRooms"'))) +
+      sec("Services", "show or hide a card on the home page and its tab in the bottom bar",
+        all.map((k) => row(`${SV[k].i} ${E(SV[k].n)}`, H.includes(k) ? "hidden" : "shown", tg(!H.includes(k), `data-s="svcvis|${E(k)}"`))).join("")) +
+      (sc.length ? sec("Scenes", "choose which scenes are shown (the first 6 are used)", sc.map((id) => row(E(this._nm(id)), E(id), tg(!hid.includes(id), `data-tog="hide:${E(id)}"`))).join("")) : "");
     } else {
       const items = Object.entries(c.custom).flatMap(([pl, arr]) => arr.map((it, i) => ({ pl, it, i })));
       body = sec("Cards", "custom cards you added", (items.map(({ pl, it, i }) => {
@@ -887,7 +1167,7 @@ class QuintDashboard extends HTMLElement {
       }).join("") || '<div class="lbl" style="padding:6px 4px 12px">No custom cards yet.</div>') + `<div class="btns"><button class="pri" data-cc="open:home">＋ Add card</button></div>`);
     }
     const tabsHtml = tabs.map(([id, t, sub]) => `<button class="sti ${tab === id ? "act" : ""}" data-go='${JSON.stringify({ p: "settings", tab: id })}'>${SET_I[id]}<span><b>${t}</b><small>${sub}</small></span></button>`).join("");
-    return `<div class="sbar"><div><h1>Settings</h1><div class="sub">Stored on the server for every user · Quint v${VER} · ${this._rn || 0} screen updates</div></div><div class="sbtns"><button class="sbtn ${this._dirty ? "pri2" : ""}" data-s="save|">Save</button><button class="sbtn" data-s="reset|">Reset everything</button><button class="sbtn" data-s="close|">Close</button></div></div><div class="sg"><div class="snav">${tabsHtml}</div><div>${body}</div></div>`;
+    return `${this._top(false)}<div class="sbar"><div><h1>Settings</h1><div class="sub">Stored on the server for every user · Quint v${VER} · ${this._rn || 0} screen updates</div></div><div class="sbtns"><button class="sbtn ${this._dirty ? "pri2" : ""}" data-s="save|">Save</button><button class="sbtn" data-s="reset|">Reset everything</button><button class="sbtn" data-s="close|">Close</button></div></div><div class="sg"><div class="snav">${tabsHtml}</div><div>${body}</div></div>`;
   }
 
   /* ---------- render ---------- */
@@ -897,16 +1177,22 @@ class QuintDashboard extends HTMLElement {
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "settings" && !this._admin()) this._v = { p: "home" };
-    this._track = new Set(Object.keys(this._h.states).filter((i) => this._svcOf(i)));
+    this._track = new Set(Object.keys(this._h.states).filter((i) => this._svcOf(i) || i.startsWith("scene.") || i.startsWith("weather.") || i === "sun.sun"));
     Object.values(this._c.custom).flat().forEach((x) => x.entity && this._track.add(x.entity));
     this._seen = {}; this._track.forEach((i) => (this._seen[i] = this._h.states[i]));
     this._n = Object.keys(this._h.states).length;
-    const p = this._v.p, V = this._v;
-    const body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._roomPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : this._settings();
-    const nav = `<button class="${p === "home" ? "act" : ""}" data-go='{"p":"home"}'>${HOME_I}Home</button>` + this._svcs().map((s) => `<button style="--c:${SV[s].c}" class="${V.svc === s || p === s ? "act" : ""}" ${this._tileGo(s)}>${SV[s].i}${SV[s].n}</button>`).join("");
+    const p = this._v.p, V = this._v, c = this._c;
+    if (this._cam && !(this._h.states[this._cam] && this._h.states[this._cam].attributes.entity_picture)) this._cam = null;
+    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : this._settings();
+    if (p !== "home" && p !== "room") body = `<div class="page">${body}</div>`;
+    const tab = (cls, go, ic, t, st) => `<button class="t ${cls}" ${st || ""} ${go}>${ic}<span>${t}</span></button>`;
+    const tabs = tab(p === "home" ? "act" : "", `data-go='{"p":"home"}'`, HOME_I, "Home") +
+      (c.noRooms || !this._rooms().length ? "" : tab(p === "room" ? "act" : "", `data-go='{"p":"room"}'`, ICONS.door, "Rooms")) +
+      this._svcs().map((s) => tab((p === "rooms" && V.svc === s) || p === s ? "act" : "", this._tileGo(s), SV[s].i, SV[s].n)).join("");
+    const cr = this._credit(), adm = this._admin();
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="bgl"><i></i></div><div class="app"><header><div class="brand">${this._narrow || localStorage.getItem("quint_full") === "1" ? `<button class="ib" data-tog="menu:0">☰</button>` : ""}${LOGO_I}${this._esc(this._c.title || this._title || "Quint")}</div><div class="hb"><span class="tm">@@T@@</span>${this._admin() ? `<button class="ib" data-go='{"p":"settings"}'>${GEAR_I}</button>` : ""}</div></header><main class="${changed ? "anim" : ""}">${body}</main><nav>${nav}</nav></div>${this._dialog()}`;
+    const html = `<div class="bgl"><i></i></div><div class="app"><main class="${changed ? "anim" : ""}">${body}</main><nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}${adm ? `<button class="gb" data-go='{"p":"settings"}'>${GEAR_I}</button>` : ""}</div></nav></div>${this._dialog()}${this._camView()}`;
     if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
