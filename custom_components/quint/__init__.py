@@ -118,6 +118,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     title = entry.data.get("title", "Quint")
     js = Path(__file__).parent / "frontend" / "quint-panel.js"
     stamp = int((await hass.async_add_executor_job(js.stat)).st_mtime)
+    guard = f"{STATIC_URL}/quint-guard.js?v={VERSION}.{stamp}"
+    frontend.add_extra_js_url(hass, guard)
+    data["guard"] = guard
     await panel_custom.async_register_panel(
         hass,
         webcomponent_name="quint-panel",
@@ -133,4 +136,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend.async_remove_panel(hass, PANEL_PATH)
+    guard = hass.data.get(DOMAIN, {}).pop("guard", None)
+    if guard:
+        frontend.remove_extra_js_url(hass, guard)
     return True

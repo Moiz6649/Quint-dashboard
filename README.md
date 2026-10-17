@@ -3,6 +3,7 @@
 Standalone Savant-style dashboard for Home Assistant. Installs as an integration and adds its own **sidebar panel**. No Lovelace setup, no token, no YAML.
 
 - Home page (wall-panel style): client name top left, big clock, date, weather + sunset, greeting, scene buttons, and one live card per service – Security (status, doors/locks, alarm mode), Cameras (live picture), Lighting (rooms with on/off), Climate, Media (now playing + controls), Shades
+- **v1.10.0**: **several intercoms** (Settings → Intercoms: add one per door station, each with its own tile, camera, bell and buttons); **Automations** (choose automations and scripts in Settings → Automations: a home tile and tab with an on/off switch and ▶ run button); **Access** (Settings → Access: *Open Quint first* and *Lock to Quint* for normal users, for all of them or only chosen ones)
 - **v1.9.3**: the room photo now fills the **whole screen** behind that room's page (slightly darkened so text stays readable); the normal background returns when you leave the room
 - **v1.9.2**: **floors** (tabs like Ground / First / Outside on the Rooms page; add, rename, order floors and choose each room's floor in Settings → Rooms; HA floors are imported automatically); **room photos** are now set in Settings → Room photos (shared for everyone by an admin with a switch per room; normal users can pick their own photo per room on their device); the photo button is removed from the room page
 - **v1.9.1**: scenes are added only in **Settings → Scenes** (not on the home page); a scene can belong to a room and then also shows on that room's page; every user now has a settings button with **Scenes** and **Background** (saved on their own device); **room photo** button at the top right of every room page; Intercom buttons (Video / Audio / Open door) can be shown or hidden in Settings → Intercom
@@ -68,6 +69,20 @@ Left menu, right panels, with **Save / Reset everything / Close** at the top. Ch
 
 ### Scenes
 Scenes are added in **Settings → Scenes** (the home page only shows and runs them). Set your devices the way you want, press **＋ New scene**, pick a room (optional), choose the devices and save. A scene with a room also shows on that room's page. Admins can save a scene for **everyone** (stored on the server) or **only this device**. Normal users also have the Settings button, but only with **Scenes** and **Background**, and everything they save stays on their own device.
+
+### Several intercoms
+**Settings → Intercoms**: press **＋ Add intercom** for every door station, pick it in the list and set its name, camera, doorbell sensor, button visibility and the Open door / Audio call / Video call actions. Each intercom gets its own tile (and rings on its own doorbell). Settings saved by older versions become the first intercom automatically.
+
+### Automations
+**Settings → Automations** lists every Home Assistant automation and script. Switch on the ones you want on the dashboard: they appear in an **Automations** tile and tab, where users can switch an automation on/off or press **▶** to run it (scripts only have ▶).
+
+### Access (default page and lock)
+**Settings → Access** (admin only):
+- **Open Quint first** – after signing in, normal users land on Quint instead of the default Home Assistant page (once per browser session; they can still go elsewhere).
+- **Lock to Quint** – normal users cannot open other Home Assistant pages: the sidebar is hidden and any other address sends them back to Quint.
+- **Who is locked** – leave all users off to lock every normal user, or switch on only the users you want to lock. Admins are never affected.
+
+This works through a small script (`quint-guard.js`) that Quint loads on every Home Assistant page. It hides and redirects the screens; it is **not a security wall**. For real limits keep these users non-admin. Restart Home Assistant once after updating so the script is loaded.
 
 ### Floors
 In **Settings → Rooms** add floors (or let Quint import your Home Assistant floors), then choose a floor for each room. The Rooms page shows one tab per floor (rooms without a floor are under **Other**).
