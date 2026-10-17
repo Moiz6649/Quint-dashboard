@@ -46,3 +46,18 @@ The dashboard measures its own width and picks a layout automatically:
 - **Desktop / wall panel** (≥ 1200 px): wide grid, large clock, side rail, multi-column cameras.
 
 Admins can force a layout per device in **Settings → Screen layout** (e.g. a wall tablet set to *Desktop / wall panel*).
+
+## Settings page (admin only)
+Left menu, right panels, with **Save / Reset everything / Close** at the top. Changes are staged: nothing is stored on the server until you press **Save**, and **Close** (or leaving the page) asks before discarding.
+- **General** – settings file (export / import JSON), title, greeting name, **Background**, and per-device screen layout and fullscreen.
+- **Pages** – rename, show/hide and re-order the services (home tiles and bottom bar).
+- **Rooms** – rename, show/hide, re-order, add, delete, re-import from HA areas.
+- **Devices** – search, assign a room, hide.
+- **Home page** – clock and which status pills show next to the greeting.
+- **Cards** – every custom card you added, with delete and add.
+
+### Background
+Pick a colour theme, or upload your own photo (shrunk to 1920 px and stored on the HA server in `.storage/quint.background`). **Darken** and **Blur** keep text readable. The background is shared by every user.
+
+### More (admin)
+**More** is always shown to admins so they can add extra cards to any room (＋ Add card in every room). Other users only see it once it has cards.

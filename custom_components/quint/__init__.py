@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, PANEL_PATH, STATIC_URL, VERSION
+from .util import valid_image
 
 
 class QuintConfigView(HomeAssistantView):
@@ -33,11 +34,45 @@ class QuintConfigView(HomeAssistantView):
         return self.json({"ok": True})
 
 
+class QuintBackgroundView(HomeAssistantView):
+    """Optional custom background photo shared by every user."""
+
+    url = "/api/quint/background"
+    name = "api:quint:background"
+    requires_auth = True
+
+    def __init__(self, store: Store) -> None:
+        self._store = store
+
+    async def get(self, request):
+        data = await self._store.async_load() or {}
+        return self.json({"data": data.get("data", "")})
+
+    async def post(self, request):
+        user = request.get("hass_user")
+        if user is None or not user.is_admin:
+            return self.json_message("Admin required", 403)
+        body = await request.json()
+        image = body.get("data", "") if isinstance(body, dict) else ""
+        if not valid_image(image):
+            return self.json_message("Invalid image", 400)
+        await self._store.async_save({"data": image})
+        return self.json({"ok": True})
+
+    async def delete(self, request):
+        user = request.get("hass_user")
+        if user is None or not user.is_admin:
+            return self.json_message("Admin required", 403)
+        await self._store.async_remove()
+        return self.json({"ok": True})
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     data = hass.data.setdefault(DOMAIN, {})
     if not data.get("static"):
         store = Store(hass, 1, f"{DOMAIN}.config")
         hass.http.register_view(QuintConfigView(store))
+        hass.http.register_view(QuintBackgroundView(Store(hass, 1, f"{DOMAIN}.background")))
         await hass.http.async_register_static_paths(
             [StaticPathConfig(STATIC_URL, str(Path(__file__).parent / "frontend"), False)]
         )

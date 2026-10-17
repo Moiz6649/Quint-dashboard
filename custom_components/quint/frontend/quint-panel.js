@@ -9,6 +9,7 @@ const SV = {
   security:{ n: "Security", c: "#34c98b", i: ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>') },
   more:    { n: "More",     c: "#ff6fae", i: ic('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>') },
 };
+const SV_DEF = Object.fromEntries(Object.entries(SV).map(([k, v]) => [k, v.n]));
 const HOME_I = ic('<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>');
 const GEAR_I = ic('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>');
 const ICONS = {
@@ -27,18 +28,37 @@ const ICONS = {
   home: ic('<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>'),
 };
 const LOGO_I = ic('<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 8v8M8 10l4 2 4-2"/>');
+const SET_I = {
+  general: ic('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'),
+  pages: ic('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h7M17.5 14v7"/>'),
+  rooms: ICONS.door, devices: ICONS.plug, home: ICONS.home,
+  cards: ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'),
+};
 const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.6.0";
+const VER = "1.7.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
+const BG = {
+  midnight: "radial-gradient(900px 520px at 88% -8%,rgba(245,166,35,.16),transparent),radial-gradient(800px 520px at -10% 108%,rgba(74,163,255,.15),transparent),linear-gradient(160deg,#080d19,#131c34)",
+  graphite: "linear-gradient(160deg,#15171c,#2b2f38)",
+  aurora: "radial-gradient(900px 600px at 20% 0%,rgba(52,201,139,.30),transparent),radial-gradient(800px 600px at 90% 100%,rgba(179,136,255,.26),transparent),linear-gradient(160deg,#07121a,#10202c)",
+  sunset: "radial-gradient(900px 600px at 80% 0%,rgba(255,122,89,.36),transparent),radial-gradient(800px 600px at 0% 100%,rgba(179,136,255,.26),transparent),linear-gradient(160deg,#1a0f1f,#2a1a2e)",
+  ocean: "radial-gradient(900px 600px at 10% 0%,rgba(74,163,255,.38),transparent),linear-gradient(160deg,#04111f,#0a2540)",
+  forest: "radial-gradient(900px 600px at 90% 0%,rgba(52,201,139,.30),transparent),linear-gradient(160deg,#07140f,#10261c)",
+};
+const FRESH = () => ({ rooms: [], map: {}, hide: [], name: "", custom: {}, order: {} });
 
 const CSS = `
 :host{display:block;height:100vh;overflow-y:auto;--ac:#f5a623;--ok:#34c98b;--bad:#ff5d6c;--mu:#8d9ab8;--bd:rgba(255,255,255,.10);color:#eef2fa;font-family:"Inter",-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .si{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.12em}
-.app{min-height:100%;display:flex;flex-direction:column;background:radial-gradient(900px 520px at 88% -8%,rgba(245,166,35,.16),transparent),radial-gradient(800px 520px at -10% 108%,rgba(74,163,255,.15),transparent),linear-gradient(160deg,#080d19,#131c34)}
+.app{min-height:100%;display:flex;flex-direction:column;position:relative;z-index:1}
+#r{position:relative}
+.bgl{position:sticky;top:0;height:100vh;margin-bottom:-100vh;overflow:hidden;pointer-events:none;z-index:0;background:#0b1220}
+.bgl i{position:absolute;inset:-30px;background-image:var(--qbg-img,none);background-size:cover;background-position:center;filter:blur(var(--qbg-blur,0px))}
+.bgl::after{content:"";position:absolute;inset:0;background:rgba(5,8,16,var(--qbg-dim,0))}
 header{display:flex;justify-content:space-between;align-items:center;padding:18px 28px}
 .brand{display:flex;align-items:center;gap:12px;font-size:20px;letter-spacing:7px;font-weight:600;text-transform:uppercase}
 .brand .si{font-size:30px;color:var(--ac)}
@@ -97,6 +117,29 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .moving{transform:scale(1.04);box-shadow:0 20px 50px -10px #000c,0 0 0 3px var(--ac);z-index:5;opacity:.93;transition:transform .15s}
 .hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:100;white-space:nowrap}
 ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:96px}.tv{font-size:30px;font-weight:300;line-height:1.15;margin:4px 0 2px;word-break:break-word}
+/* ===== settings page ===== */
+.sbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:14px 0 20px}
+.sbar h1{font-size:60px;font-weight:700;letter-spacing:-1.5px;margin:0;line-height:1}
+.sbar .sub{font-size:14px;margin:8px 0 0}
+.sbtns{display:flex;gap:10px;flex-wrap:wrap}
+.sbtn{border:0;border-radius:30px;padding:14px 24px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
+.sbtn.pri2{background:var(--ac);color:#000}
+.sc .sbtn{padding:9px 16px;font-size:12px}
+.sg{display:grid;grid-template-columns:270px minmax(0,1fr);gap:18px;align-items:start}
+.snav{display:flex;flex-direction:column;gap:8px}
+.sti{display:flex;gap:14px;align-items:center;text-align:left;width:100%;padding:14px 16px;border-radius:18px;border:1px solid var(--bd);background:rgba(255,255,255,.06)}
+.sti.act{background:rgba(255,255,255,.22)}
+.sti .si{font-size:22px;flex:none;color:#cfd6e6}
+.sti b{display:block;font-size:16px;font-weight:600}.sti small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
+.ssec{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:26px;padding:22px;margin-bottom:18px}
+.shd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
+.shd small{letter-spacing:0;text-transform:none;font-weight:400;color:var(--mu);font-size:12px;text-align:right}
+.srow{display:grid;grid-template-columns:minmax(0,34%) minmax(0,1fr);gap:16px;align-items:center;background:rgba(255,255,255,.06);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;margin-bottom:8px}
+.sn{font-weight:600}.ss{color:var(--mu);font-size:12px;margin-top:2px;word-break:break-all}
+.sc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}.sc>input[type=text],.sc>select{flex:1;min-width:120px}
+.sc input[type=range]{margin-top:0;flex:1;min-width:140px}.sc input[type=file]{color:var(--mu);font-size:13px;max-width:100%}
+.ib2{background:rgba(255,255,255,.1);border:0;border-radius:10px;width:36px;height:36px;flex:none}.ib2:disabled{opacity:.3}
+.swt{width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.18);cursor:pointer;padding:0;flex:none}.swt.sel{border-color:#fff;box-shadow:0 0 0 2px var(--ac)}
 /* ===== device profiles: phone / tablet / desktop (set by JS from the panel width) ===== */
 ha-icon{--mdc-icon-size:24px}nav button ha-icon{--mdc-icon-size:23px}
 :host([data-dev="phone"]) header{padding:10px 14px}
@@ -122,6 +165,14 @@ ha-icon{--mdc-icon-size:24px}nav button ha-icon{--mdc-icon-size:23px}
 :host([data-dev="phone"]) .ov{place-items:end center;padding:0}
 :host([data-dev="phone"]) .dlg{width:100%;max-height:92vh;border-radius:28px 28px 0 0}
 :host([data-dev="phone"]) .hint{bottom:78px}
+:host([data-dev="phone"]) .sg{grid-template-columns:minmax(0,1fr)}
+:host([data-dev="phone"]) .snav{flex-direction:row;overflow-x:auto;padding-bottom:4px}
+:host([data-dev="phone"]) .sti{width:auto;flex:none;white-space:nowrap;padding:10px 14px}
+:host([data-dev="phone"]) .sti small{display:none}
+:host([data-dev="phone"]) .srow{grid-template-columns:minmax(0,1fr);gap:8px}
+:host([data-dev="phone"]) .sbar h1{font-size:38px}
+:host([data-dev="phone"]) .sbtn{padding:11px 16px}
+:host([data-dev="phone"]) .ssec{padding:16px;border-radius:22px}
 :host([data-dev="tablet"]) main{padding:6px 24px 24px}
 :host([data-dev="tablet"]) .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
 :host([data-dev="tablet"]) .clk{font-size:72px}
@@ -167,6 +218,8 @@ class QuintDashboard extends HTMLElement {
     R.addEventListener("pointermove", (e) => this._pmove(e));
     R.addEventListener("pointerup", () => this._pup());
     R.addEventListener("pointercancel", () => this._pup());
+    R.addEventListener("input", (e) => this._input(e));
+    this._applyBg();
     R.addEventListener("touchmove", (e) => { if (this._mv) e.preventDefault(); }, { passive: false });
     R.addEventListener("contextmenu", (e) => { if (this._hold || this._mv) e.preventDefault(); });
   }
@@ -302,11 +355,89 @@ class QuintDashboard extends HTMLElement {
   }
 
   /* ---------- helpers ---------- */
-  _save() {
+  _save(now) {
     localStorage.setItem(KEY, JSON.stringify(this._c));
+    if (this._v.p === "settings" && !now) { this._dirty = true; return; }
+    if (now) { this._dirty = false; this._snap = JSON.stringify(this._c); }
+    this._push();
+  }
+  _push() {
     if (!this._h || !this._srv) return;
     clearTimeout(this._st);
-    this._st = setTimeout(() => this._h.callApi("POST", "quint/config", this._c).catch(() => {}), 400);
+    this._st = setTimeout(() => this._h.callApi("POST", "quint/config", this._c).catch(() => {}), 300);
+  }
+  _revert() {
+    try { this._c = { ...FRESH(), ...JSON.parse(this._snap) }; } catch (e) {}
+    localStorage.setItem(KEY, JSON.stringify(this._c));
+    this._dirty = false; this._applyBg(); this._syncTpl();
+  }
+  _toast(t) { this._hint(t); clearTimeout(this._tt); this._tt = setTimeout(() => this._hint(""), 1800); }
+  _applyBg() {
+    const b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(this._c.bg || {}) };
+    const img = b.mode === "image" && this._bgData ? `url("${this._bgData}")` : BG[b.preset] || BG.midnight;
+    this.style.setProperty("--qbg-img", img);
+    this.style.setProperty("--qbg-dim", String(Math.max(0, Math.min(80, +b.dim || 0)) / 100));
+    this.style.setProperty("--qbg-blur", Math.max(0, Math.min(20, +b.blur || 0)) + "px");
+  }
+  _loadBg() {
+    this._h.callApi("GET", "quint/background").then((d) => { this._bgData = (d && d.data) || ""; this._applyBg(); this._draw(); }).catch(() => {});
+  }
+  async _pickBg(file) {
+    try {
+      const url = URL.createObjectURL(file), img = new Image();
+      await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
+      const sc = Math.min(1, 1920 / Math.max(img.width, img.height)), cv = document.createElement("canvas");
+      cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      const data = cv.toDataURL("image/jpeg", 0.8);
+      await this._h.callApi("POST", "quint/background", { data });
+      this._bgData = data;
+      this._c.bg = { dim: 35, ...(this._c.bg || {}), mode: "image" };
+      this._save(); this._applyBg(); this._draw(true); this._toast("Photo uploaded — press Save");
+    } catch (e) { this._toast("Could not use that photo"); }
+  }
+  _importCfg(o) {
+    const c = this._c;
+    (o.rooms || []).forEach((r) => { if (r && r.id && !c.rooms.some((x) => x.id === r.id)) c.rooms.push(r); });
+    Object.assign(c.map, o.map || {}); c.hide = [...new Set([...(c.hide || []), ...(o.hide || [])])];
+    Object.entries(o.custom || {}).forEach(([k, a]) => { c.custom[k] = c.custom[k] || []; (a || []).forEach((it) => { if (it && !c.custom[k].some((x) => x.uid && x.uid === it.uid)) c.custom[k].push(it); }); });
+    c.order = { ...(c.order || {}), ...(o.order || {}) };
+    ["name", "title", "bg", "pills"].forEach((k) => { if (o[k]) c[k] = o[k]; });
+    if (typeof o.noClock === "boolean") c.noClock = o.noClock;
+    c.svcTitle = { ...(c.svcTitle || {}), ...(o.svcTitle || {}) };
+    c.svcHide = [...new Set([...(c.svcHide || []), ...(o.svcHide || [])])];
+    if (o.svcOrder) c.svcOrder = o.svcOrder;
+    this._save(); this._applyBg(); this._syncTpl(); this._draw(true);
+  }
+  _mv(arr, i, d) { const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  _sact(a, v) {
+    const c = this._c;
+    if (a === "save") { this._push(); this._dirty = false; this._snap = JSON.stringify(c); this._toast("Saved"); this._draw(true); return; }
+    if (a === "close") { if (this._dirty && !confirm("Discard unsaved changes?")) return; if (this._dirty) this._revert(); return this._nav("home"); }
+    if (a === "reset") {
+      if (!confirm("Reset everything? Rooms, device assignments, titles and custom cards are cleared. Press Close afterwards to undo, or Save to keep it.")) return;
+      this._c = FRESH(); this._importRooms(false); this._applyBg(); this._syncTpl(); this._save(); this._draw(true); return;
+    }
+    if (a === "export") {
+      const al = document.createElement("a"); al.href = URL.createObjectURL(new Blob([JSON.stringify({ quint: VER, ...c }, null, 2)], { type: "application/json" }));
+      al.download = "quint-settings.json"; al.click(); setTimeout(() => URL.revokeObjectURL(al.href), 2000); return;
+    }
+    if (a === "bgp") c.bg = { ...(c.bg || {}), preset: v, mode: "preset" };
+    else if (a === "bgm") c.bg = { ...(c.bg || {}), mode: "image" };
+    else if (a === "bgx") { this._h.callApi("DELETE", "quint/background").catch(() => {}); this._bgData = ""; c.bg = { ...(c.bg || {}), mode: "preset" }; }
+    else if (a === "svcvis") c.svcHide = (c.svcHide || []).includes(v) ? c.svcHide.filter((x) => x !== v) : [...(c.svcHide || []), v];
+    else if (a === "svcup" || a === "svcdn") { const l = this._svcsAll(); this._mv(l, l.indexOf(v), a === "svcup" ? -1 : 1); c.svcOrder = l; }
+    else if (a === "rup" || a === "rdn") this._mv(c.rooms, +v, a === "rup" ? -1 : 1);
+    else if (a === "pill") { const P = c.pills || ["lights", "climate", "security"]; c.pills = P.includes(v) ? P.filter((x) => x !== v) : [...P, v]; }
+    else if (a === "clk") c.noClock = !c.noClock;
+    else return;
+    this._save(); this._applyBg(); this._draw(true);
+  }
+  _input(e) {
+    const t = e.target, d = t.dataset;
+    if (d.bg && this._admin()) { this._c.bg = { ...(this._c.bg || {}), [d.bg]: +t.value }; this._applyBg(); }
+    if (d.dfilter !== undefined) { this._dflt = t.value; this._draw(true); }
   }
   async _loadCfg() {
     try {
@@ -321,6 +452,7 @@ class QuintDashboard extends HTMLElement {
     if (this._h && !this._c.rooms.length) this._importRooms(false);
     this._loaded = true;
     this._conn = this._h.connection; this._syncTpl();
+    this._applyBg(); this._loadBg();
     this._applyFull(); this._draw(true);
   }
   _applyFull() {
@@ -354,7 +486,13 @@ class QuintDashboard extends HTMLElement {
     return Object.keys(this._h.states).filter((id) => this._svcOf(id) === svc && !this._c.hide.includes(id) && (!room || this._roomOf(id) === room));
   }
   _nm(id) { return this._h.states[id].attributes.friendly_name || id; }
-  _svcs() { return Object.keys(SV).filter((s) => isCs(s) ? this._csHas(s) : this._ents(s).length); }
+  _svcsAll() {
+    const o = this._c.svcOrder || [], keys = Object.keys(SV).filter((x) => (isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
+    const r = (k) => { const i = o.indexOf(k); return i < 0 ? 1000 + keys.indexOf(k) : i; };
+    return keys.slice().sort((p, q) => r(p) - r(q));
+  }
+  _svcs() { const h = this._c.svcHide || []; return this._svcsAll().filter((x) => !h.includes(x)); }
+  _titles() { const T = this._c.svcTitle || {}; Object.keys(SV).forEach((k) => { SV[k].n = T[k] || (k.startsWith("cs:") ? k.slice(3) : SV_DEF[k]); }); }
   _rooms() { return this._c.rooms.filter((r) => r.on !== false); }
   _isOn(id) { return !OFF.includes(this._h.states[id].state); }
   _stats(svc) {
@@ -375,23 +513,28 @@ class QuintDashboard extends HTMLElement {
     return { n, t: e.length };
   }
   _admin() { return !!(this._h && this._h.user && this._h.user.is_admin); }
-  _nav(p, x = {}) { this._v = { p, ...x }; this._draw(true); }
+  _nav(p, x = {}) {
+    if (this._v.p === "settings" && p !== "settings" && this._dirty) { if (!confirm("Discard unsaved settings changes?")) return; this._revert(); }
+    if (p === "settings" && this._v.p !== "settings") { this._snap = JSON.stringify(this._c); this._dirty = false; }
+    this._v = { p, ...x }; this._draw(true);
+  }
   _tileGo(s) { return s === "cameras" || s === "security" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
 
   /* ---------- events ---------- */
   _click(e) {
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s));
     if (!t) return;
     const d = t.dataset;
-    if ((d.cc || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
+    if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
     if (d.tpl) return this._tap(d.tpl);
+    if (d.s) { const i = d.s.indexOf("|"); return this._sact(d.s.slice(0, i), d.s.slice(i + 1)); }
     if (d.go) { const { p, ...x } = JSON.parse(d.go); return this._nav(p, x); }
     if (d.cc) {
       const [k, r, i] = d.cc.split(":");
       if (k === "open") { const cv = this._v.svc || ""; this._dlg = { room: r, place: r, mode: "entity", tap: "details", sn: cv.startsWith("cs:") ? cv.slice(3) : cv === "more" ? "More" : "" }; return this._draw(true); }
       if (k === "cancel") { this._dlg = null; return this._draw(true); }
-      if (k === "del") { this._c.custom[r].splice(+i, 1); this._save(); this._syncTpl(); return this._draw(true); }
+      if (k === "del") { this._c.custom[r].splice(+i, 1); this._save(this._v.p !== "settings"); this._syncTpl(); return this._draw(true); }
       if (k === "save") return this._saveCC();
     }
     if (d.act) { const [dom, srv] = d.act.split("."); const data = d.x ? JSON.parse(d.x) : {}; this._h.callService(dom, srv, { entity_id: d.e, ...data }); return; }
@@ -410,6 +553,15 @@ class QuintDashboard extends HTMLElement {
   _change(e) {
     const t = e.target, d = t.dataset, adm = this._admin();
     if (d.devsel !== undefined) { localStorage.setItem("quint_dev", t.value); this._layout(); this._draw(true); return; }
+    if (adm && d.bgfile !== undefined) { const fl = t.files && t.files[0]; if (fl) this._pickBg(fl); t.value = ""; return; }
+    if (adm && d.import !== undefined) {
+      const fl = t.files && t.files[0];
+      if (fl) fl.text().then((tx) => { try { this._importCfg(JSON.parse(tx)); this._toast("Imported — press Save"); } catch (er) { this._toast("Not a valid settings file"); } });
+      t.value = ""; return;
+    }
+    if (adm && d.bg) { this._save(); return; }
+    if (adm && d.ttl !== undefined) { this._c.title = t.value.trim().slice(0, 30); this._save(); this._draw(true); return; }
+    if (adm && d.svct) { this._c.svcTitle = this._c.svcTitle || {}; this._c.svcTitle[d.svct] = t.value.trim().replace(/['"<>\\&]/g, "").slice(0, 24); this._save(); this._draw(true); return; }
     if (d.slider) { const [dom, srv, key, div] = d.slider.split("|"); this._h.callService(dom, srv, { entity_id: d.e, [key]: +t.value / +div }); }
     if (adm && d.rname !== undefined) { this._c.rooms[+d.rname].name = t.value; this._save(); }
     if (adm && d.map) { this._c.map[d.map] = t.value; this._save(); }
@@ -472,11 +624,13 @@ class QuintDashboard extends HTMLElement {
   }
   _sched() { if (this._pending) return; this._pending = setTimeout(() => { this._pending = null; this._draw(); }, 150); }
   _csPage(s) {
-    const parts = this._rooms().map((r) => [r, this._csItems(r.id, s)]).filter(([, e]) => e.length).map(([r, e]) => {
+    const adm = this._admin();
+    const parts = this._rooms().map((r) => [r, this._csItems(r.id, s)]).filter(([, e]) => adm || e.length).map(([r, e]) => {
       const n = e.filter((x) => x.it.entity && this._h.states[x.it.entity] && this._isOn(x.it.entity)).length;
-      return `<section><div class="rh"><div class="grow" data-go='${JSON.stringify({ p: "room", room: r.id, svc: s })}'><div class="rn">${r.name}</div><div class="lbl">${n} active of ${e.length}</div></div></div><div class="grid" data-grid="room:${r.id}:${s}">${this._customCards(r.id, "room:" + r.id + ":" + s, s)}</div></section>`;
+      const add = adm ? `<div class="tile add" data-cc="open:${r.id}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : "";
+      return `<section><div class="rh"><div class="grow" data-go='${JSON.stringify({ p: "room", room: r.id, svc: s })}'><div class="rn">${r.name}</div><div class="lbl">${n} active of ${e.length}</div></div></div><div class="grid" data-grid="room:${r.id}:${s}">${this._customCards(r.id, "room:" + r.id + ":" + s, s)}${add}</div></section>`;
     });
-    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">Grouped by room</div>${parts.join("") || '<div class="card">No cards yet.</div>'}`;
+    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${adm ? "Admin · add cards to any room with ＋" : "Grouped by room"}</div>${parts.join("") || '<div class="card">No cards yet.</div>'}`;
   }
   _homeCards() {
     const n = (this._c.custom.home || []).length, adm = this._admin();
@@ -616,7 +770,7 @@ class QuintDashboard extends HTMLElement {
     if (place !== "home") { item.svc = v("cc-sn").replace(/['"<>\\&]/g, "").slice(0, 24); const ic = v("cc-sico"); if (/^mdi:[a-z0-9-]+$/i.test(ic)) item.svcIcon = ic; }
     item.uid = this._uid();
     (this._c.custom[place] = this._c.custom[place] || []).push(item);
-    this._save(); this._dlg = null; this._syncTpl();
+    this._save(true); this._dlg = null; this._syncTpl();
     this._v = place === "home" ? { p: "home" } : { p: "rooms", svc: this._csKey(item) };
     this._last = null; this._draw(true);
   }
@@ -637,8 +791,8 @@ class QuintDashboard extends HTMLElement {
     const who = this._c.name || (this._h.user && this._h.user.name) || "";
     const L = this._svcs();
     const pill = (k) => { const t = this._stats(k); return `<span class="pill" style="--c:${SV[k].c}">${SV[k].i}${t.big} ${t.lbl}</span>`; };
-    return `<section class="hero"><div><div class="clk">@@T@@</div><div class="sub">${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</div></div>
-    <div><h1>${g}${who ? ", " + who : ""}</h1><div class="pills">${["lights", "climate", "security"].filter((k) => L.includes(k)).map(pill).join("")}</div></div></section>
+    return `<section class="hero"><div>${this._c.noClock ? "" : `<div class="clk">@@T@@</div>`}<div class="sub">${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</div></div>
+    <div><h1>${g}${who ? ", " + who : ""}</h1><div class="pills">${(this._c.pills || ["lights", "climate", "security"]).filter((k) => L.includes(k)).map(pill).join("")}</div></div></section>
     <div class="grid">${L.map((k) => { const t = this._stats(k); return `<div class="tile ${t.on ? "on" : ""}" data-id="s:${k}" style="--c:${SV[k].c}" ${this._tileGo(k)}><div class="bdg">${SV[k].i}</div><div><div class="num">${t.big}</div><div class="nm">${SV[k].n}</div><div class="lbl">${t.lbl}</div></div></div>`; }).join("") || '<div class="card">No supported devices found.</div>'}</div>${this._homeCards()}`;
   }
   _roomsTiles() {
@@ -675,20 +829,63 @@ class QuintDashboard extends HTMLElement {
     return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(${s === "cameras" ? 320 : 200}px,1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
   }
   _settings() {
-    const all = Object.keys(this._h.states).filter((i) => this._svcOf(i));
-    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>Settings</h1><div class="lbl" style="margin-bottom:10px">Quint v${VER} · screen updates since opening: ${this._rn || 0}</div>
-    <div class="card"><div class="nm">Greeting name</div><input type=text data-uname value="${this._c.name}" placeholder="${(this._h.user && this._h.user.name) || ""}"></div>
-    <div class="card" style="margin-top:12px"><div class="row"><div class="grow"><div class="nm">Fullscreen</div><div class="st">Hide the Home Assistant sidebar on this device</div></div><button class="sw ${localStorage.getItem("quint_full") === "1" ? "on" : ""}" data-tog="full:0"></button></div></div>
-    <div class="card" style="margin-top:12px"><div class="row"><div class="grow"><div class="nm">Screen layout</div><div class="st">Detected: ${this._auto || "–"} · ${this._w || 0}px wide. Pick a layout to force it on this device.</div></div><select data-devsel="1" style="width:150px">${[["auto", "Auto"], ["phone", "Phone"], ["tablet", "Tablet"], ["desktop", "Desktop / wall panel"]].map(([v, l]) => `<option value="${v}" ${(localStorage.getItem("quint_dev") || "auto") === v ? "selected" : ""}>${l}</option>`).join("")}</select></div></div>
-    <h2>Rooms</h2><div class="card">${this._c.rooms.map((r, i) => `<div class="row" style="margin:6px 0"><input type=text data-rname="${i}" value="${r.name}"><button class="sw ${r.on !== false ? "on" : ""}" data-tog="room:${i}"></button><button class="ib" data-tog="del:${i}">✕</button></div>`).join("")}
-    <div class="btns"><button data-tog="add:0">＋ Add room</button><button data-tog="import:0">Re-import from HA areas</button></div></div>
-    <h2>Devices → room &amp; visibility</h2><div class="card"><table>${all.map((id) => `<tr><td>${SV[this._svcOf(id)].i} ${this._nm(id)}<div class="lbl">${id}</div></td><td><select data-map="${id}"><option value="">(none)</option>${this._c.rooms.map((r) => `<option value="${r.id}" ${this._roomOf(id) === r.id ? "selected" : ""}>${r.name}</option>`).join("")}</select></td><td><button class="sw ${this._c.hide.includes(id) ? "" : "on"}" data-tog="hide:${id}"></button></td></tr>`).join("")}</table></div>`;
+    const E = (t) => this._esc(t), c = this._c, tab = this._v.tab || "general";
+    const row = (l, sub, ctl) => `<div class="srow"><div class="sl"><div class="sn">${l}</div>${sub ? `<div class="ss">${sub}</div>` : ""}</div><div class="sc">${ctl}</div></div>`;
+    const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
+    const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
+    const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
+    const tabs = [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "which ones and in which order"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "greeting, status pills, clock"], ["cards", "Cards", "custom cards you added"]];
+    let body = "";
+    if (tab === "general") {
+      const bg = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(c.bg || {}) }, dv = localStorage.getItem("quint_dev") || "auto";
+      body = sec("Settings file", "settings are stored on the server and shared by every user; a file makes them portable",
+        row("Export", "download all settings as JSON", `<button class="sbtn" data-s="export|">Download</button>`) +
+        row("Import", "an export; merged with what is already there", `<input type="file" accept=".json,application/json" data-import="1">`)) +
+      sec("Appearance", "",
+        row("Title", "top left in the navigation", `<input type="text" data-ttl value="${E(c.title || "")}" placeholder="${E(this._title || "Quint")}">`) +
+        row("Greeting name", "shown on the home page", `<input type="text" data-uname value="${E(c.name || "")}" placeholder="${E((this._h.user && this._h.user.name) || "")}">`)) +
+      sec("Background", "everything sits on top of this",
+        row("Theme", "colour themes", Object.keys(BG).map((k) => `<button class="swt ${bg.mode !== "image" && bg.preset === k ? "sel" : ""}" style="background:${BG[k]}" title="${k}" data-s="bgp|${k}"></button>`).join("")) +
+        row("Photo", "your own picture; jpg or png, shrunk to fit automatically", `<input type="file" accept="image/*" data-bgfile="1">${this._bgData ? `<button class="sbtn" data-s="bgm|">${bg.mode === "image" ? "In use" : "Use photo"}</button><button class="sbtn" data-s="bgx|">Remove</button>` : ""}`) +
+        row("Darken", "easier to read text on a bright photo", `<input type="range" min="0" max="80" value="${+bg.dim || 0}" data-bg="dim">`) +
+        row("Blur", "soften the background", `<input type="range" min="0" max="20" value="${+bg.blur || 0}" data-bg="blur">`)) +
+      sec("This device", "saved on this device only",
+        row("Screen layout", `Detected: ${this._auto || "–"} · ${this._w || 0}px wide`, `<select data-devsel="1">${[["auto", "Auto"], ["phone", "Phone"], ["tablet", "Tablet"], ["desktop", "Desktop / wall panel"]].map(([v, l]) => `<option value="${v}" ${dv === v ? "selected" : ""}>${l}</option>`).join("")}</select>`) +
+        row("Fullscreen", "hide the Home Assistant sidebar", tg(localStorage.getItem("quint_full") === "1", 'data-tog="full:0"')));
+    } else if (tab === "pages") {
+      const all = this._svcsAll(), H = c.svcHide || [], T = c.svcTitle || {};
+      body = sec("Pages", "name, show and order the services on the home screen and bottom bar", all.map((k, i) => {
+        const def = SV_DEF[k] || k.slice(3);
+        return row(`${SV[k].i} ${E(def)}`, H.includes(k) ? "hidden" : "shown", `<input type="text" data-svct="${E(k)}" value="${E(T[k] || "")}" placeholder="${E(def)}">${tg(!H.includes(k), `data-s="svcvis|${E(k)}"`)}${up("svcup", E(k), i === 0)}${up("svcdn", E(k), i === all.length - 1)}`);
+      }).join(""));
+    } else if (tab === "rooms") {
+      body = sec("Rooms", "which ones and in which order", c.rooms.map((r, i) => row(E(r.id), "", `<input type="text" data-rname="${i}" value="${E(r.name)}">${tg(r.on !== false, `data-tog="room:${i}"`)}${up("rup", i, i === 0)}${up("rdn", i, i === c.rooms.length - 1)}<button class="ib2" data-tog="del:${i}">✕</button>`)).join("") +
+        `<div class="btns"><button data-tog="add:0">＋ Add room</button><button data-tog="import:0">Re-import from HA areas</button></div>`);
+    } else if (tab === "devices") {
+      const q = (this._dflt || "").toLowerCase(), H = c.hide || [];
+      const list = Object.keys(this._h.states).filter((i) => this._svcOf(i)).filter((i) => !q || i.includes(q) || this._nm(i).toLowerCase().includes(q));
+      body = sec("Devices", `${Math.min(list.length, 200)} of ${list.length} shown`, row("Search", "filter by name or entity id", `<input type="text" data-dfilter value="${E(this._dflt || "")}" placeholder="light.kitchen">`) +
+        list.slice(0, 200).map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<select data-map="${E(id)}"><option value="">(no room)</option>${c.rooms.map((r) => `<option value="${E(r.id)}" ${this._roomOf(id) === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>${tg(!H.includes(id), `data-tog="hide:${E(id)}"`)}`)).join(""));
+    } else if (tab === "home") {
+      const P = c.pills || ["lights", "climate", "security"], all = this._svcsAll();
+      body = sec("Home page", "", row("Clock", "the big clock on the home screen", tg(!c.noClock, 'data-s="clk|"')) +
+        ["lights", "climate", "security", "media", "shades", "cameras"].filter((k) => all.includes(k)).map((k) => row(`${SV[k].i} ${E(SV[k].n)}`, "status pill next to the greeting", tg(P.includes(k), `data-s="pill|${k}"`))).join(""));
+    } else {
+      const items = Object.entries(c.custom).flatMap(([pl, arr]) => arr.map((it, i) => ({ pl, it, i })));
+      body = sec("Cards", "custom cards you added", (items.map(({ pl, it, i }) => {
+        const room = pl === "home" ? "Home page" : (c.rooms.find((r) => r.id === pl) || { name: pl }).name, k = this._csKey(it);
+        const st = this._h.states[it.entity], nm = it.name || (it.type === "lovelace" ? (it.config && it.config.type) || "Lovelace card" : it.text) || (st && st.attributes.friendly_name) || it.entity;
+        return row(E(nm), `${E(room)} · ${pl === "home" ? "My cards" : k === "more" ? "More" : E(k.slice(3))} · ${it.type}`, `<button class="ib2" data-cc="del:${pl}:${i}">✕</button>`);
+      }).join("") || '<div class="lbl" style="padding:6px 4px 12px">No custom cards yet.</div>') + `<div class="btns"><button class="pri" data-cc="open:home">＋ Add card</button></div>`);
+    }
+    const tabsHtml = tabs.map(([id, t, sub]) => `<button class="sti ${tab === id ? "act" : ""}" data-go='${JSON.stringify({ p: "settings", tab: id })}'>${SET_I[id]}<span><b>${t}</b><small>${sub}</small></span></button>`).join("");
+    return `<div class="sbar"><div><h1>Settings</h1><div class="sub">Stored on the server for every user · Quint v${VER} · ${this._rn || 0} screen updates</div></div><div class="sbtns"><button class="sbtn ${this._dirty ? "pri2" : ""}" data-s="save|">Save</button><button class="sbtn" data-s="reset|">Reset everything</button><button class="sbtn" data-s="close|">Close</button></div></div><div class="sg"><div class="snav">${tabsHtml}</div><div>${body}</div></div>`;
   }
 
   /* ---------- render ---------- */
   _draw(force) {
     if (!this._h || !this._loaded || this._mv || this._hold) return;
-    this._syncSv();
+    this._syncSv(); this._titles();
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "settings" && !this._admin()) this._v = { p: "home" };
@@ -701,7 +898,7 @@ class QuintDashboard extends HTMLElement {
     const nav = `<button class="${p === "home" ? "act" : ""}" data-go='{"p":"home"}'>${HOME_I}Home</button>` + this._svcs().map((s) => `<button style="--c:${SV[s].c}" class="${V.svc === s || p === s ? "act" : ""}" ${this._tileGo(s)}>${SV[s].i}${SV[s].n}</button>`).join("");
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="app"><header><div class="brand">${this._narrow || localStorage.getItem("quint_full") === "1" ? `<button class="ib" data-tog="menu:0">☰</button>` : ""}${LOGO_I}${this._title || "Quint"}</div><div class="hb"><span class="tm">@@T@@</span>${this._admin() ? `<button class="ib" data-go='{"p":"settings"}'>${GEAR_I}</button>` : ""}</div></header><main class="${changed ? "anim" : ""}">${body}</main><nav>${nav}</nav></div>${this._dialog()}`;
+    const html = `<div class="bgl"><i></i></div><div class="app"><header><div class="brand">${this._narrow || localStorage.getItem("quint_full") === "1" ? `<button class="ib" data-tog="menu:0">☰</button>` : ""}${LOGO_I}${this._esc(this._c.title || this._title || "Quint")}</div><div class="hb"><span class="tm">@@T@@</span>${this._admin() ? `<button class="ib" data-go='{"p":"settings"}'>${GEAR_I}</button>` : ""}</div></header><main class="${changed ? "anim" : ""}">${body}</main><nav>${nav}</nav></div>${this._dialog()}`;
     if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
