@@ -31,6 +31,8 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
+const VER = "1.5.1";
+const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 
 const CSS = `
 :host{display:block;height:100vh;overflow-y:auto;--ac:#f5a623;--ok:#34c98b;--bad:#ff5d6c;--mu:#8d9ab8;--bd:rgba(255,255,255,.10);color:#eef2fa;font-family:"Inter",-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
@@ -44,7 +46,6 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 button{font:inherit;color:inherit;cursor:pointer}
 .ib{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:50%;width:42px;height:42px;font-size:20px;display:grid;place-items:center;padding:0}
 main{flex:1;padding:6px 28px 24px;max-width:1240px;width:100%;margin:0 auto}
-main.anim{animation:in .3s ease}
 @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:8px 0 26px}
 .clk{font-size:76px;font-weight:200;line-height:1;letter-spacing:-2px}
@@ -75,7 +76,7 @@ input[type=range]::-moz-range-thumb{width:26px;height:26px;border:0;border-radiu
 .sw.on{background:var(--ac)}.sw.on::after{left:23px}
 .big{font-size:44px;font-weight:200;margin-top:10px}
 img.cam{width:100%;border-radius:16px;margin-top:12px;background:#000;aspect-ratio:16/9;object-fit:cover}
-nav{position:sticky;bottom:16px;margin:0 auto 16px;display:flex;gap:4px;padding:8px;border-radius:36px;background:rgba(18,26,46,.72);backdrop-filter:blur(22px);border:1px solid var(--bd);max-width:calc(100% - 24px);overflow-x:auto;box-shadow:0 18px 50px -10px #000c}
+nav{position:sticky;bottom:16px;margin:0 auto 16px;display:flex;gap:4px;padding:8px;border-radius:36px;background:rgba(18,26,46,.94);border:1px solid var(--bd);max-width:calc(100% - 24px);overflow-x:auto;box-shadow:0 18px 50px -10px #000c}
 nav button{background:none;border:0;padding:9px 16px;border-radius:28px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--mu);min-width:74px;transition:.2s}
 nav button .si{font-size:23px}
 nav button.act{background:color-mix(in srgb,var(--c,#fff) 20%,transparent);color:var(--c,#fff)}
@@ -86,7 +87,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 6px;bord
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-right:6px}.dot.ok{background:var(--ok)}
 .cw{position:relative}.rm{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:12px;opacity:.55;z-index:2}.rm:hover{opacity:1;background:var(--bad)}
 .tile.add{min-height:120px;border-style:dashed;background:transparent;opacity:.85}.lvw{grid-column:span 2}
-.ov{position:fixed;inset:0;background:rgba(5,8,16,.7);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:99;padding:16px}
+.ov{position:fixed;inset:0;background:rgba(5,8,16,.7);display:grid;place-items:center;z-index:99;padding:16px}
 .dlg{width:min(520px,100%);background:#141c33;border:1px solid var(--bd);border-radius:28px;padding:24px;max-height:90vh;overflow:auto}.dlg input{margin-top:4px}
 textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid var(--bd);color:#eef2fa;border-radius:12px;padding:11px;font:13px monospace;margin-top:4px}
 .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:6px}.pri{background:var(--ac)!important;color:#000!important;font-weight:600}
@@ -95,6 +96,7 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .holding{animation:hold 5s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
 .moving{transform:scale(1.04);box-shadow:0 20px 50px -10px #000c,0 0 0 3px var(--ac);z-index:5;opacity:.93;transition:transform .15s}
 .hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:100;white-space:nowrap}
+ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:96px}.tv{font-size:30px;font-weight:300;line-height:1.15;margin:4px 0 2px;word-break:break-word}
 @media(max-width:600px){.clk{font-size:56px}main,header{padding-left:16px;padding-right:16px}.grid{grid-template-columns:repeat(2,1fr);gap:12px}.tile{min-height:150px}}
 `;
 
@@ -104,6 +106,7 @@ class QuintDashboard extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.innerHTML = `<style>${CSS}</style><div id="r"></div>`;
     this._root = this.shadowRoot.getElementById("r");
+    this._tres = {}; this._tsub = {};
     this._v = { p: "home" };
     let c = {};
     try { c = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
@@ -121,11 +124,11 @@ class QuintDashboard extends HTMLElement {
     R.addEventListener("contextmenu", (e) => { if (this._hold || this._mv) e.preventDefault(); });
   }
   _pdown(e) {
-    if (!this._admin() || e.button > 0 || e.target.type === "range" || this._mv) return;
-    const k = e.composedPath().find((n) => n.dataset && n.dataset.k); if (!k) return;
-    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId };
-    k.classList.add("holding");
-    this._ht = setTimeout(() => this._startMove(), 5000);
+    if (e.button > 0 || e.target.type === "range" || this._mv) return;
+    const path = e.composedPath(), k = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl);
+    if (!k || (!tp && !this._admin())) return;
+    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), tpl: tp ? tp.dataset.tpl : "" };
+    if (this._admin()) { k.classList.add("holding"); this._ht = setTimeout(() => this._startMove(), 5000); }
   }
   _startMove() {
     if (!this._hold) return;
@@ -145,7 +148,11 @@ class QuintDashboard extends HTMLElement {
   }
   _cancelHold() { clearTimeout(this._ht); if (this._hold) this._hold.k.classList.remove("holding"); this._hold = null; this._draw(); }
   _pup() {
-    if (this._hold) return this._cancelHold();
+    if (this._hold) {
+      const h = this._hold;
+      if (h.tpl && Date.now() - h.t >= 600) { this._sup = Date.now() + 500; this._details(this._findTpl(h.tpl)); }
+      return this._cancelHold();
+    }
     if (!this._mv) return;
     const el = this._mv.el, grid = el.parentNode;
     el.classList.remove("moving");
@@ -159,6 +166,11 @@ class QuintDashboard extends HTMLElement {
     if (!t) return;
     const h = document.createElement("div"); h.id = "hint"; h.className = "hint"; h.textContent = t; this.shadowRoot.appendChild(h);
   }
+  _relevant(h) {
+    if (Object.keys(h.states).length !== this._n) return true;
+    for (const id of this._track) if (h.states[id] !== this._seen[id]) return true;
+    return false;
+  }
   _attrs(o, n) {
     const keepSrc = o.tagName === "IMG" && o.getAttribute("data-src") === n.getAttribute("data-src");
     for (const a of Array.from(n.attributes)) {
@@ -170,27 +182,43 @@ class QuintDashboard extends HTMLElement {
       if (!n.hasAttribute(a.name)) o.removeAttribute(a.name);
     }
   }
+  _kof(x) { return x.nodeType === 1 ? x.getAttribute("data-k") || x.getAttribute("data-id") : null; }
+  _patch(o, n, act) {
+    if (n.nodeType === 3) { if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue; return; }
+    if (n.nodeType !== 1) return;
+    if (o.hasAttribute("data-lv")) { const v = n.getAttribute("data-lv"); if (o.getAttribute("data-lv") !== v) o.setAttribute("data-lv", v); return; }
+    this._attrs(o, n);
+    this._morph(o, n);
+    if (o === act) return;
+    if (o.tagName === "INPUT" && (o.type === "range" ? !this._drag : o.hasAttribute("data-rname") || o.hasAttribute("data-uname"))) o.value = n.getAttribute("value") ?? "";
+    if (o.tagName === "SELECT") { const sel = n.querySelector("option[selected]"); o.value = sel ? sel.value : ""; }
+  }
   _morph(from, to) {
-    const a = Array.from(from.childNodes), b = Array.from(to.childNodes), act = this.shadowRoot.activeElement;
-    b.forEach((n, i) => {
-      const o = a[i];
-      if (!o) { from.appendChild(n.cloneNode(true)); return; }
-      if (o.nodeType !== n.nodeType || o.nodeName !== n.nodeName) { from.replaceChild(n.cloneNode(true), o); return; }
-      if (n.nodeType === 3) { if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue; return; }
-      if (n.nodeType !== 1) return;
-      if (o.hasAttribute("data-lv")) {
-        if (o.getAttribute("data-lv") !== n.getAttribute("data-lv")) from.replaceChild(n.cloneNode(true), o);
-        return; // keep the mounted Lovelace card untouched
+    const act = this.shadowRoot.activeElement, pool = new Map(), used = new Set();
+    Array.from(from.childNodes).forEach((o) => { const k = this._kof(o); if (k) pool.set(k, o); });
+    let cur = from.firstChild;
+    Array.from(to.childNodes).forEach((n) => {
+      const k = this._kof(n);
+      let o = null, cand = null;
+      if (k) { o = pool.get(k) || null; if (o) pool.delete(k); }
+      else {
+        cand = cur;
+        while (cand && (used.has(cand) || this._kof(cand))) cand = cand.nextSibling;
+        if (cand && cand.nodeType === n.nodeType && cand.nodeName === n.nodeName) o = cand;
       }
-      this._attrs(o, n);
-      this._morph(o, n);
-      if (o === act) return;
-      if (o.tagName === "INPUT" && (o.type === "range" ? !this._drag : o.hasAttribute("data-rname") || o.hasAttribute("data-uname"))) o.value = n.getAttribute("value") ?? "";
-      if (o.tagName === "SELECT") { const sel = n.querySelector("option[selected]"); o.value = sel ? sel.value : ""; }
+      if (o) {
+        if (o === cur) cur = cur.nextSibling; else from.insertBefore(o, cur);
+        used.add(o); this._patch(o, n, act); return;
+      }
+      const c = n.cloneNode(true);
+      if (cand === cur && cand) { const nx = cur.nextSibling; from.replaceChild(c, cur); cur = nx; }
+      else { from.insertBefore(c, cur); if (cand) from.removeChild(cand); }
+      used.add(c);
     });
-    while (from.childNodes.length > b.length) from.removeChild(from.lastChild);
+    Array.from(from.childNodes).forEach((x) => { if (!used.has(x)) from.removeChild(x); });
   }
   _refreshCams() {
+    if (document.hidden) return;
     this.shadowRoot.querySelectorAll("img.cam[data-src]").forEach((img) => {
       const b = img.dataset.src, u = b + (b.includes("?") ? "&" : "?") + "t=" + Date.now(), t = new Image();
       t.onload = () => { img.src = u; }; t.src = u;
@@ -198,9 +226,9 @@ class QuintDashboard extends HTMLElement {
   }
   _time() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
   connectedCallback() { this._iv2 = setInterval(() => this._refreshCams(), 5000); this._iv = setInterval(() => { const r = this.shadowRoot; [".clk", ".tm"].forEach((q) => { const e = r.querySelector(q); if (e) e.textContent = this._time(); }); }, 15000); }
-  disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); }
+  disconnectedCallback() { clearInterval(this._iv); clearInterval(this._iv2); Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
-  set narrow(n) { this._narrow = n; this._draw(true); }
+  set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
   set route(r) {}
   setConfig(config) { this._title = (config && config.title) || "Quint"; }
   getCardSize() { return 12; }
@@ -209,7 +237,10 @@ class QuintDashboard extends HTMLElement {
   set hass(h) {
     this._h = h;
     if (!this._loading) { this._loading = true; this._loadCfg(); }
-    if (!this._c.rooms.length && h.areas) this._importRooms(false);
+    if (this._lvc) Object.values(this._lvc).forEach((e) => (e.hass = h));
+    if (this._loaded && h.connection !== this._conn) { this._conn = h.connection; this._tsub = {}; this._syncTpl(); }
+    if (!this._c.rooms.length && h.areas && Object.keys(h.areas).length) this._importRooms(false);
+    if (this._loaded && this._track && !this._relevant(h)) return;
     if (this._pending) return;
     this._pending = setTimeout(() => { this._pending = null; this._draw(); }, 250);
   }
@@ -233,6 +264,7 @@ class QuintDashboard extends HTMLElement {
     if (ch && this._admin()) this._save();
     if (this._h && !this._c.rooms.length) this._importRooms(false);
     this._loaded = true;
+    this._conn = this._h.connection; this._syncTpl();
     this._applyFull(); this._draw(true);
   }
   _applyFull() {
@@ -266,12 +298,12 @@ class QuintDashboard extends HTMLElement {
     return Object.keys(this._h.states).filter((id) => this._svcOf(id) === svc && !this._c.hide.includes(id) && (!room || this._roomOf(id) === room));
   }
   _nm(id) { return this._h.states[id].attributes.friendly_name || id; }
-  _svcs() { return Object.keys(SV).filter((s) => s === "more" ? this._admin() || Object.values(this._c.custom).some((a) => a.length) : this._ents(s).length); }
+  _svcs() { return Object.keys(SV).filter((s) => isCs(s) ? this._csHas(s) : this._ents(s).length); }
   _rooms() { return this._c.rooms.filter((r) => r.on !== false); }
   _isOn(id) { return !OFF.includes(this._h.states[id].state); }
   _stats(svc) {
     const e = this._ents(svc), st = (i) => this._h.states[i].state;
-    if (svc === "more") { const all = Object.values(this._c.custom).flat(); const n = all.filter((x) => x.type === "entity" && this._h.states[x.entity] && this._isOn(x.entity)).length; return { big: all.length, lbl: all.length ? `custom cards · ${n} on` : "add custom cards", on: n > 0 }; }
+    if (isCs(svc)) { const all = Object.entries(this._c.custom).filter(([k]) => k !== "home").flatMap(([, v]) => v.filter((x) => this._csKey(x) === svc)); const n = all.filter((x) => x.entity && this._h.states[x.entity] && this._isOn(x.entity)).length; return { big: all.length, lbl: `cards · ${n} on`, on: n > 0 }; }
     if (svc === "lights") { const n = e.filter((i) => st(i) === "on").length; return { big: n, lbl: `on of ${e.length}`, on: n > 0 }; }
     if (svc === "cameras") { const n = e.filter((i) => !["unavailable", "unknown"].includes(st(i))).length; return { big: n, lbl: `online of ${e.length}`, on: n > 0 }; }
     if (svc === "shades") { const o = e.filter((i) => ["open", "opening"].includes(st(i))).length; return { big: `${o} / ${e.length - o}`, lbl: "open / closed", on: o > 0 }; }
@@ -281,7 +313,7 @@ class QuintDashboard extends HTMLElement {
     return { big: o ? `${o} open` : "Secure", lbl: o ? "doors / locks open" : "all closed & locked", on: o > 0 };
   }
   _roomCount(svc, r) {
-    if (svc === "more") { const it = this._c.custom[r] || []; return { n: it.filter((x) => x.type === "entity" && this._h.states[x.entity] && this._isOn(x.entity)).length, t: it.length }; }
+    if (isCs(svc)) { const it = this._csItems(r, svc).map((x) => x.it); return { n: it.filter((x) => x.entity && this._h.states[x.entity] && this._isOn(x.entity)).length, t: it.length }; }
     const e = this._ents(svc, r); if (!e.length) return null;
     const n = e.filter((i) => { const s = this._h.states[i].state; return svc === "shades" ? ["open", "opening"].includes(s) : svc === "lights" ? s === "on" : this._isOn(i); }).length;
     return { n, t: e.length };
@@ -293,16 +325,17 @@ class QuintDashboard extends HTMLElement {
   /* ---------- events ---------- */
   _click(e) {
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
+    if (d.tpl) return this._tap(d.tpl);
     if (d.go) { const { p, ...x } = JSON.parse(d.go); return this._nav(p, x); }
     if (d.cc) {
       const [k, r, i] = d.cc.split(":");
-      if (k === "open") { this._dlg = { room: r }; return this._draw(true); }
+      if (k === "open") { const cv = this._v.svc || ""; this._dlg = { room: r, place: r, mode: "entity", tap: "details", sn: cv.startsWith("cs:") ? cv.slice(3) : cv === "more" ? "More" : "" }; return this._draw(true); }
       if (k === "cancel") { this._dlg = null; return this._draw(true); }
-      if (k === "del") { this._c.custom[r].splice(+i, 1); this._save(); return this._draw(true); }
+      if (k === "del") { this._c.custom[r].splice(+i, 1); this._save(); this._syncTpl(); return this._draw(true); }
       if (k === "save") return this._saveCC();
     }
     if (d.act) { const [dom, srv] = d.act.split("."); const data = d.x ? JSON.parse(d.x) : {}; this._h.callService(dom, srv, { entity_id: d.e, ...data }); return; }
@@ -324,7 +357,7 @@ class QuintDashboard extends HTMLElement {
     if (adm && d.rname !== undefined) { this._c.rooms[+d.rname].name = t.value; this._save(); }
     if (adm && d.map) { this._c.map[d.map] = t.value; this._save(); }
     if (d.sel) { const [dom, srv, key] = d.sel.split("|"); this._h.callService(dom, srv, { entity_id: d.e, [key]: t.value }); }
-    if (adm && d.dd && this._dlg) { this._dlg[d.dd] = t.value; if (d.dd === "dom") this.shadowRoot.getElementById("cc-list").innerHTML = this._opts(t.value); }
+    if (adm && d.dd && this._dlg) { this._dlg[d.dd] = t.value; if (d.dd === "dom") this.shadowRoot.getElementById("cc-list").innerHTML = this._opts(t.value); if (d.dd === "mode" || d.dd === "tap" || d.dd === "place") this._draw(true); }
     if (adm && d.uname !== undefined) { this._c.name = t.value; this._save(); this._draw(true); }
   }
 
@@ -368,11 +401,69 @@ class QuintDashboard extends HTMLElement {
   }
   _kw(k, html) { return `<div class="kw" data-k="${k}">${html}</div>`; }
   _cardsOf(ids, ctx) { return this._sort(ctx, ids, (i) => "e:" + i).map((i) => this._kw("e:" + i, this._card(i))).join(""); }
-  _customCards(rid, ctx) {
-    const items = (this._c.custom[rid] || []).map((it, i) => ({ it, i }));
+  _csKey(it) { const n = (it.svc || "").trim(); return !n || n.toLowerCase() === "more" ? "more" : "cs:" + n; }
+  _csItems(rid, key) { return (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => this._csKey(x.it) === key); }
+  _csHas(key) { return Object.entries(this._c.custom).some(([r, a]) => r !== "home" && a.some((x) => this._csKey(x) === key)); }
+  _syncSv() {
+    const PAL = ["#4aa3ff", "#2dd4bf", "#f5a623", "#b388ff", "#34c98b", "#ff7a59", "#7dd3fc", "#f472b6"], found = {};
+    Object.entries(this._c.custom).forEach(([r, a]) => { if (r === "home") return; a.forEach((x) => { const k = this._csKey(x); if (k === "more") return; const f = (found[k] = found[k] || { ic: "" }); if (!f.ic && x.svcIcon) f.ic = x.svcIcon; }); });
+    Object.keys(SV).forEach((k) => { if (k.startsWith("cs:") && !found[k]) delete SV[k]; });
+    Object.entries(found).forEach(([k, f]) => {
+      let h = 0; for (const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      SV[k] = { n: k.slice(3), c: PAL[h % PAL.length], i: f.ic ? `<ha-icon icon="${this._esc(f.ic)}"></ha-icon>` : SV.more.i };
+    });
+  }
+  _sched() { if (this._pending) return; this._pending = setTimeout(() => { this._pending = null; this._draw(); }, 150); }
+  _csPage(s) {
+    const parts = this._rooms().map((r) => [r, this._csItems(r.id, s)]).filter(([, e]) => e.length).map(([r, e]) => {
+      const n = e.filter((x) => x.it.entity && this._h.states[x.it.entity] && this._isOn(x.it.entity)).length;
+      return `<section><div class="rh"><div class="grow" data-go='${JSON.stringify({ p: "room", room: r.id, svc: s })}'><div class="rn">${r.name}</div><div class="lbl">${n} active of ${e.length}</div></div></div><div class="grid" data-grid="room:${r.id}:${s}">${this._customCards(r.id, "room:" + r.id + ":" + s, s)}</div></section>`;
+    });
+    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">Grouped by room</div>${parts.join("") || '<div class="card">No cards yet.</div>'}`;
+  }
+  _homeCards() {
+    const n = (this._c.custom.home || []).length, adm = this._admin();
+    if (!n && !adm) return "";
+    return `${n ? "<h2>My cards</h2>" : ""}<div class="grid" data-grid="home:cards" style="margin-top:${n ? 0 : 16}px">${this._customCards("home", "home:cards")}${adm ? `<div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : ""}</div>`;
+  }
+  _esc(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  _findTpl(uid) { return Object.values(this._c.custom).flat().find((x) => x.uid === uid); }
+  _syncTpl() {
+    if (!this._h || !this._h.connection) return;
+    const want = new Set();
+    Object.values(this._c.custom).flat().forEach((x) => { if (x.type === "template") [x.text, x.label].forEach((t) => t && want.add(t)); });
+    Object.keys(this._tsub).forEach((t) => { if (!want.has(t)) { this._tsub[t].then((u) => u()).catch(() => {}); delete this._tsub[t]; } });
+    want.forEach((t) => {
+      if (this._tsub[t]) return;
+      this._tsub[t] = this._h.connection.subscribeMessage((m) => {
+        this._tres[t] = m.result !== undefined ? m.result : m.error ? "⚠ " + m.error : "";
+        this._sched();
+      }, { type: "render_template", template: t, strict: false, report_errors: true }).catch(() => () => {});
+    });
+  }
+  _tplCard(it) {
+    const s = it.entity && this._h.states[it.entity], on = s && !OFF.includes(s.state);
+    const r = (t) => (t ? (this._tres[t] !== undefined ? this._esc(this._tres[t]) : "…") : "");
+    const label = it.label ? r(it.label) : "";
+    return `<div class="card tpl ${on ? "on" : ""}" data-tpl="${it.uid}"><div class="row"><div class="bdg" style="--c:${SV.more.c}"><ha-icon icon="${this._esc(it.icon || "mdi:code-braces")}"></ha-icon></div><div class="grow"><div class="st" style="margin:0">${this._esc(it.name || "")}</div><div class="tv">${r(it.text)}</div>${label ? `<div class="lbl">${label}</div>` : ""}</div></div></div>`;
+  }
+  _details(it) { if (it && it.entity) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: it.entity } })); }
+  _tap(uid) {
+    const it = this._findTpl(uid); if (!it) return;
+    const t = it.tap || "details";
+    if (t === "details") return this._details(it);
+    if (t === "toggle") { if (it.entity) this._h.callService("homeassistant", "toggle", { entity_id: it.entity }); return; }
+    if (t === "action") { const [d, sv] = (it.service || "").split("."); if (d && sv) this._h.callService(d, sv, { ...(it.entity ? { entity_id: it.entity } : {}), ...(it.data || {}) }); return; }
+    if (t === "path" && it.path) {
+      if (/^https?:/.test(it.path)) window.open(it.path, "_blank");
+      else if (it.path.startsWith("/")) { history.pushState(null, "", it.path); window.dispatchEvent(new CustomEvent("location-changed")); }
+    }
+  }
+  _customCards(rid, ctx, key) {
+    const items = (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => !key || this._csKey(x.it) === key);
     return this._sort(ctx, items, (x) => "c:" + x.it.uid).map(({ it, i }) => {
       const rm = this._admin() ? `<button class="rm" data-cc="del:${rid}:${i}">✕</button>` : "", k = "c:" + it.uid;
-      return it.type === "lovelace" ? `<div class="cw lvw" data-k="${k}"><div data-lv="${rid}:${i}"></div>${rm}</div>` : `<div class="cw" data-k="${k}">${this._gen(it)}${rm}</div>`;
+      return it.type === "template" ? `<div class="cw" data-k="${k}">${this._tplCard(it)}${rm}</div>` : it.type === "lovelace" ? `<div class="cw lvw" data-k="${k}"><div data-lv="${rid}:${i}"></div>${rm}</div>` : `<div class="cw" data-k="${k}">${this._gen(it)}${rm}</div>`;
     }).join("");
   }
   _gen(it) {
@@ -408,29 +499,69 @@ class QuintDashboard extends HTMLElement {
   }
   _dialog() {
     if (!this._dlg || !this._admin()) return "";
-    const D = this._dlg, r = this._c.rooms.find((x) => x.id === D.room) || { name: D.room }, doms = {};
+    const D = this._dlg, mode = D.mode || "entity", doms = {};
     Object.keys(this._h.states).forEach((i) => { const k = i.split(".")[0]; doms[k] = (doms[k] || 0) + 1; });
     const sel = (key, list) => `<select data-dd="${key}">${list.map(([v, l]) => `<option value="${v}" ${(D[key] || "") === v ? "selected" : ""}>${l}</option>`).join("")}</select>`;
-    const L = (t) => `<div class="lbl" style="margin:12px 0 4px">${t}</div>`;
-    return `<div class="ov"><div class="dlg"><h1 style="font-size:22px">Add card · ${r.name}</h1>
-      ${L("Device type")}${sel("dom", [["", "All device types (" + Object.keys(this._h.states).length + ")"], ...Object.keys(doms).sort().map((k) => [k, k.replace(/_/g, " ") + " (" + doms[k] + ")"])])}
+    const L = (t, sub) => `<div class="lbl" style="margin:12px 0 4px">${t}${sub ? ` · ${sub}` : ""}</div>`;
+    const inp = (id, ph, val) => `<input type="text" id="${id}" placeholder="${this._esc(ph)}" ${val ? `value="${val}"` : ""}>`;
+    let body = "";
+    if (mode === "template") {
+      const tap = D.tap || "details";
+      body = `${L("Name")}${inp("cc-name", "e.g. Outside")}
+      ${L("Icon", "mdi name")}${inp("cc-icon", "mdi:code-braces", "mdi:code-braces")}
+      ${L("Text", "Jinja template for the state")}${inp("cc-tt", "{{ states('sensor.outside_temperature') }} °C")}
+      ${L("Label", "optional, small line below")}${inp("cc-tl", "{{ relative_time(states.sensor.x.last_changed) }} ago")}
+      ${L("Entity", "for details (hold) and toggling")}<input type="text" id="cc-ent" list="cc-list" placeholder="sensor.x"><datalist id="cc-list">${this._opts("")}</datalist>
+      ${L("Tap")}${sel("tap", [["details", "entity details"], ["toggle", "toggle entity"], ["action", "run action"], ["path", "go to path"]])}
+      ${tap === "action" ? `${L("Action", "domain.service")}${inp("cc-svc", "light.turn_on")}${L("Action data", "optional JSON")}${inp("cc-data", '{"brightness": 200}')}` : ""}
+      ${tap === "path" ? `${L("Path", "e.g. /lovelace/0 or https://…")}${inp("cc-path", "/lovelace/0")}` : ""}
+      <div class="lbl" style="margin-top:10px">Hold a card for about 1 second to open entity details. Hold 5 seconds to move it.</div>`;
+    } else if (mode === "lovelace") {
+      body = `${L("Lovelace card as JSON", "custom cards supported")}<textarea id="cc-json" placeholder='{"type":"custom:mushroom-light-card","entity":"light.x"}'></textarea>`;
+    } else {
+      body = `${L("Device type")}${sel("dom", [["", "All device types (" + Object.keys(this._h.states).length + ")"], ...Object.keys(doms).sort().map((k) => [k, k.replace(/_/g, " ") + " (" + doms[k] + ")"])])}
       ${L("Entity")}<input type="text" id="cc-ent" list="cc-list" placeholder="Start typing a name or entity id"><datalist id="cc-list">${this._opts(D.dom || "")}</datalist>
       ${L("Display name (optional)")}<input type="text" id="cc-name">
       ${L("Card style")}${sel("style", [["auto", "Auto – best control for this device"], ["toggle", "On / Off switch"], ["button", "Run button"], ["value", "Value / status only"]])}
-      ${L("Icon")}${sel("icon", [["", "Default"], ...Object.keys(ICONS).map((k) => [k, k])])}
-      ${L("…or paste any Lovelace card as JSON (custom cards supported)")}<textarea id="cc-json" placeholder='{"type":"custom:mushroom-light-card","entity":"light.x"}'></textarea>
+      ${L("Icon")}${sel("icon", [["", "Default"], ...Object.keys(ICONS).map((k) => [k, k])])}`;
+    }
+    const names = [...new Set(Object.entries(this._c.custom).filter(([k]) => k !== "home").flatMap(([, a]) => a.map((x) => { const k = this._csKey(x); return k === "more" ? "More" : k.slice(3); })))];
+    const svcFields = (D.place || D.room) === "home" ? "" : `${L("Service", "tile name on the home screen")}<input type="text" id="cc-sn" list="cc-sl" placeholder="More" value="${this._esc(D.sn || "")}"><datalist id="cc-sl">${names.map((n) => `<option value="${this._esc(n)}">`).join("")}</datalist>${L("Service icon", "optional, mdi name")}${inp("cc-sico", "mdi:gate")}`;
+    return `<div class="ov"><div class="dlg"><h1 style="font-size:26px">New card</h1>
+      ${L("Card type")}${sel("mode", [["entity", "Device card (any entity)"], ["template", "Template card (Jinja)"], ["lovelace", "Lovelace card (JSON)"]])}
+      ${L("Place", "home page or a room")}${sel("place", [["home", "Home"], ...this._c.rooms.map((r) => [r.id, r.name])])}
+      ${svcFields}
+      ${body}
       <div class="err" id="cc-err"></div><div class="btns"><button data-cc="cancel">Cancel</button><button class="pri" data-cc="save">Add card</button></div></div></div>`;
   }
   _saveCC() {
     const q = (i) => this.shadowRoot.getElementById(i), err = (t) => { q("cc-err").textContent = t; };
-    const ent = q("cc-ent").value.trim(), name = q("cc-name").value.trim(), js = q("cc-json").value.trim(), D = this._dlg;
+    const v = (i) => (q(i) ? q(i).value.trim() : ""), D = this._dlg, mode = D.mode || "entity", place = D.place || D.room;
     let item;
-    if (js) { try { const c = JSON.parse(js); if (!c.type) throw new Error('"type" is missing'); item = { type: "lovelace", config: c }; } catch (e) { return err("Invalid JSON: " + e.message); } }
-    else if (ent && this._h.states[ent]) item = { type: "entity", entity: ent, name, style: D.style || "auto", icon: D.icon || "" };
-    else return err("Pick a valid entity or paste card JSON");
+    if (mode === "lovelace") {
+      try { const c = JSON.parse(v("cc-json")); if (!c.type) throw new Error('"type" is missing'); item = { type: "lovelace", config: c }; } catch (e) { return err("Invalid JSON: " + e.message); }
+    } else if (mode === "template") {
+      const tap = D.tap || "details", ent = v("cc-ent");
+      if (!v("cc-tt") && !v("cc-tl")) return err("Enter a text template");
+      if (ent && !this._h.states[ent]) return err("Entity not found: " + ent);
+      let data = {};
+      if (tap === "action") {
+        if (!/^[a-z_]+\.[a-z0-9_]+$/i.test(v("cc-svc"))) return err("Action must look like light.turn_on");
+        if (v("cc-data")) { try { data = JSON.parse(v("cc-data")); } catch (e) { return err("Action data is not valid JSON"); } }
+      }
+      if (tap === "path" && !/^(\/|https?:)/.test(v("cc-path"))) return err("Path must start with / or http");
+      item = { type: "template", name: v("cc-name"), icon: v("cc-icon") || "mdi:code-braces", text: v("cc-tt"), label: v("cc-tl"), entity: ent, tap, service: v("cc-svc"), data, path: v("cc-path") };
+    } else {
+      const ent = v("cc-ent");
+      if (!ent || !this._h.states[ent]) return err("Pick a valid entity");
+      item = { type: "entity", entity: ent, name: v("cc-name"), style: D.style || "auto", icon: D.icon || "" };
+    }
+    if (place !== "home") { item.svc = v("cc-sn").replace(/['"<>\\&]/g, "").slice(0, 24); const ic = v("cc-sico"); if (/^mdi:[a-z0-9-]+$/i.test(ic)) item.svcIcon = ic; }
     item.uid = this._uid();
-    (this._c.custom[D.room] = this._c.custom[D.room] || []).push(item);
-    this._save(); this._dlg = null; this._v = { p: "room", room: D.room, svc: "more" }; this._draw(true);
+    (this._c.custom[place] = this._c.custom[place] || []).push(item);
+    this._save(); this._dlg = null; this._syncTpl();
+    this._v = place === "home" ? { p: "home" } : { p: "rooms", svc: this._csKey(item) };
+    this._last = null; this._draw(true);
   }
   async _mountLv() {
     const ph = this.shadowRoot.querySelectorAll("[data-lv]"); if (!ph.length) return;
@@ -451,7 +582,7 @@ class QuintDashboard extends HTMLElement {
     const pill = (k) => { const t = this._stats(k); return `<span class="pill" style="--c:${SV[k].c}">${SV[k].i}${t.big} ${t.lbl}</span>`; };
     return `<section class="hero"><div><div class="clk">@@T@@</div><div class="sub">${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</div></div>
     <div><h1>${g}${who ? ", " + who : ""}</h1><div class="pills">${["lights", "climate", "security"].filter((k) => L.includes(k)).map(pill).join("")}</div></div></section>
-    <div class="grid">${L.map((k) => { const t = this._stats(k); return `<div class="tile ${t.on ? "on" : ""}" style="--c:${SV[k].c}" ${this._tileGo(k)}><div class="bdg">${SV[k].i}</div><div><div class="num">${t.big}</div><div class="nm">${SV[k].n}</div><div class="lbl">${t.lbl}</div></div></div>`; }).join("") || '<div class="card">No supported devices found.</div>'}</div>`;
+    <div class="grid">${L.map((k) => { const t = this._stats(k); return `<div class="tile ${t.on ? "on" : ""}" data-id="s:${k}" style="--c:${SV[k].c}" ${this._tileGo(k)}><div class="bdg">${SV[k].i}</div><div><div class="num">${t.big}</div><div class="nm">${SV[k].n}</div><div class="lbl">${t.lbl}</div></div></div>`; }).join("") || '<div class="card">No supported devices found.</div>'}</div>${this._homeCards()}`;
   }
   _roomsTiles() {
     const s = this._v.svc;
@@ -459,7 +590,7 @@ class QuintDashboard extends HTMLElement {
   }
   _roomsPage() {
     const s = this._v.svc;
-    if (s === "more") return this._roomsTiles();
+    if (isCs(s)) return this._csPage(s);
     const act = (i) => { const st = this._h.states[i].state; return s === "lights" ? st === "on" : s === "shades" ? ["open", "opening"].includes(st) : this._isOn(i); };
     const sec = (title, ids, rid) => {
       const on = ids.filter(act).length, all = ids.join(",");
@@ -477,18 +608,18 @@ class QuintDashboard extends HTMLElement {
   }
   _roomPage() {
     const rid = this._v.room, r = this._rooms().find((x) => x.id === rid) || { name: rid };
-    const av = this._svcs().filter((s) => s === "more" ? (this._c.custom[rid] || []).length : this._ents(s, rid).length);
+    const av = this._svcs().filter((s) => (isCs(s) ? this._csItems(rid, s).length : this._ents(s, rid).length));
     const s = av.includes(this._v.svc) ? this._v.svc : av[0];
     return `<button class="back" data-go='${JSON.stringify({ p: "rooms", svc: this._v.svc })}'>‹ Rooms</button><h1>${r.name}</h1>
     <div class="tabs">${av.map((x) => `<button class="${x === s ? "act" : ""}" data-go='${JSON.stringify({ p: "room", room: rid, svc: x })}'>${SV[x].i} ${SV[x].n}</button>`).join("")}</div>
-    <div class="grid" data-grid="room:${rid}:${s}">${s === "more" ? this._customCards(rid, "room:" + rid + ":more") : s ? this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s) : ""}${this._admin() ? `<div class="tile add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : ""}</div>`;
+    <div class="grid" data-grid="room:${rid}:${s}">${isCs(s) ? this._customCards(rid, "room:" + rid + ":" + s, s) : s ? this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s) : ""}${this._admin() ? `<div class="tile add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : ""}</div>`;
   }
   _list(s) {
     return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(${s === "cameras" ? 320 : 200}px,1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
   }
   _settings() {
     const all = Object.keys(this._h.states).filter((i) => this._svcOf(i));
-    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>Settings</h1>
+    return `<button class="back" data-go='{"p":"home"}'>‹ Home</button><h1>Settings</h1><div class="lbl" style="margin-bottom:10px">Quint v${VER} · screen updates since opening: ${this._rn || 0}</div>
     <div class="card"><div class="nm">Greeting name</div><input type=text data-uname value="${this._c.name}" placeholder="${(this._h.user && this._h.user.name) || ""}"></div>
     <div class="card" style="margin-top:12px"><div class="row"><div class="grow"><div class="nm">Fullscreen</div><div class="st">Hide the Home Assistant sidebar on this device</div></div><button class="sw ${localStorage.getItem("quint_full") === "1" ? "on" : ""}" data-tog="full:0"></button></div></div>
     <h2>Rooms</h2><div class="card">${this._c.rooms.map((r, i) => `<div class="row" style="margin:6px 0"><input type=text data-rname="${i}" value="${r.name}"><button class="sw ${r.on !== false ? "on" : ""}" data-tog="room:${i}"></button><button class="ib" data-tog="del:${i}">✕</button></div>`).join("")}
@@ -499,9 +630,14 @@ class QuintDashboard extends HTMLElement {
   /* ---------- render ---------- */
   _draw(force) {
     if (!this._h || !this._loaded || this._mv || this._hold) return;
+    this._syncSv();
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "settings" && !this._admin()) this._v = { p: "home" };
+    this._track = new Set(Object.keys(this._h.states).filter((i) => this._svcOf(i)));
+    Object.values(this._c.custom).flat().forEach((x) => x.entity && this._track.add(x.entity));
+    this._seen = {}; this._track.forEach((i) => (this._seen[i] = this._h.states[i]));
+    this._n = Object.keys(this._h.states).length;
     const p = this._v.p, V = this._v;
     const body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._roomPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : this._settings();
     const nav = `<button class="${p === "home" ? "act" : ""}" data-go='{"p":"home"}'>${HOME_I}Home</button>` + this._svcs().map((s) => `<button style="--c:${SV[s].c}" class="${V.svc === s || p === s ? "act" : ""}" ${this._tileGo(s)}>${SV[s].i}${SV[s].n}</button>`).join("");
@@ -513,9 +649,10 @@ class QuintDashboard extends HTMLElement {
     const tpl = document.createElement("template");
     tpl.innerHTML = html.replaceAll("@@T@@", this._time());
     this._morph(this._root, tpl.content);
+    this._rn = (this._rn || 0) + 1;
     this.scrollTop = changed ? 0 : sy;
     this._mountLv();
   }
 }
 customElements.define("quint-panel", QuintDashboard);
-console.info("%c QUINT %c panel loaded", "background:#f5a623;color:#000", "");
+console.info("%c QUINT %c panel v" + VER + " loaded", "background:#f5a623;color:#000", "");

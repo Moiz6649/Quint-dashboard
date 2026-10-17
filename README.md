@@ -22,3 +22,19 @@ Settings → **Fullscreen** hides the HA sidebar on that device (☰ button brin
 
 ## Admin-only editing
 Only Home Assistant **administrators** see the Settings button, the **＋ Add card** tile and the ✕ remove buttons. Other users can use the dashboard and view existing custom cards. Changes are also rejected by the server for non-admins.
+
+## Add-card options and moving cards
+- **Add card** lets you filter by device type (every domain found in your HA), pick the entity, choose a style (Auto / On-Off / Run button / Value) and an icon. Auto supports: switch, fan (speed), humidifier, number / input_number (slider), select / input_select (dropdown), scene, script, button, vacuum, lawn mower, water heater, alarm panel, weather, sensors and more.
+- **Move cards (admin):** press and hold a card for **5 seconds** (it outlines, then lifts), drag it over another card and release. The order is saved per page/room on the server.
+
+## Template cards
+**Add card → Card type → Template card (Jinja)**, or use the **＋ Add card** tile on the Home page.
+- **Name / Icon** – any `mdi:` icon.
+- **Place** – the Home page or any room.
+- **Text / Label** – Jinja templates rendered live by Home Assistant, e.g. `{{ states('sensor.outside_temperature') }} °C` and `{{ relative_time(states.sensor.x.last_changed) }} ago`.
+- **Entity** – used for details (hold the card ~1 s) and toggling.
+- **Tap** – entity details, toggle entity, run action (`light.turn_on` + optional JSON data) or go to a path.
+- Hold 5 seconds to move a card (admin).
+
+## Custom services (new home tiles)
+When you add a card to a **room**, the dialog has a **Service** field (default *More*). Every distinct service name becomes its own tile on the Home screen and in the bottom bar, with the name on it, e.g. *Pool*, *Gate*, *Irrigation*. Tapping the tile opens a page grouped by room; each room also gets a tab for that service. Optional **Service icon** (`mdi:…`) sets the tile icon. Cards placed on **Home** appear under *My cards* instead.

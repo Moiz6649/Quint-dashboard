@@ -43,11 +43,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
         data["static"] = True
     title = entry.data.get("title", "Quint")
+    js = Path(__file__).parent / "frontend" / "quint-panel.js"
+    stamp = int((await hass.async_add_executor_job(js.stat)).st_mtime)
     await panel_custom.async_register_panel(
         hass,
         webcomponent_name="quint-panel",
         frontend_url_path=PANEL_PATH,
-        module_url=f"{STATIC_URL}/quint-panel.js?v={VERSION}",
+        module_url=f"{STATIC_URL}/quint-panel.js?v={VERSION}.{stamp}",
         sidebar_title=title,
         sidebar_icon="mdi:home-automation",
         require_admin=False,
