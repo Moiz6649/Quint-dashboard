@@ -3,6 +3,7 @@
 Standalone Savant-style dashboard for Home Assistant. Installs as an integration and adds its own **sidebar panel**. No Lovelace setup, no token, no YAML.
 
 - Home page (wall-panel style): client name top left, big clock, date, weather + sunset, greeting, scene buttons, and one live card per service – Security (status, doors/locks, alarm mode), Cameras (live picture), Lighting (rooms with on/off), Climate, Media (now playing + controls), Shades
+- **v1.9.2**: **floors** (tabs like Ground / First / Outside on the Rooms page; add, rename, order floors and choose each room's floor in Settings → Rooms; HA floors are imported automatically); **room photos** are now set in Settings → Room photos (shared for everyone by an admin with a switch per room; normal users can pick their own photo per room on their device); the photo button is removed from the room page
 - **v1.9.1**: scenes are added only in **Settings → Scenes** (not on the home page); a scene can belong to a room and then also shows on that room's page; every user now has a settings button with **Scenes** and **Background** (saved on their own device); **room photo** button at the top right of every room page; Intercom buttons (Video / Audio / Open door) can be shown or hidden in Settings → Intercom
 - **v1.9.0**: organized balanced home columns, **Intercom** tile (video call, audio call, open door, doorbell ring), **each camera as its own tile**, a clearer **Lighting** tile (rooms with switch + dimmer, All on / All off), **Scenes you can create** (shared or only on this device), **personal background** for every user, a dynamic sliding bottom bar, and AM/PM clock fix
 - **Tap a camera to open it big** (live stream, with snapshot fallback); switch cameras with the arrows or the name buttons
@@ -67,8 +68,11 @@ Left menu, right panels, with **Save / Reset everything / Close** at the top. Ch
 ### Scenes
 Scenes are added in **Settings → Scenes** (the home page only shows and runs them). Set your devices the way you want, press **＋ New scene**, pick a room (optional), choose the devices and save. A scene with a room also shows on that room's page. Admins can save a scene for **everyone** (stored on the server) or **only this device**. Normal users also have the Settings button, but only with **Scenes** and **Background**, and everything they save stays on their own device.
 
-### Room photo
-On every room page, the **＋ Photo** button at the top right sets a photo for that room (shown in the room header; **✕** removes it). Photos are stored in the browser of that device.
+### Floors
+In **Settings → Rooms** add floors (or let Quint import your Home Assistant floors), then choose a floor for each room. The Rooms page shows one tab per floor (rooms without a floor are under **Other**).
+
+### Room photos
+**Settings → Room photos** lists every room. Admins choose a photo per room (stored on the HA server in `.storage/quint.roomimg`, shared by everyone) and use the switch to show or hide it at the top of that room's page. Normal users see the same tab and can pick their own photo for a room; it is saved in their browser only.
 
 ### Background
 Pick a colour theme, or upload your own photo (shrunk to 1920 px and stored on the HA server in `.storage/quint.background`). **Darken** and **Blur** keep text readable. The shared background is set by admins. Every user can also press the palette button in the bottom bar to choose a theme or their **own photo for this device only** (stored in the browser). Normal users can also do this in Settings → Background.
