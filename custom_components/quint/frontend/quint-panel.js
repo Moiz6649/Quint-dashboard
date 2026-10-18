@@ -67,7 +67,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.21.0";
+const VER = "1.22.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const TSIZES = { xl: { n: "Extra large", z: 1.3, m: 1.3 }, l: { n: "Large", z: 1, m: 1 }, s: { n: "Small", z: 0.8, m: 0.9 }, xs: { n: "Very small", z: 0.62, m: 0.8 } };
@@ -261,6 +261,8 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 [data-sk],[data-k]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.dtgt{outline:3px dashed var(--ac);outline-offset:3px}
 .moving{opacity:.28;outline:2px dashed var(--ac);outline-offset:-2px}
 .gh{position:fixed;left:0;top:0;z-index:140;pointer-events:none;will-change:transform}
+.gh.carry{left:50%;top:auto;bottom:150px;transform:translateX(-50%) scale(.5)!important;transform-origin:bottom center;pointer-events:none}
+.hint.hc{display:flex;align-items:center;gap:12px;pointer-events:auto}.hint.hc button{background:#12151c;color:#fff;border:0;border-radius:16px;padding:6px 14px;font-weight:600}
 .gh>*{transform:scale(1.04) rotate(-1.2deg);opacity:.97;margin:0!important;height:auto!important;align-self:auto}
 .gh>.bc,.gh>.tile,.gh>.card,.gh>.kw>*,.gh>.cw>*{box-shadow:0 26px 60px -12px #000d,0 0 0 3px var(--ac);background:#151b29!important}
 .hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:130;white-space:nowrap}
@@ -456,9 +458,9 @@ class QuintDashboard extends HTMLElement {
     R.addEventListener("pointerdown", (e) => { if (!this._wdown(e)) this._pdown(e); });
     R.addEventListener("pointermove", (e) => { if (!this._wmove(e)) this._pmove(e); });
     R.addEventListener("pointerup", () => { if (!this._wup()) this._pup(); });
-    R.addEventListener("pointercancel", () => { if (!this._wup()) this._pup(); });
+    R.addEventListener("pointercancel", () => { if (!this._wup()) this._pcancel(); });
     R.addEventListener("input", (e) => this._input(e));
-    R.addEventListener("touchmove", (e) => { if (this._mv) e.preventDefault(); }, { passive: false });
+    R.addEventListener("touchmove", (e) => { if (this._mv && !this._mv.carry) e.preventDefault(); }, { passive: false });
     R.addEventListener("contextmenu", (e) => { if (this._hold || this._mv) e.preventDefault(); });
     R.addEventListener("error", (e) => { const t = e.target; if (t && t.classList && t.classList.contains("camx") && !this._camFb) { this._camFb = true; if (t.dataset.snap) t.src = t.dataset.snap; } if (t && t.classList && t.classList.contains("wallx") && t.dataset.wid) { (this._wallFb = this._wallFb || new Set()).add(t.dataset.wid); this._last = null; this._draw(true); } }, true);
   }
@@ -467,7 +469,7 @@ class QuintDashboard extends HTMLElement {
     const path = e.composedPath(), kk = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl), sk = kk ? null : path.find((n) => n.dataset && n.dataset.sk), k = kk || sk;
     if (!k || this._dlg || this._cam) return;
     this._lp = { x: e.clientX, y: e.clientY };
-    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", sk: sk ? sk.dataset.sk : "" };
+    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, pt: e.pointerType, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", sk: sk ? sk.dataset.sk : "" };
     if (!tp) { k.classList.add("holding"); this._ht = setTimeout(() => this._startMove(), HOLD_MS); }
   }
   _startMove() {
@@ -481,7 +483,7 @@ class QuintDashboard extends HTMLElement {
     cp.classList.remove("moving", "holding", "dtgt"); ["data-k", "data-sk", "data-id"].forEach((a) => cp.removeAttribute(a));
     cp.style.zoom = z; cp.style.width = r.width / z + "px";
     gh.appendChild(cp); this.shadowRoot.appendChild(gh);
-    const m = (this._mv = { el, sk: this._hold.sk || "", tgt: "", te: null, gh, ox: lp.x - r.left, oy: lp.y - r.top });
+    const m = (this._mv = { el, sk: this._hold.sk || "", tgt: "", te: null, gh, pt: this._hold.pt, ox: lp.x - r.left, oy: lp.y - r.top });
     this._hold = null;
     gh.style.transform = `translate(${lp.x - m.ox}px,${lp.y - m.oy}px)`;
     m.as = setInterval(() => this._mvStep(), 30);
@@ -489,7 +491,7 @@ class QuintDashboard extends HTMLElement {
     this._hint("Drag onto the card whose place you want, then release");
   }
   _mvStep() {
-    const m = this._mv, p = this._lp; if (!m || !p) return;
+    const m = this._mv, p = this._lp; if (!m || !p || m.carry) return;
     m.gh.style.transform = `translate(${p.x - m.ox}px,${p.y - m.oy}px)`;
     const box = this.getBoundingClientRect(), yy = p.y - box.top, edge = 90;   // scroll the page when the tile is near the top or bottom
     if (yy < edge) this.scrollTop -= Math.ceil((edge - Math.max(yy, 0)) / 5);
@@ -521,23 +523,56 @@ class QuintDashboard extends HTMLElement {
       if (h.tpl && Date.now() - h.t >= 600) { this._sup = Date.now() + 500; this._details(this._findTpl(h.tpl)); }
       return this._cancelHold();
     }
-    if (!this._mv) return;
-    const m = this._mv, el = m.el, grid = el.parentNode;
-    clearInterval(m.as); m.gh.remove();
+    if (!this._mv || this._mv.carry) return;
+    // a finger lifted over nothing keeps the tile in hand: tap the card where it should go
+    if (this._mv.pt === "touch" && !this._mv.te) return this._carry();
+    this._endMove(true);
+  }
+  _pcancel() {
+    // on a phone the browser takes over the finger to scroll and cancels it: keep the tile in hand instead of dropping it
+    if (this._mv) { if (!this._mv.carry && this._mv.pt === "touch") this._carry(); else if (!this._mv.carry) this._endMove(false); return; }
+    this._pup();
+  }
+  _carry() {
+    const m = this._mv; if (!m) return;
+    clearInterval(m.as); m.carry = true; m.armed = Date.now() + 600;
+    m.gh.classList.add("carry"); m.gh.style.transform = "";
+    this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
+    m.to = setTimeout(() => this._endMove(false), 90000);
+    this._hint("Tap the card where it should go", true);
+  }
+  _carryClick(e) {
+    const m = this._mv, path = e.composedPath();
+    if (Date.now() < m.armed) return;
+    if (path.some((n) => n.dataset && n.dataset.carry === "cancel")) return this._endMove(false);
+    const t = m.sk ? path.find((n) => n.dataset && n.dataset.sk) : path.find((n) => n.dataset && n.dataset.k && n.parentNode === m.el.parentNode);
+    if (!t) return;
+    if (t === m.el) return this._endMove(false);
+    m.te = t; m.tgt = m.sk ? t.dataset.sk : "";
+    this._endMove(true);
+  }
+  _endMove(apply) {
+    const m = this._mv; if (!m) return;
+    clearInterval(m.as); clearTimeout(m.to); m.gh.remove();
+    const el = m.el, grid = el.parentNode;
     el.classList.remove("moving");
     this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
-    if (m.sk) { if (m.tgt) this._svcMove(m.sk, m.tgt); }
-    else if (m.te) {
-      grid.insertBefore(el, m.te.compareDocumentPosition(el) & 2 ? m.te.nextSibling : m.te);   // the card takes the place of the one it was dropped on
-      const ctx = grid.dataset.grid; if (ctx) this._ordSet(ctx, Array.from(grid.children).filter((c) => c.dataset && c.dataset.k).map((c) => c.dataset.k));
+    if (apply) {
+      if (m.sk) { if (m.tgt) this._svcMove(m.sk, m.tgt); }
+      else if (m.te) {
+        grid.insertBefore(el, m.te.compareDocumentPosition(el) & 2 ? m.te.nextSibling : m.te);   // the card takes the place of the one it was dropped on
+        const ctx = grid.dataset.grid; if (ctx) this._ordSet(ctx, Array.from(grid.children).filter((c) => c.dataset && c.dataset.k).map((c) => c.dataset.k));
+      }
     }
     this._mv = null; this._sup = Date.now() + 400; this._hint("");
     this._last = null; this._draw(true);
   }
-  _hint(t) {
+  _hint(t, cancel) {
     const old = this.shadowRoot.getElementById("hint"); if (old) old.remove();
     if (!t) return;
-    const h = document.createElement("div"); h.id = "hint"; h.className = "hint"; h.textContent = t; this.shadowRoot.appendChild(h);
+    const h = document.createElement("div"); h.id = "hint"; h.className = "hint"; h.textContent = t;
+    if (cancel) { const b = document.createElement("button"); b.textContent = "Cancel"; b.dataset.carry = "cancel"; h.appendChild(b); h.classList.add("hc"); }
+    this.shadowRoot.appendChild(h);
   }
   _relevant(h) {
     if (Object.keys(h.states).length !== this._n) return true;
@@ -988,6 +1023,7 @@ class QuintDashboard extends HTMLElement {
 
   /* ---------- events ---------- */
   _click(e) {
+    if (this._mv && this._mv.carry) return this._carryClick(e);
     if (this._sup && Date.now() < this._sup) return;
     const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
     if (!t) return;
