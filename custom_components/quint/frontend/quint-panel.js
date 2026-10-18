@@ -66,7 +66,10 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.19.0";
+const VER = "1.20.0";
+const HOLD_MS = 2000;
+// z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
+const TSIZES = { xl: { n: "Extra large", z: 1.3, m: 1.3 }, l: { n: "Large", z: 1, m: 1 }, s: { n: "Small", z: 0.8, m: 0.9 }, xs: { n: "Very small", z: 0.62, m: 0.8 } };
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -207,7 +210,10 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .btn3 button{padding:12px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.28);background:none;font-size:14px;font-weight:500}.btn3 button:active{background:var(--ac);color:#000}
 .cnt{font-family:var(--serif);font-size:56px;line-height:1}
 /* ===== common cards (service pages / custom cards) ===== */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(250px * var(--tm,1)),1fr));gap:16px}
+/* tile size (Settings): everything inside a tile or card is scaled by --z */
+.bc,.grid>.kw,.grid>.cw,.grid>.tile,.grid>.card,.abody>.kw,.abody>.cw,.abody>.tile,.abody>.card{zoom:var(--z,1)}
+.bc .kw,.bc .cw,.bc .tile,.bc .card{zoom:1}
 .tile,.card{position:relative;background:var(--cd);border:1px solid var(--bd);border-radius:18px;padding:18px}
 .tile{cursor:pointer;min-height:120px;display:flex;flex-direction:column;justify-content:space-between}
 .tile:active{transform:scale(.98)}
@@ -244,9 +250,12 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:6px}.pri{background:var(--ac)!important;color:#000!important;font-weight:600}
 .rh{display:flex;align-items:center;gap:12px;margin:26px 0 12px}.rh .grow{cursor:pointer}.rn{font-family:var(--serif);font-size:30px;font-weight:400}.rb{margin:0}.rb button{flex:none;padding:8px 14px;font-size:13px}
 .kw{position:relative}.kw,.cw{border-radius:18px;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-.holding{animation:hold .7s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
-[data-sk]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.dtgt{outline:3px dashed var(--ac);outline-offset:3px}
-.moving{transform:scale(1.04);box-shadow:0 20px 50px -10px #000c,0 0 0 3px var(--ac);z-index:5;opacity:.93;transition:transform .15s}
+.holding{animation:hold 2s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
+[data-sk],[data-k]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.dtgt{outline:3px dashed var(--ac);outline-offset:3px}
+.moving{opacity:.28;outline:2px dashed var(--ac);outline-offset:-2px}
+.gh{position:fixed;left:0;top:0;z-index:140;pointer-events:none;will-change:transform}
+.gh>*{transform:scale(1.04) rotate(-1.2deg);opacity:.97;margin:0!important;height:auto!important;align-self:auto}
+.gh>.bc,.gh>.tile,.gh>.card,.gh>.kw>*,.gh>.cw>*{box-shadow:0 26px 60px -12px #000d,0 0 0 3px var(--ac);background:#151b29!important}
 .hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:130;white-space:nowrap}
 ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:96px}.tv{font-size:30px;font-weight:300;line-height:1.15;margin:4px 0 2px;word-break:break-word}
 /* ===== rooms page ===== */
@@ -264,11 +273,11 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .ahb{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:none}
 .ob2{padding:11px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.32);background:none;font-weight:600;font-size:14px;flex:none}
 .chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:16px 0}
-.abody{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;grid-auto-flow:row dense}
+.abody{display:grid;grid-template-columns:repeat(var(--abn,1),minmax(0,1fr));gap:16px;align-items:start;grid-auto-flow:row dense}
 .lr{display:grid;grid-template-columns:minmax(70px,30%) minmax(0,1fr) 52px;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--bd)}.lr:first-of-type{border-top:0}
 .lr .ln{background:none;border:0;text-align:left;padding:0;font-size:15px;font-weight:500;color:#e6eaf2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lr .lp{text-align:right;font-size:14px;color:#c3cbdb}
-.bc .grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}.bc .card{background:rgba(255,255,255,.05)}
+.bc .grid{grid-template-columns:repeat(auto-fill,minmax(calc(230px * var(--tm,1)),1fr))}.bc .card{background:rgba(255,255,255,.05)}
 .span2{grid-column:1/-1}
 .tall{grid-row:span 2}
 :host([data-dev="phone"]) .tall{grid-row:auto}
@@ -371,9 +380,9 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-dev="phone"]) h1{font-size:36px}
 :host([data-dev="phone"]) .clk{font-size:72px}
 :host([data-dev="phone"]) .bc{padding:16px 16px 16px;border-radius:18px}
-:host([data-dev="phone"]) .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+:host([data-dev="phone"]) .grid{grid-template-columns:repeat(var(--pc,2),minmax(0,1fr));gap:10px}
 :host([data-dev="phone"]) .grid[data-grid^="list:cameras"]{grid-template-columns:minmax(0,1fr)!important}
-:host([data-dev="phone"]) .bc .grid{grid-template-columns:minmax(0,1fr)}
+:host([data-dev="phone"]) .bc .grid{grid-template-columns:repeat(var(--pc2,1),minmax(0,1fr))}
 :host([data-dev="phone"]) .card{padding:14px;border-radius:16px}
 :host([data-dev="phone"]) .rn{font-size:24px}
 :host([data-dev="phone"]) .rh{flex-wrap:wrap;margin:20px 0 10px}
@@ -395,7 +404,6 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-dev="tablet"]) .home,:host([data-dev="tablet"]) .area{padding:28px 28px 22px}
 :host([data-dev="tablet"]) .page{padding:28px 28px 24px}
 :host([data-dev="tablet"]) .clk{font-size:96px}
-:host([data-dev="tablet"]) .abody{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-dev="phone"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-dev="tablet"]) .scg{grid-template-columns:repeat(3,minmax(0,1fr))}
 :host([data-dev="tablet"]) nav{padding:10px 20px calc(10px + env(safe-area-inset-bottom))}
@@ -403,7 +411,7 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-dev="tablet"]) nav button.t .si,:host([data-dev="desktop"]) nav button.t .si,:host([data-dev="tablet"]) nav button.t ha-icon,:host([data-dev="desktop"]) nav button.t ha-icon{display:none}
 :host([data-dev="desktop"]) nav{padding:12px 44px calc(12px + env(safe-area-inset-bottom))}
 :host([data-dev="desktop"]) .home,:host([data-dev="desktop"]) .area{padding:40px 44px 28px}
-:host([data-dev="desktop"]) .abody{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+:host([data-dev="desktop"]) .abody{gap:18px}
 :host([data-dev="desktop"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-dev="desktop"]) .camv .vh,:host([data-dev="desktop"]) .camv .vb,:host([data-dev="desktop"]) .camv .vf{padding-left:44px;padding-right:44px}
 :host([data-wide="1"]) .home{grid-template-columns:minmax(300px,390px) minmax(0,1fr);gap:40px}
@@ -451,34 +459,53 @@ class QuintDashboard extends HTMLElement {
     if (e.button > 0 || e.target.type === "range" || this._mv) return;
     const path = e.composedPath(), kk = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl), sk = kk ? null : path.find((n) => n.dataset && n.dataset.sk), k = kk || sk;
     if (!k || this._dlg || this._cam) return;
+    this._lp = { x: e.clientX, y: e.clientY };
     this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", sk: sk ? sk.dataset.sk : "" };
-    if (!tp) { k.classList.add("holding"); this._ht = setTimeout(() => this._startMove(), 700); }
+    if (!tp) { k.classList.add("holding"); this._ht = setTimeout(() => this._startMove(), HOLD_MS); }
   }
   _startMove() {
     if (!this._hold) return;
-    const el = this._hold.k; el.classList.remove("holding"); el.classList.add("moving");
+    const el = this._hold.k, r = el.getBoundingClientRect(), lp = this._lp || { x: this._hold.x, y: this._hold.y }, z = this._z || 1;
+    el.classList.remove("holding"); el.classList.add("moving");
     try { el.setPointerCapture(this._hold.id); } catch (e) {}
-    this._mv = { el, sk: this._hold.sk || "", tgt: "" }; this._hold = null;
+    // the lifted copy floats under the finger; the original stays as a faded placeholder
+    const gh = document.createElement("div"), cp = el.cloneNode(true);
+    gh.className = "gh"; gh.style.width = r.width + "px";
+    cp.classList.remove("moving", "holding", "dtgt"); ["data-k", "data-sk", "data-id"].forEach((a) => cp.removeAttribute(a));
+    cp.style.zoom = z; cp.style.width = r.width / z + "px";
+    gh.appendChild(cp); this.shadowRoot.appendChild(gh);
+    const m = (this._mv = { el, sk: this._hold.sk || "", tgt: "", te: null, gh, ox: lp.x - r.left, oy: lp.y - r.top });
+    this._hold = null;
+    gh.style.transform = `translate(${lp.x - m.ox}px,${lp.y - m.oy}px)`;
+    m.as = setInterval(() => this._mvStep(), 30);
     if (navigator.vibrate) navigator.vibrate(40);
-    this._hint("Drag to a new position, then release");
+    this._hint("Drag onto the card whose place you want, then release");
+  }
+  _mvStep() {
+    const m = this._mv, p = this._lp; if (!m || !p) return;
+    m.gh.style.transform = `translate(${p.x - m.ox}px,${p.y - m.oy}px)`;
+    const box = this.getBoundingClientRect(), yy = p.y - box.top, edge = 90;   // scroll the page when the tile is near the top or bottom
+    if (yy < edge) this.scrollTop -= Math.ceil((edge - Math.max(yy, 0)) / 5);
+    else if (yy > box.height - edge) this.scrollTop += Math.ceil((yy - (box.height - edge)) / 5);
+    const hit = this.shadowRoot.elementFromPoint(p.x, p.y);
+    this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
+    m.te = null; m.tgt = "";
+    if (m.sk) {
+      const t = hit && hit.closest && hit.closest("[data-sk]");
+      if (t && t.dataset.sk !== m.sk) { m.te = t; m.tgt = t.dataset.sk; }
+    } else {
+      const t = hit && hit.closest && hit.closest("[data-k]");
+      if (t && t !== m.el && t.parentNode === m.el.parentNode) m.te = t;
+    }
+    if (m.te) m.te.classList.add("dtgt");
   }
   _pmove(e) {
+    this._lp = { x: e.clientX, y: e.clientY };
     if (this._hold && !this._mv) {
       if (Math.hypot(e.clientX - this._hold.x, e.clientY - this._hold.y) <= 12) return;
-      if (this._hold.tpl && Date.now() - this._hold.t >= 600) { clearTimeout(this._ht); this._startMove(); } else return this._cancelHold();
+      if (this._hold.tpl && Date.now() - this._hold.t >= HOLD_MS) { clearTimeout(this._ht); this._startMove(); } else return this._cancelHold();
     }
-    if (!this._mv) return;
-    if (this._mv.sk) {
-      const hit = this.shadowRoot.elementFromPoint(e.clientX, e.clientY), t = hit && hit.closest && hit.closest("[data-sk]");
-      this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
-      this._mv.tgt = t && t.dataset.sk !== this._mv.sk ? t.dataset.sk : "";
-      if (this._mv.tgt) t.classList.add("dtgt");
-      return;
-    }
-    const el = this._mv.el, grid = el.parentNode, hit = this.shadowRoot.elementFromPoint(e.clientX, e.clientY);
-    const t = hit && hit.closest && hit.closest("[data-k]");
-    if (!t || t === el || t.parentNode !== grid) return;
-    grid.insertBefore(el, t.compareDocumentPosition(el) & 2 ? t.nextSibling : t);
+    if (this._mv) this._mvStep();
   }
   _cancelHold() { clearTimeout(this._ht); if (this._hold) this._hold.k.classList.remove("holding"); this._hold = null; this._draw(); }
   _pup() {
@@ -488,11 +515,15 @@ class QuintDashboard extends HTMLElement {
       return this._cancelHold();
     }
     if (!this._mv) return;
-    const el = this._mv.el, grid = el.parentNode;
+    const m = this._mv, el = m.el, grid = el.parentNode;
+    clearInterval(m.as); m.gh.remove();
     el.classList.remove("moving");
     this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
-    if (this._mv.sk) { if (this._mv.tgt) this._svcMove(this._mv.sk, this._mv.tgt); }
-    else { const ctx = grid && grid.dataset.grid; if (ctx) this._ordSet(ctx, Array.from(grid.children).filter((c) => c.dataset && c.dataset.k).map((c) => c.dataset.k)); }
+    if (m.sk) { if (m.tgt) this._svcMove(m.sk, m.tgt); }
+    else if (m.te) {
+      grid.insertBefore(el, m.te.compareDocumentPosition(el) & 2 ? m.te.nextSibling : m.te);   // the card takes the place of the one it was dropped on
+      const ctx = grid.dataset.grid; if (ctx) this._ordSet(ctx, Array.from(grid.children).filter((c) => c.dataset && c.dataset.k).map((c) => c.dataset.k));
+    }
     this._mv = null; this._sup = Date.now() + 400; this._hint("");
     this._last = null; this._draw(true);
   }
@@ -568,6 +599,7 @@ class QuintDashboard extends HTMLElement {
     if (this.getAttribute("data-dev") !== dev) this.setAttribute("data-dev", dev);
     if (this.getAttribute("data-wide") !== wide) this.setAttribute("data-wide", wide);
     if (this.getAttribute("data-nav") !== "bar") this.setAttribute("data-nav", "bar");
+    this._applyTs();
     if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; this._slide(); if (this._loaded && this._v.p === "home" && this._cols() !== this._colsN) this._draw(true); }
   }
   _slide() {
@@ -683,6 +715,7 @@ class QuintDashboard extends HTMLElement {
     if (o.intercoms) c.intercoms = o.intercoms; else if (o.intercom) { c.intercoms = [{ id: "ic1", ...o.intercom }]; delete c.intercom; }
     if (Array.isArray(o.scenes)) o.scenes.forEach((x) => { if (x && x.id && !(c.scenes || []).some((y) => y.id === x.id)) (c.scenes = c.scenes || []).push(x); });
     ["noClock", "noScenes", "noWeather", "noRooms"].forEach((k) => { if (typeof o[k] === "boolean") c[k] = o[k]; });
+    if (TSIZES[o.tsz]) c.tsz = o.tsz;
     c.svcTitle = { ...(c.svcTitle || {}), ...(o.svcTitle || {}) };
     c.svcHide = [...new Set([...(c.svcHide || []), ...(o.svcHide || [])])];
     if (o.svcOrder) c.svcOrder = o.svcOrder;
@@ -718,6 +751,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "autoclear") c.autos = [];
     else if (a === "icadd") { this._ics().push({ id: "ic" + Date.now().toString(36) }); this._icSel = this._ics().length - 1; }
     else if (a === "icdel") { const l = this._ics(); l.splice(this._icSel || 0, 1); this._icSel = Math.max(0, Math.min(this._icSel || 0, l.length - 1)); }
+    else if (a === "tsz") { if (TSIZES[v]) c.tsz = v; }
     else if (a === "clk") c.noClock = !c.noClock;
     else if (a === "flag" && ["noClock", "noScenes", "noWeather", "noRooms", "dflt", "lock"].includes(v)) c[v] = !c[v];
     else if (a === "srsel") { this._sr = v; return this._draw(true); }
@@ -1255,7 +1289,7 @@ class QuintDashboard extends HTMLElement {
       ${L("Tap")}${sel("tap", [["details", "entity details"], ["toggle", "toggle entity"], ["action", "run action"], ["path", "go to path"]])}
       ${tap === "action" ? `${L("Action", "domain.service")}${inp("cc-svc", "light.turn_on")}${L("Action data", "optional JSON")}${inp("cc-data", '{"brightness": 200}')}` : ""}
       ${tap === "path" ? `${L("Path", "e.g. /lovelace/0 or https://…")}${inp("cc-path", "/lovelace/0")}` : ""}
-      <div class="lbl" style="margin-top:10px">Hold a card for about 1 second to open entity details. Hold 5 seconds to move it.</div>`;
+      <div class="lbl" style="margin-top:10px">Hold a card for about 1 second to open entity details. Hold 2 seconds, then drag, to move it.</div>`;
     } else if (mode === "lovelace") {
       body = `${L("Lovelace card as JSON", "custom cards supported")}<textarea id="cc-json" placeholder='{"type":"custom:mushroom-light-card","entity":"light.x"}'></textarea>`;
     } else {
@@ -1488,6 +1522,7 @@ class QuintDashboard extends HTMLElement {
   _scAct(a, v) {
     const find = (key) => { const [k, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)]; return this._myScenes().find((s) => s.sc === k && s.id === id); };
     if (a === "run") { const s = find(v); if (s) this._applyScene(s); return; }
+    if (a === "tsd") { try { if (TSIZES[v]) localStorage.setItem("quint_ts", v); else localStorage.removeItem("quint_ts"); } catch (e) {} this._applyTs(); return this._draw(true); }
     if (a === "ordreset") { try { localStorage.removeItem("quint_ord"); localStorage.removeItem("quint_svo"); } catch (e) {} this._toast("Back to the shared order"); return this._draw(true); }
     if (a === "new") { this._sd = { name: "", scope: this._admin() ? "s" : "l", room: "", q: "", sel: new Set(Object.keys(this._h.states).filter((i) => ["lights", "shades", "climate"].includes(this._svcOf(i)) && !this._c.hide.includes(i))) }; return this._draw(true); }
     if (a === "re") { const s = find(v); if (!s) return; this._sd = { name: s.name, scope: s.sc, room: s.room || "", q: "", edit: v, sel: new Set((s.items || []).map((x) => x.e)) }; return this._draw(true); }
@@ -1658,9 +1693,18 @@ class QuintDashboard extends HTMLElement {
     const t = this._stats(k);
     return wrap("", `${hd("", S.i)}<div class="cnt">${t.big}</div><div class="cap2">${t.big ? t.lbl : "No cards yet · tap to open"}</div>`);
   }
+  _ts() { let u = ""; try { u = localStorage.getItem("quint_ts") || ""; } catch (e) {} return TSIZES[u] ? u : TSIZES[this._c && this._c.tsz] ? this._c.tsz : "l"; }
+  _applyTs() {
+    const k = this._ts(), z = TSIZES[k].z, i = ["xl", "l", "s", "xs"].indexOf(k), phone = this.getAttribute("data-dev") === "phone", st = this.style;
+    this._z = z; this._m = TSIZES[k].m;
+    const set = (n, v) => { if (st.getPropertyValue(n) !== String(v)) st.setProperty(n, String(v)); };
+    set("--z", z); set("--tm", TSIZES[k].m); set("--pc", [1, 2, 3, 4][i]); set("--pc2", [1, 1, 2, 2][i]); set("--abn", phone ? [1, 1, 2, 2][i] : [1, 2, 3, 4][i]);
+    if (this.getAttribute("data-ts") !== k) this.setAttribute("data-ts", k);
+  }
   _cols() {
     const w = this._w || 1024, wide = this.getAttribute("data-wide") === "1", area = wide ? w - Math.min(390, w * 0.3) - 40 - 88 : w - 56;
-    return Math.max(1, Math.min(3, Math.floor((area + 16) / 316)));
+    const m = this._m || 1;
+    return Math.max(1, Math.min(m < 1 ? 4 : 3, Math.floor((area + 16) / (316 * m))));
   }
   _home() {
     const c = this._c, hr = new Date().getHours(), g = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening";
@@ -1762,7 +1806,7 @@ class QuintDashboard extends HTMLElement {
     return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${total} active · grouped by room</div>${parts.join("")}`;
   }
   _list(s) {
-    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(${s === "cameras" ? 320 : 200}px,1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
+    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(calc(${s === "cameras" ? 320 : 200}px * var(--tm,1)),1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
   }
   _settings() {
     const E = (t) => this._esc(t), c = this._c; let tab = this._v.tab || "general";
@@ -1772,13 +1816,16 @@ class QuintDashboard extends HTMLElement {
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
     const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
+    const tsSeg = (cur, attr, none) => `<div class="seg sm" style="flex-wrap:wrap">${Object.entries(TSIZES).map(([k, t]) => `<button class="${cur === k ? "on" : ""}" ${attr}="${attr === "data-s" ? "tsz|" : "tsd|"}${k}">${t.n}</button>`).join("")}${none ? `<button ${attr}="tsd|">Same as shared</button>` : ""}</div>`;
     let tab2 = tab;
     if (!adm) tab2 = tab === "bg" || tab === "rphoto" || ((tab === "users" || tab === "updates") && this._mgr()) ? tab : "scenes";
     tab = tab2;
     let body = "";
     if (tab === "bg") {
       const u = this._bgu(), b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(u || c.bg || {}) };
-      body = (adm ? "" : sec("Arrangement", "hold a tile or card for a moment, then drag it to a new place",
+      let mine = ""; try { mine = localStorage.getItem("quint_ts") || ""; } catch (e) {}
+      body = sec("Tile size", mine && TSIZES[mine] ? "this device only" : "using the shared size", row("Size on this device", "extra large, large, small or very small tiles and cards", tsSeg(this._ts(), "data-sc", !!(mine && TSIZES[mine])))) +
+        (adm ? "" : sec("Arrangement", "hold a tile or card for 2 seconds, then drag it onto the card whose place you want",
         row("Your own order", "tiles and cards are arranged on this device only", '<button class="sbtn" data-sc="ordreset|">Back to the shared order</button>'))) +
         sec("Background", u ? "this device only" : "using the shared look", `<div style="padding:4px 4px 12px">${this._pbControls(u, b)}</div>`);
     } else if (tab === "general") {
@@ -1786,6 +1833,8 @@ class QuintDashboard extends HTMLElement {
       body = sec("Settings file", "settings are stored on the server and shared by every user; a file makes them portable",
         row("Export", "download all settings as JSON", `<button class="sbtn" data-s="export|">Download</button>`) +
         row("Import", "an export; merged with what is already there", `<input type="file" accept=".json,application/json" data-import="1">`)) +
+      sec("Tile size", "the size of every tile and card for all users; a person can pick another size on their own device",
+        row("Size for everyone", "extra large, large, small or very small", tsSeg(TSIZES[c.tsz] ? c.tsz : "l", "data-s"))) +
       sec("Appearance", "",
         row("Client name", "written top left on every page", `<input type="text" data-ttl value="${E(c.title || "")}" placeholder="${E(this._title || "Quint")}">`) +
         row("Bottom text", "written next to the settings button, bottom right (empty = hide)", `<input type="text" data-cred value="${E(c.credit === undefined ? "By Quinteca" : c.credit)}" placeholder="By Quinteca">`) +
@@ -1971,7 +2020,7 @@ class QuintDashboard extends HTMLElement {
   /* ---------- render ---------- */
   _draw(force) {
     if (!this._h || !this._loaded || this._mv || this._hold) return;
-    this._syncSv(); this._titles();
+    this._applyTs(); this._syncSv(); this._titles();
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "intercom" && !this._icOn()) this._v = { p: "home" };
