@@ -67,7 +67,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.22.0";
+const VER = "1.23.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const TSIZES = { xl: { n: "Extra large", z: 1.3, m: 1.3 }, l: { n: "Large", z: 1, m: 1 }, s: { n: "Small", z: 0.8, m: 0.9 }, xs: { n: "Very small", z: 0.62, m: 0.8 } };
@@ -462,6 +462,7 @@ class QuintDashboard extends HTMLElement {
     R.addEventListener("input", (e) => this._input(e));
     R.addEventListener("touchmove", (e) => { if (this._mv && !this._mv.carry) e.preventDefault(); }, { passive: false });
     R.addEventListener("contextmenu", (e) => { if (this._hold || this._mv) e.preventDefault(); });
+    R.addEventListener("load", (e) => { const t = e.target; if (t && t.classList && t.classList.contains("camx")) t.dataset.ok = "1"; }, true);
     R.addEventListener("error", (e) => { const t = e.target; if (t && t.classList && t.classList.contains("camx") && !this._camFb) { this._camFb = true; if (t.dataset.snap) t.src = t.dataset.snap; } if (t && t.classList && t.classList.contains("wallx") && t.dataset.wid) { (this._wallFb = this._wallFb || new Set()).add(t.dataset.wid); this._last = null; this._draw(true); } }, true);
   }
   _pdown(e) {
@@ -626,11 +627,34 @@ class QuintDashboard extends HTMLElement {
     });
     Array.from(from.childNodes).forEach((x) => { if (!used.has(x)) from.removeChild(x); });
   }
+  _snapLoad(img, base, cb) {
+    const u = base + (base.includes("?") ? "&" : "?") + "t=" + Date.now();
+    const old = img._obj, swap = (src, obj) => {
+      img._obj = obj || null;
+      if (old) img.addEventListener("load", () => URL.revokeObjectURL(old), { once: true });
+      img.src = src; cb(true);
+    };
+    if (this._noFetch || typeof fetch !== "function") { const t = new Image(); t.onload = () => swap(u, null); t.onerror = () => cb(false); t.src = u; return; }
+    const ac = typeof AbortController !== "undefined" ? new AbortController() : null, to = setTimeout(() => ac && ac.abort(), 12000);
+    fetch(u, { cache: "no-store", signal: ac ? ac.signal : undefined }).then((r) => { if (!r.ok) throw new Error("http"); return r.blob(); })
+      .then((bl) => { clearTimeout(to); swap(URL.createObjectURL(bl), true); })
+      .catch((e) => { clearTimeout(to); if (e && e.name === "TypeError") this._noFetch = true; cb(false); });
+  }
   _refreshCams() {
-    if (document.hidden) return;
-    this.shadowRoot.querySelectorAll("img.cam[data-src]").forEach((img) => {
-      const b = img.dataset.src, u = b + (b.includes("?") ? "&" : "?") + "t=" + Date.now(), t = new Image();
-      t.onload = () => { img.src = u; }; t.src = u;
+    if (document.hidden || this._cam) return;
+    const wall = this._v && this._v.p === "camwall", now = Date.now(), vh = window.innerHeight || 800;
+    const n = this.shadowRoot.querySelectorAll(".wallg .wt").length;
+    const gap = wall ? (n <= 4 ? 1200 : n <= 9 ? 2200 : n <= 16 ? 3200 : 4500) : 3000;
+    let busy = 0;
+    const list = Array.from(this.shadowRoot.querySelectorAll("img.cam[data-src]"));
+    list.forEach((img) => { if (img._busy && now - img._busy > 12000) { img._busy = 0; } if (img._busy) busy++; });
+    const cap = wall ? (n <= 8 ? 2 : 3) : 4;
+    list.filter((img) => !img._busy && (img._due || 0) <= now).sort((a, b) => (a._due || 0) - (b._due || 0)).forEach((img) => {
+      if (busy >= cap) return;
+      const r = img.getBoundingClientRect();
+      if (r.bottom < -150 || r.top > vh + 150 || (!r.width && !r.height)) return;
+      img._busy = now; busy++;
+      this._snapLoad(img, img.dataset.src, (ok) => { img._busy = 0; img._due = Date.now() + (ok ? gap : 5000); });
     });
   }
   _layout() {
@@ -662,17 +686,19 @@ class QuintDashboard extends HTMLElement {
     if (typeof ResizeObserver !== "undefined") { this._ro = new ResizeObserver(() => this._layout()); this._ro.observe(this); }
     this._kd = (e) => { if (e.key === "Escape" && this._cam) { this._cam = null; this._camFb = false; this._draw(true); } };
     window.addEventListener("keydown", this._kd);
-    this._iv2 = setInterval(() => { this._refreshCams(); if (this._h && this._ics().some((x) => x.bell && x.bell.startsWith("event."))) this._draw(); }, 5000);
+    this._iv2 = setInterval(() => { this._refreshCams(); }, 700); this._iv5 = setInterval(() => { if (this._h && this._ics().some((x) => x.bell && x.bell.startsWith("event."))) this._draw(); }, 5000);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._slide());
     this._iv3 = setInterval(() => {
-      if (!this._cam || !this._camFb || document.hidden) return;
+      if (!this._cam) { this._camId = null; return; }
+      if (document.hidden) return;
       const img = this.shadowRoot.querySelector("img.camx"); if (!img || !img.dataset.snap) return;
-      const b = img.dataset.snap, u = b + (b.includes("?") ? "&" : "?") + "t=" + Date.now(), t = new Image();
-      t.onload = () => { img.src = u; }; t.src = u;
-    }, 1500);
+      if (!this._camFb) { if (!img.dataset.ok && Date.now() - (this._camSince || 0) > 9000) { this._camFb = true; this._draw(true); } return; }
+      if (img._busy && Date.now() - img._busy < 8000) return;
+      img._busy = Date.now(); this._snapLoad(img, img.dataset.snap, () => { img._busy = 0; });
+    }, 1000);
     this._iv = setInterval(() => { const r = this.shadowRoot; const c = r.querySelector(".clk"); if (c) c.innerHTML = this._clockHtml(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 10000);
   }
-  disconnectedCallback() { clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
+  disconnectedCallback() { clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
   set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
   set route(r) {}
@@ -1857,11 +1883,15 @@ class QuintDashboard extends HTMLElement {
     if (!ids.length) return `${this._top()}<h1>${SV.camwall.i} ${E(SV.camwall.n)}</h1><div class="bc" style="max-width:640px;margin-top:10px"><div class="lbl">No cameras to show yet.${this._admin() ? " Choose them in Settings → Camera wall." : ""}</div></div>`;
     const g = this._wallGrid(ids.length), small = g.c >= 5 || ids.length > 12;
     this._wallKey = `${ids.length}:${g.c}:${g.r}`;
+    const liveMax = ids.length <= 4 ? 4 : ids.length <= 8 ? 3 : 2, dpr = Math.min(2, window.devicePixelRatio || 1), tw = ((this._w || 1024) / g.c) * dpr, px = Math.max(320, Math.min(1280, Math.ceil(tw / 160) * 160));
+    let nl = 0;
     const tiles = ids.map((id) => {
       const a = H[id].attributes, off = ["unavailable", "unknown"].includes(H[id].state) || !a.entity_picture, nm = w.names ? `<span class="cn">${E(this._nm(id))}</span>` : "";
       if (off) return `<div class="cvw wt" data-id="w:cam:${E(id)}" style="cursor:default">${nm}<span class="wo">Offline</span></div>`;
-      const snap = this._h.hassUrl(a.entity_picture), live = w.live && !(this._wallFb || new Set()).has(id);
-      const img = live ? `<img class="wallx" data-wid="${E(id)}" data-src="${E(snap.replace("/camera_proxy/", "/camera_proxy_stream/"))}" src="${E(snap.replace("/camera_proxy/", "/camera_proxy_stream/"))}">` : `<img class="cam" data-src="${E(snap)}" src="${E(snap)}">`;
+      const snap = this._h.hassUrl(a.entity_picture), live = w.live && nl < liveMax && !(this._wallFb || new Set()).has(id);
+      if (live) nl++;
+      const sized = snap + (snap.includes("?") ? "&" : "?") + "width=" + px;
+      const img = live ? `<img class="wallx" data-wid="${E(id)}" data-src="${E(snap.replace("/camera_proxy/", "/camera_proxy_stream/"))}" src="${E(snap.replace("/camera_proxy/", "/camera_proxy_stream/"))}">` : `<img class="cam" decoding="async" data-src="${E(sized)}" src="${E(sized)}">`;
       return `<div class="cvw wt" data-cam="${E(id)}" data-id="w:cam:${E(id)}">${img}${nm}<span class="live">Live</span></div>`;
     }).join("");
     return `${this._top()}<div class="wallg ${small ? "sm" : ""}" style="grid-template-columns:repeat(${g.c},minmax(0,1fr));grid-template-rows:repeat(${g.r},minmax(0,1fr));gap:${g.gap}px;height:${g.height}px">${tiles}</div>`;
@@ -1871,11 +1901,12 @@ class QuintDashboard extends HTMLElement {
     if (!s || !s.attributes.entity_picture) return "";
     const E = (t) => this._esc(t), cams = this._camList();
     const snap = this._h.hassUrl(s.attributes.entity_picture), stream = snap.replace("/camera_proxy/", "/camera_proxy_stream/");
+    if (this._camId !== id) { this._camId = id; this._camSince = Date.now(); }
     const ic = this._icList().find((x) => x.camera === id) || {}, armed = this._arm === "door:" + ic.id;
     const vb = [!ic.noAudio && `<button class="icb" data-ic="audio|${E(ic.id || "")}">${PHONE_I}<span>Audio call</span></button>`, !ic.noDoor && `<button class="icb door ${armed ? "armed" : ""}" data-ic="door|${E(ic.id || "")}">${KEY_I}<span>${armed ? "Tap again to open" : "Open door"}</span></button>`].filter(Boolean);
     const ictl = ic.id && vb.length ? `<div class="vic">${vb.join("")}</div>` : "";
     const arrows = cams.length > 1 ? `<button class="ib" data-cam="prev">‹</button><button class="ib" data-cam="next">›</button>` : "";
-    return `<div class="camv" data-cam="bg"><div class="vh"><span class="live">Live</span><span class="vt">${E(this._nm(id))}</span><span class="grow"></span>${arrows}<button class="ib" data-cam="close">✕</button></div><div class="vb"><img class="camx" data-cam="keep" data-src="${stream}" data-snap="${snap}" src="${this._camFb ? snap : stream}"></div>${ictl}<div class="vf">${cams.map((i) => `<button class="cc2 ${i === id ? "on" : ""}" data-id="cc:${i}" data-cam="${i}">${E(this._nm(i))}</button>`).join("")}</div></div>`;
+    return `<div class="camv" data-cam="bg"><div class="vh"><span class="live">Live</span><span class="vt">${E(this._nm(id))}</span><span class="grow"></span>${arrows}<button class="ib" data-cam="close">✕</button></div><div class="vb"><img class="camx" data-cam="keep" data-src="${stream}" data-snap="${snap}" style="background:#000 url('${E(snap)}') center/contain no-repeat" src="${this._camFb ? snap : stream}"></div>${ictl}<div class="vf">${cams.map((i) => `<button class="cc2 ${i === id ? "on" : ""}" data-id="cc:${i}" data-cam="${i}">${E(this._nm(i))}</button>`).join("")}</div></div>`;
   }
   _roomsPage() {
     const s = this._v.svc;
@@ -2012,7 +2043,7 @@ class QuintDashboard extends HTMLElement {
       body = sec("Camera wall", "one dedicated screen that shows many cameras at once",
         row("Cameras on the screen", "1 to 32. The tiles are laid out to fill the screen for this number", `<select data-wn="1">${Array.from({ length: 32 }, (_, i) => i + 1).map((n) => `<option value="${n}" ${n === w.n ? "selected" : ""}>${n}</option>`).join("")}</select>`) +
         row("Show in the bottom bar", "switch off to hide the page for everyone", tg(!H.includes("camwall"), 'data-s="svcvis|camwall"')) +
-        row("Live video", "play the live stream. Off = a picture that refreshes every 5 seconds, lighter with many cameras", tg(w.live, 'data-s="wall|live"')) +
+        row("Live video", "play the live stream on the first few cameras (4 at most, fewer when there are many, so the screen stays fast). The other cameras show pictures that refresh as fast as the camera answers", tg(w.live, 'data-s="wall|live"')) +
         row("Camera names", "write the name on each tile", tg(w.names, 'data-s="wall|names"'))) +
       sec("Cameras", `${chosen.length ? chosen.length + " chosen" : "automatic: the first " + w.n} · ${shown} on the screen`,
         (all.length ? chosen.map((id, i) => camRow(id, true, i)).join("") + all.filter((i) => !chosen.includes(i)).map((id) => camRow(id, false, -1)).join("") : '<div class="lbl" style="padding:6px 4px 12px">No cameras found in Home Assistant.</div>') +
