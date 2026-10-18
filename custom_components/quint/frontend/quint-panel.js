@@ -66,7 +66,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.14.0";
+const VER = "1.15.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -762,6 +762,15 @@ class QuintDashboard extends HTMLElement {
       .catch((e) => { this._upMsg = a === "restart" ? "Home Assistant is restarting. This page reloads when it is back." : "That did not work: " + ((e && e.body && e.body.message) || (e && e.message) || "error"); })
       .finally(() => { this._upBusy = false; this._draw(true); if (a !== "restart") setTimeout(() => this._upLoad(true), 4000); });
   }
+  _goRoot() { location.href = "/"; }
+  async _signOut() {
+    if (!confirm(this._dirty ? "You have unsaved settings. Sign out anyway?" : "Sign out of Home Assistant on this device?")) return;
+    const h = this._h;
+    try { if (h && h.auth && typeof h.auth.revoke === "function") await h.auth.revoke(); } catch (e) {}
+    try { if (h && h.connection && h.connection.close) h.connection.close(); } catch (e) {}
+    try { localStorage.removeItem("hassTokens"); sessionStorage.removeItem("quint_rl"); } catch (e) {}
+    this._goRoot();
+  }
   _locked() {
     const c = this._c, u = this._h && this._h.user; if (!c || !c.lock || !u || u.is_admin) return false;
     const l = c.lockUsers || []; return !l.length || l.includes(u.id);
@@ -902,10 +911,11 @@ class QuintDashboard extends HTMLElement {
   /* ---------- events ---------- */
   _click(e) {
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
+    if (d.out) return this._signOut();
     if (d.um) { const i = d.um.indexOf("|"); if (!this._admin() && !this._mgr()) return; return this._uact(d.um.slice(0, i), d.um.slice(i + 1)); }
     if (d.sc !== undefined) { const i = d.sc.indexOf("|"); return this._scAct(d.sc.slice(0, i), d.sc.slice(i + 1)); }
     if (d.ic) return this._icAct(d.ic);
@@ -1865,7 +1875,7 @@ class QuintDashboard extends HTMLElement {
       }).join("") || '<div class="lbl" style="padding:6px 4px 12px">No custom cards yet.</div>') + `<div class="btns"><button class="pri" data-cc="open:home">＋ Add card</button></div>`);
     }
     const tabsHtml = tabs.map(([id, t, sub]) => `<button class="sti ${tab === id ? "act" : ""}" data-go='${JSON.stringify({ p: "settings", tab: id })}'>${SET_I[id]}<span><b>${t}</b><small>${sub}</small></span></button>`).join("");
-    return `${this._top(false)}<div class="sbar"><div><h1>Settings</h1><div class="sub">${adm ? `Stored on the server for every user · Quint v${VER} · ${this._rn || 0} screen updates` : "Saved on this device only"}</div></div><div class="sbtns">${adm ? `<button class="sbtn ${this._dirty ? "pri2" : ""}" data-s="save|">Save</button><button class="sbtn" data-s="reset|">Reset everything</button><button class="sbtn" data-s="close|">Close</button>` : `<button class="sbtn" data-go='{"p":"home"}'>Close</button>`}</div></div><div class="sg"><div class="snav">${tabsHtml}</div><div>${body}</div></div>`;
+    return `${this._top(false)}<div class="sbar"><div><h1>Settings</h1><div class="sub">${adm ? `Stored on the server for every user · Quint v${VER} · ${this._rn || 0} screen updates` : "Saved on this device only"}</div></div><div class="sbtns">${adm ? `<button class="sbtn ${this._dirty ? "pri2" : ""}" data-s="save|">Save</button><button class="sbtn" data-s="reset|">Reset everything</button><button class="sbtn" data-out="1">Sign out</button><button class="sbtn" data-s="close|">Close</button>` : `<button class="sbtn" data-out="1">Sign out</button><button class="sbtn" data-go='{"p":"home"}'>Close</button>`}</div></div><div class="sg"><div class="snav">${tabsHtml}</div><div>${body}</div></div>`;
   }
 
   /* ---------- render ---------- */

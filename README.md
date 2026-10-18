@@ -102,6 +102,9 @@ Every cover that Home Assistant calls a shutter, blind, shade, curtain, awning o
 
 Limits hide things inside Quint; they are **not a security wall**. Also use **Access → Lock to Quint** so users cannot open Home Assistant itself.
 
+### Sign out (v1.15)
+Every user (admin, Quint admin and normal users) has a **Sign out** button at the top of **Settings**. It signs the user out of Home Assistant on that device, which is handy when the sidebar is hidden by **Lock to Quint**.
+
 ### Access (default page and lock)
 **Settings → Access** (admin only):
 - **Open Quint first** – after signing in, normal users land on Quint instead of the default Home Assistant page (once per browser session; they can still go elsewhere).
