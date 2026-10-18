@@ -66,7 +66,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.17.0";
+const VER = "1.18.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -236,7 +236,7 @@ img.cam{width:100%;border-radius:14px;margin-top:12px;background:#000;aspect-rat
 input[type=text],select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--bd);color:#eef2fa;border-radius:10px;padding:11px;font:inherit}
 table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 6px;border-bottom:1px solid var(--bd)}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-right:6px}.dot.ok{background:var(--ok)}
-.cw{position:relative}.rm{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:12px;opacity:.55;z-index:2}.rm:hover{opacity:1;background:var(--bad)}
+.cw{position:relative}.cwoff>.card,.cwoff>.cw{opacity:.4}.hdn{position:absolute;left:12px;bottom:8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);pointer-events:none}.rm.eye{right:40px}.rm{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:12px;opacity:.55;z-index:2}.rm:hover{opacity:1;background:var(--bad)}
 .tile.add{min-height:96px;border-style:dashed;background:transparent;opacity:.85;align-items:flex-start}.lvw{grid-column:span 2}
 .ov{position:fixed;inset:0;background:rgba(5,8,16,.7);display:grid;place-items:center;z-index:99;padding:16px}
 .dlg{width:min(520px,100%);background:#141c2e;border:1px solid var(--bd);border-radius:24px;padding:24px;max-height:90vh;overflow:auto}.dlg input{margin-top:4px}
@@ -960,6 +960,7 @@ class QuintDashboard extends HTMLElement {
       const [k, r, i] = d.cc.split(":");
       if (k === "open") { const cv = this._v.svc || ""; this._dlg = { room: r, place: r, mode: "entity", tap: "details", sn: cv.startsWith("cs:") ? cv.slice(3) : cv === "more" ? "More" : "" }; return this._draw(true); }
       if (k === "cancel") { this._dlg = null; return this._draw(true); }
+      if (k === "vis") { const it = (this._c.custom[r] || [])[+i]; if (it) { if (it.off) delete it.off; else it.off = true; this._save(this._v.p !== "settings"); this._syncTpl(); } return this._draw(true); }
       if (k === "del") { this._c.custom[r].splice(+i, 1); this._save(this._v.p !== "settings"); this._syncTpl(); return this._draw(true); }
       if (k === "save") return this._saveCC();
     }
@@ -1121,8 +1122,8 @@ class QuintDashboard extends HTMLElement {
   }
   _cardsOf(ids, ctx) { return this._sort(ctx, ids, (i) => "e:" + i).map((i) => this._kw("e:" + i, this._card(i))).join(""); }
   _csKey(it) { const n = (it.svc || "").trim(); return !n || n.toLowerCase() === "more" ? "more" : "cs:" + n; }
-  _csItems(rid, key) { return (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => this._csKey(x.it) === key); }
-  _csHas(key) { return Object.entries(this._c.custom).some(([r, a]) => r !== "home" && a.some((x) => this._csKey(x) === key)); }
+  _csItems(rid, key) { return (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => this._csKey(x.it) === key && !x.it.off); }
+  _csHas(key) { return Object.entries(this._c.custom).some(([r, a]) => r !== "home" && a.some((x) => this._csKey(x) === key && (!x.off || this._admin()))); }
   _syncSv() {
     const PAL = ["#4aa3ff", "#2dd4bf", "#f5a623", "#b388ff", "#34c98b", "#ff7a59", "#7dd3fc", "#f472b6"], found = {};
     Object.entries(this._c.custom).forEach(([r, a]) => { if (r === "home") return; a.forEach((x) => { const k = this._csKey(x); if (k === "more") return; const f = (found[k] = found[k] || { ic: "" }); if (!f.ic && x.svcIcon) f.ic = x.svcIcon; }); });
@@ -1138,14 +1139,14 @@ class QuintDashboard extends HTMLElement {
     const parts = this._rooms().map((r) => [r, this._csItems(r.id, s)]).filter(([, e]) => adm || e.length).map(([r, e]) => {
       const n = e.filter((x) => x.it.entity && this._h.states[x.it.entity] && this._isOn(x.it.entity)).length;
       const add = adm ? `<div class="tile add" data-cc="open:${r.id}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : "";
-      return `<section><div class="rh"><div class="grow" data-go='${JSON.stringify({ p: "room", room: r.id, svc: s })}'><div class="rn">${r.name}</div><div class="lbl">${n} active of ${e.length}</div></div></div><div class="grid" data-grid="room:${r.id}:${s}">${this._customCards(r.id, "room:" + r.id + ":" + s, s)}${add}</div></section>`;
+      return `<section><div class="rh"><div class="grow" data-go='${JSON.stringify({ p: "room", room: r.id, svc: s })}'><div class="rn">${r.name}</div><div class="lbl">${n} active of ${e.length}</div></div></div><div class="grid" data-grid="room:${r.id}:${s}">${this._customCards(r.id, "room:" + r.id + ":" + s, s, true)}${add}</div></section>`;
     });
     return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${adm ? "Admin · add cards to any room with ＋" : "Grouped by room"}</div>${parts.join("") || '<div class="card">No cards yet.</div>'}`;
   }
   _homeCards() {
-    const n = (this._c.custom.home || []).length, adm = this._admin();
+    const adm = this._admin(), n = (this._c.custom.home || []).filter((x) => adm || !x.off).length;
     if (!n && !adm) return "";
-    return `${n ? "<h2>My cards</h2>" : ""}<div class="grid" data-grid="home:cards" style="margin-top:${n ? 0 : 16}px">${this._customCards("home", "home:cards")}${adm ? `<div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : ""}</div>`;
+    return `${n ? "<h2>My cards</h2>" : ""}<div class="grid" data-grid="home:cards" style="margin-top:${n ? 0 : 16}px">${this._customCards("home", "home:cards", "", true)}${adm ? `<div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : ""}</div>`;
   }
   _esc(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
   _findTpl(uid) { return Object.values(this._c.custom).flat().find((x) => x.uid === uid); }
@@ -1180,10 +1181,11 @@ class QuintDashboard extends HTMLElement {
       else if (it.path.startsWith("/")) { history.pushState(null, "", it.path); window.dispatchEvent(new CustomEvent("location-changed")); }
     }
   }
-  _customCards(rid, ctx, key) {
-    const items = (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => !key || this._csKey(x.it) === key);
+  _customCards(rid, ctx, key, showOff) {
+    const items = (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => (!key || this._csKey(x.it) === key) && (!x.it.off || (showOff && this._admin())));
     return this._sort(ctx, items, (x) => "c:" + x.it.uid).map(({ it, i }) => {
-      const rm = this._admin() ? `<button class="rm" data-cc="del:${rid}:${i}">✕</button>` : "", k = "c:" + it.uid;
+      const rm = this._admin() ? `<button class="rm eye" data-cc="vis:${rid}:${i}" title="${it.off ? "Hidden: tap to show" : "Shown: tap to hide"}">${it.off ? "⊘" : "◉"}</button><button class="rm" data-cc="del:${rid}:${i}">✕</button>` : "", k = "c:" + it.uid;
+      if (it.off) return `<div class="cw cwoff" data-k="${k}">${it.type === "template" ? this._tplCard(it) : it.type === "lovelace" ? `<div class="card"><div class="nm">${this._esc(it.name || "Lovelace card")}</div></div>` : this._gen(it)}${rm}<span class="hdn">Hidden</span></div>`;
       return it.type === "template" ? `<div class="cw" data-k="${k}">${this._tplCard(it)}${rm}</div>` : it.type === "lovelace" ? `<div class="cw lvw" data-k="${k}"><div data-lv="${rid}:${i}"></div>${rm}</div>` : `<div class="cw" data-k="${k}">${this._gen(it)}${rm}</div>`;
     }).join("");
   }
@@ -1809,6 +1811,11 @@ class QuintDashboard extends HTMLElement {
         sec(E(cur.name), `${shown} of ${inR.length} devices shown`,
           (inR.map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, `${E(SV[this._svcOf(id)].n)} · ${E(id)}`, tg(!H.includes(id), `data-tog="hide:${E(id)}"`))).join("") || '<div class="lbl" style="padding:6px 4px 12px">No devices in this room yet.</div>') +
           (inR.length ? `<div class="btns"><button data-s="rdall|show">Show all</button><button data-s="rdall|hide">Hide all</button></div>` : "")) +
+        (() => {
+          const cc = (c.custom[cur.id] || []).map((it, i) => ({ it, i }));
+          return cc.length ? sec("Cards in " + E(cur.name), "the cards you added (shown on the More page and in the room)",
+            cc.map(({ it, i }) => { const st = it.entity && this._h.states[it.entity], nm = it.name || (st && st.attributes.friendly_name) || it.text || it.entity || "Card"; return row(E(nm), `${E(this._csKey(it) === "more" ? "More" : this._csKey(it).slice(3))} · ${E(it.type === "entity" ? it.entity : it.type)}`, tg(!it.off, `data-cc="vis:${E(cur.id)}:${i}"`)); }).join("")) : "";
+        })() +
         (free.length ? sec("Not in any room", "add a device to " + E(cur.name),
           free.map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<button class="sbtn" data-s="rdadd|${E(id)}">Add here</button>`)).join("")) : "");
       }
