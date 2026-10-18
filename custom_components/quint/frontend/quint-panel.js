@@ -61,12 +61,12 @@ const SET_I = {
   rooms: ICONS.door, devices: ICONS.plug, home: ICONS.home,
   cards: ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'),
 };
-SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.users = ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M17 5.5a3.2 3.2 0 0 1 0 6M18.5 14.8c1.9.7 3.1 2.4 3.5 5.2"/>');  SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
+SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.rdev = ICONS.plug; SET_I.users = ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M17 5.5a3.2 3.2 0 0 1 0 6M18.5 14.8c1.9.7 3.1 2.4 3.5 5.2"/>');  SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
 const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.16.0";
+const VER = "1.17.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -264,7 +264,7 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .ahb{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:none}
 .ob2{padding:11px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.32);background:none;font-weight:600;font-size:14px;flex:none}
 .chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:16px 0}
-.abody{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.abody{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;grid-auto-flow:row dense}
 .lr{display:grid;grid-template-columns:minmax(70px,30%) minmax(0,1fr) 52px;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--bd)}.lr:first-of-type{border-top:0}
 .lr .ln{background:none;border:0;text-align:left;padding:0;font-size:15px;font-weight:500;color:#e6eaf2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lr .lp{text-align:right;font-size:14px;color:#c3cbdb}
@@ -692,6 +692,7 @@ class QuintDashboard extends HTMLElement {
   _sact(a, v) {
     const c = this._c;
     if (a === "icsel") { this._icSel = +v; return this._draw(true); }
+    if (a === "rdsel") { this._rd = v; return this._draw(true); }
     if (a === "save") { this._push(); this._dirty = false; this._snap = JSON.stringify(c); this._toast("Saved"); this._draw(true); return; }
     if (a === "close") { if (this._dirty && !confirm("Discard unsaved changes?")) return; if (this._dirty) this._revert(); return this._nav("home"); }
     if (a === "reset") {
@@ -719,6 +720,11 @@ class QuintDashboard extends HTMLElement {
     else if (a === "icdel") { const l = this._ics(); l.splice(this._icSel || 0, 1); this._icSel = Math.max(0, Math.min(this._icSel || 0, l.length - 1)); }
     else if (a === "clk") c.noClock = !c.noClock;
     else if (a === "flag" && ["noClock", "noScenes", "noWeather", "noRooms", "dflt", "lock"].includes(v)) c[v] = !c[v];
+    else if (a === "rdall") {
+      const rid = this._rd || ((c.rooms || []).find((r) => r.on !== false) || {}).id, ids = Object.keys(this._h.states).filter((i) => this._svcOf(i) && this._roomOf(i) === rid);
+      c.hide = v === "hide" ? [...new Set([...(c.hide || []), ...ids])] : (c.hide || []).filter((x) => !ids.includes(x));
+    }
+    else if (a === "rdadd") { const rid = this._rd || ((c.rooms || []).find((r) => r.on !== false) || {}).id; if (rid) c.map[v] = rid; }
     else if (a === "lockuser") { const l = new Set(c.lockUsers || []); l.has(v) ? l.delete(v) : l.add(v); c.lockUsers = [...l]; }
     else return;
     this._save(); this._applyBg(); this._draw(true);
@@ -1686,10 +1692,14 @@ class QuintDashboard extends HTMLElement {
         const all = sh.join(",");
         sec.push(`<div class="bc span2" data-sk="shades" data-id="a:shades"><div class="bh" ${this._tileGo(s)}><span>${SV.shades.n}</span><span class="bs">${sh.length} window${sh.length === 1 ? "" : "s"}${avg != null ? " · " + avg + "% open" : ""}</span></div><div class="shg">${sh.map((i) => this._kw("e:" + i, this._shadeCard(i))).join("")}</div>${sh.length > 1 ? `<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open all</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close all</button></div>` : ""}</div>`);
       } else if (s === "climate") {
-        const id = cl[0], a = H[id].attributes, off = ["off", "unavailable", "unknown"].includes(st(id)), tg = a.temperature, step = a.target_temp_step || 0.5, x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
-        const verb = a.hvac_action === "heating" ? "heating to " : a.hvac_action === "cooling" ? "cooling to " : "set to ";
-        const txt = `${a.current_temperature != null ? this._fmt(a.current_temperature) + "° now" : st(id)}${off ? " · off" : tg != null ? " · " + verb + this._fmt(tg) + "°" : ""}`;
-        sec.push(`<div class="bc" data-sk="climate" data-id="a:climate"><div class="bh" ${this._tileGo(s)}><span>${SV.climate.n}</span></div><div class="cl"><div class="cap2" style="margin:0;font-size:15px">${E(txt)}</div>${tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : ""}</div></div>`);
+        const x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
+        const rows = cl.map((id) => {
+          const a = H[id].attributes, off = ["off", "unavailable", "unknown"].includes(st(id)), tg = a.temperature, step = a.target_temp_step || 0.5;
+          const verb = a.hvac_action === "heating" ? "heating to " : a.hvac_action === "cooling" ? "cooling to " : "set to ";
+          const txt = `${a.current_temperature != null ? this._fmt(a.current_temperature) + "° now" : st(id)}${off ? " · off" : tg != null ? " · " + verb + this._fmt(tg) + "°" : ""}`;
+          return `<div class="cl" data-id="cl:${E(id)}"><div>${cl.length > 1 ? `<div class="lbl" style="margin:0 0 2px">${E(this._nm(id))}</div>` : ""}<div class="cap2" style="margin:0;font-size:15px">${E(txt)}</div></div>${tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : ""}</div>`;
+        }).join("");
+        sec.push(`<div class="bc" data-sk="climate" data-id="a:climate"><div class="bh" ${this._tileGo(s)}><span>${SV.climate.n}</span>${cl.length > 1 ? `<span class="bs">${cl.length} thermostats</span>` : ""}</div>${rows}</div>`);
       } else {
         const inner = isCs(s) ? this._customCards(rid, "room:" + rid + ":" + s, s) : this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s);
         sec.push(`<div class="bc ${s === "media" || s === "cameras" ? "span2" : ""}" data-sk="${E(s)}" data-id="a:${E(s)}"><div class="bh" ${this._tileGo(s)}><span>${SV[s].n}</span></div><div class="grid" data-grid="room:${rid}:${s}">${inner}</div></div>`);
@@ -1737,7 +1747,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     let tab2 = tab;
     if (!adm) tab2 = tab === "bg" || tab === "rphoto" || ((tab === "users" || tab === "updates") && this._mgr()) ? tab : "scenes";
@@ -1785,8 +1795,23 @@ class QuintDashboard extends HTMLElement {
     } else if (tab === "devices") {
       const q = (this._dflt || "").toLowerCase(), H = c.hide || [];
       const list = Object.keys(this._h.states).filter((i) => this._svcOf(i)).filter((i) => !q || i.includes(q) || this._nm(i).toLowerCase().includes(q));
-      body = sec("Devices", `${Math.min(list.length, 200)} of ${list.length} shown`, row("Search", "filter by name or entity id", `<input type="text" data-dfilter value="${E(this._dflt || "")}" placeholder="light.kitchen">`) +
-        list.slice(0, 200).map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<select data-map="${E(id)}"><option value="">(no room)</option>${c.rooms.map((r) => `<option value="${E(r.id)}" ${this._roomOf(id) === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>${tg(!H.includes(id), `data-tog="hide:${E(id)}"`)}`)).join(""));
+      body = sec("Devices", `${Math.min(list.length, 500)} of ${list.length} shown`, row("Search", "filter by name or entity id", `<input type="text" data-dfilter value="${E(this._dflt || "")}" placeholder="light.kitchen">`) +
+        list.slice(0, 500).map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<select data-map="${E(id)}"><option value="">(no room)</option>${c.rooms.map((r) => `<option value="${E(r.id)}" ${this._roomOf(id) === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>${tg(!H.includes(id), `data-tog="hide:${E(id)}"`)}`)).join(""));
+    } else if (tab === "rdev") {
+      const rs = (c.rooms || []).filter((r) => r.on !== false), H = c.hide || [], cur = rs.find((r) => r.id === this._rd) || rs[0];
+      if (!cur) body = sec("Room devices", "", '<div class="lbl" style="padding:6px 4px 12px">No rooms yet. Add rooms in Settings → Rooms.</div>');
+      else {
+        const all = Object.keys(this._h.states).filter((i) => this._svcOf(i)), inR = all.filter((i) => this._roomOf(i) === cur.id).sort((a, b) => this._nm(a).localeCompare(this._nm(b)));
+        const free = all.filter((i) => !this._roomOf(i) || !rs.some((r) => r.id === this._roomOf(i))).sort((a, b) => this._nm(a).localeCompare(this._nm(b))).slice(0, 80);
+        const shown = inR.filter((i) => !H.includes(i)).length;
+        body = sec("Room", "choose a room, then switch its devices on (shown) or off (hidden for every user)",
+          `<div class="seg" style="flex-wrap:wrap;margin:4px 4px 10px">${rs.map((r) => `<button class="${r.id === cur.id ? "on" : ""}" data-s="rdsel|${E(r.id)}">${E(r.name)}</button>`).join("")}</div>`) +
+        sec(E(cur.name), `${shown} of ${inR.length} devices shown`,
+          (inR.map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, `${E(SV[this._svcOf(id)].n)} · ${E(id)}`, tg(!H.includes(id), `data-tog="hide:${E(id)}"`))).join("") || '<div class="lbl" style="padding:6px 4px 12px">No devices in this room yet.</div>') +
+          (inR.length ? `<div class="btns"><button data-s="rdall|show">Show all</button><button data-s="rdall|hide">Hide all</button></div>` : "")) +
+        (free.length ? sec("Not in any room", "add a device to " + E(cur.name),
+          free.map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<button class="sbtn" data-s="rdadd|${E(id)}">Add here</button>`)).join("")) : "");
+      }
     } else if (tab === "home") {
       const all = this._svcsAll(), H = c.svcHide || [];
       body = sec("Home screen", "what the home page shows",
