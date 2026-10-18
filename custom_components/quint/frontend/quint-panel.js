@@ -61,12 +61,12 @@ const SET_I = {
   rooms: ICONS.door, devices: ICONS.plug, home: ICONS.home,
   cards: ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'),
 };
-SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.rdev = ICONS.plug; SET_I.users = ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M17 5.5a3.2 3.2 0 0 1 0 6M18.5 14.8c1.9.7 3.1 2.4 3.5 5.2"/>');  SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
+SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.rdev = ICONS.plug; SET_I.srooms = ICONS.door; SET_I.users = ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M17 5.5a3.2 3.2 0 0 1 0 6M18.5 14.8c1.9.7 3.1 2.4 3.5 5.2"/>');  SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
 const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.18.0";
+const VER = "1.19.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -236,7 +236,7 @@ img.cam{width:100%;border-radius:14px;margin-top:12px;background:#000;aspect-rat
 input[type=text],select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--bd);color:#eef2fa;border-radius:10px;padding:11px;font:inherit}
 table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 6px;border-bottom:1px solid var(--bd)}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-right:6px}.dot.ok{background:var(--ok)}
-.cw{position:relative}.cwoff>.card,.cwoff>.cw{opacity:.4}.hdn{position:absolute;left:12px;bottom:8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);pointer-events:none}.rm.eye{right:40px}.rm{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:12px;opacity:.55;z-index:2}.rm:hover{opacity:1;background:var(--bad)}
+.cw{position:relative}.cwoff>.card,.cwoff>.cw{opacity:.4}.hdn{position:absolute;left:12px;bottom:8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);pointer-events:none}.rm.eye{right:40px}.rm.pin{right:72px}.rm.pin.on{background:var(--ac);color:#1a1408;opacity:1}.ctile{padding:10px!important}.rm{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:12px;opacity:.55;z-index:2}.rm:hover{opacity:1;background:var(--bad)}
 .tile.add{min-height:96px;border-style:dashed;background:transparent;opacity:.85;align-items:flex-start}.lvw{grid-column:span 2}
 .ov{position:fixed;inset:0;background:rgba(5,8,16,.7);display:grid;place-items:center;z-index:99;padding:16px}
 .dlg{width:min(520px,100%);background:#141c2e;border:1px solid var(--bd);border-radius:24px;padding:24px;max-height:90vh;overflow:auto}.dlg input{margin-top:4px}
@@ -720,6 +720,15 @@ class QuintDashboard extends HTMLElement {
     else if (a === "icdel") { const l = this._ics(); l.splice(this._icSel || 0, 1); this._icSel = Math.max(0, Math.min(this._icSel || 0, l.length - 1)); }
     else if (a === "clk") c.noClock = !c.noClock;
     else if (a === "flag" && ["noClock", "noScenes", "noWeather", "noRooms", "dflt", "lock"].includes(v)) c[v] = !c[v];
+    else if (a === "srsel") { this._sr = v; return this._draw(true); }
+    else if (a === "srt" || a === "srempty" || a === "srall") {
+      const sv = this._svcsAll().filter((k) => k !== "intercom" && k !== "automations"), cur = sv.includes(this._sr) ? this._sr : sv[0]; if (!cur) return;
+      const rh = (c.roomHide = c.roomHide || {}), l = new Set(rh[cur] || []), rs = (c.rooms || []).filter((r) => r.on !== false);
+      if (a === "srt") l.has(v) ? l.delete(v) : l.add(v);
+      else if (a === "srall") l.clear();
+      else rs.forEach((r) => { if (!(isCs(cur) ? this._csItems(r.id, cur).length : this._ents(cur, r.id).length)) l.add(r.id); });
+      if (l.size) rh[cur] = [...l]; else delete rh[cur];
+    }
     else if (a === "rdall") {
       const rid = this._rd || ((c.rooms || []).find((r) => r.on !== false) || {}).id, ids = Object.keys(this._h.states).filter((i) => this._svcOf(i) && this._roomOf(i) === rid);
       c.hide = v === "hide" ? [...new Set([...(c.hide || []), ...ids])] : (c.hide || []).filter((x) => !ids.includes(x));
@@ -893,6 +902,7 @@ class QuintDashboard extends HTMLElement {
   }
   _svcs() { const h = this._c.svcHide || []; return this._svcsAll().filter((x) => !h.includes(x)); }
   _titles() { const T = this._c.svcTitle || {}; Object.keys(SV).forEach((k) => { SV[k].n = T[k] || (k.startsWith("cs:") ? k.slice(3) : SV_DEF[k]); }); }
+  _svcRooms(s) { const h = (this._c.roomHide || {})[s] || []; return this._rooms().filter((r) => !h.includes(r.id)); }
   _rooms() { return this._svOk("rooms") ? this._c.rooms.filter((r) => r.on !== false && this._rmOk(r.id)) : []; }
   _isOn(id) { return !OFF.includes(this._h.states[id].state); }
   _stats(svc) {
@@ -960,6 +970,7 @@ class QuintDashboard extends HTMLElement {
       const [k, r, i] = d.cc.split(":");
       if (k === "open") { const cv = this._v.svc || ""; this._dlg = { room: r, place: r, mode: "entity", tap: "details", sn: cv.startsWith("cs:") ? cv.slice(3) : cv === "more" ? "More" : "" }; return this._draw(true); }
       if (k === "cancel") { this._dlg = null; return this._draw(true); }
+      if (k === "pin") { const it = (this._c.custom[r] || [])[+i]; if (it) { if (it.tile) delete it.tile; else it.tile = true; this._save(this._v.p !== "settings"); this._syncTpl(); } return this._draw(true); }
       if (k === "vis") { const it = (this._c.custom[r] || [])[+i]; if (it) { if (it.off) delete it.off; else it.off = true; this._save(this._v.p !== "settings"); this._syncTpl(); } return this._draw(true); }
       if (k === "del") { this._c.custom[r].splice(+i, 1); this._save(this._v.p !== "settings"); this._syncTpl(); return this._draw(true); }
       if (k === "save") return this._saveCC();
@@ -1136,7 +1147,7 @@ class QuintDashboard extends HTMLElement {
   _sched() { if (this._pending) return; this._pending = setTimeout(() => { this._pending = null; this._draw(); }, 150); }
   _csPage(s) {
     const adm = this._admin();
-    const parts = this._rooms().map((r) => [r, this._csItems(r.id, s)]).filter(([, e]) => adm || e.length).map(([r, e]) => {
+    const parts = this._svcRooms(s).map((r) => [r, this._csItems(r.id, s)]).filter(([, e]) => adm || e.length).map(([r, e]) => {
       const n = e.filter((x) => x.it.entity && this._h.states[x.it.entity] && this._isOn(x.it.entity)).length;
       const add = adm ? `<div class="tile add" data-cc="open:${r.id}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : "";
       return `<section><div class="rh"><div class="grow" data-go='${JSON.stringify({ p: "room", room: r.id, svc: s })}'><div class="rn">${r.name}</div><div class="lbl">${n} active of ${e.length}</div></div></div><div class="grid" data-grid="room:${r.id}:${s}">${this._customCards(r.id, "room:" + r.id + ":" + s, s, true)}${add}</div></section>`;
@@ -1181,13 +1192,19 @@ class QuintDashboard extends HTMLElement {
       else if (it.path.startsWith("/")) { history.pushState(null, "", it.path); window.dispatchEvent(new CustomEvent("location-changed")); }
     }
   }
-  _customCards(rid, ctx, key, showOff) {
-    const items = (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => (!key || this._csKey(x.it) === key) && (!x.it.off || (showOff && this._admin())));
+  _customCards(rid, ctx, key, showOff, noTile) {
+    const items = (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => (!key || this._csKey(x.it) === key) && (!x.it.off || (showOff && this._admin())) && !(noTile && x.it.tile));
     return this._sort(ctx, items, (x) => "c:" + x.it.uid).map(({ it, i }) => {
-      const rm = this._admin() ? `<button class="rm eye" data-cc="vis:${rid}:${i}" title="${it.off ? "Hidden: tap to show" : "Shown: tap to hide"}">${it.off ? "⊘" : "◉"}</button><button class="rm" data-cc="del:${rid}:${i}">✕</button>` : "", k = "c:" + it.uid;
+      const rm = this._admin() ? `${rid === "home" ? "" : `<button class="rm pin ${it.tile ? "on" : ""}" data-cc="pin:${rid}:${i}" title="${it.tile ? "Shown in the room as a tile: tap to stop" : "Show in the room as a tile"}">⌂</button>`}<button class="rm eye" data-cc="vis:${rid}:${i}" title="${it.off ? "Hidden: tap to show" : "Shown: tap to hide"}">${it.off ? "⊘" : "◉"}</button><button class="rm" data-cc="del:${rid}:${i}">✕</button>` : "", k = "c:" + it.uid;
       if (it.off) return `<div class="cw cwoff" data-k="${k}">${it.type === "template" ? this._tplCard(it) : it.type === "lovelace" ? `<div class="card"><div class="nm">${this._esc(it.name || "Lovelace card")}</div></div>` : this._gen(it)}${rm}<span class="hdn">Hidden</span></div>`;
       return it.type === "template" ? `<div class="cw" data-k="${k}">${this._tplCard(it)}${rm}</div>` : it.type === "lovelace" ? `<div class="cw lvw" data-k="${k}"><div data-lv="${rid}:${i}"></div>${rm}</div>` : `<div class="cw" data-k="${k}">${this._gen(it)}${rm}</div>`;
     }).join("");
+  }
+  _roomTiles(rid) {
+    return (this._c.custom[rid] || []).map((it, i) => ({ it, i })).filter((x) => x.it.tile && !x.it.off && this._svOk(this._csKey(x.it))).map(({ it, i }) => {
+      const body = it.type === "template" ? this._tplCard(it) : it.type === "lovelace" ? `<div data-lv="${rid}:${i}"></div>` : this._gen(it);
+      return `<div class="bc ctile" data-id="a:t:${this._esc(it.uid || i)}">${body}</div>`;
+    });
   }
   _gen(it) {
     const id = it.entity, s = this._h.states[id], st = it.style || "auto";
@@ -1254,6 +1271,7 @@ class QuintDashboard extends HTMLElement {
       ${L("Card type")}${sel("mode", [["entity", "Device card (any entity)"], ["template", "Template card (Jinja)"], ["lovelace", "Lovelace card (JSON)"]])}
       ${L("Place", "home page or a room")}${sel("place", [["home", "Home"], ...this._c.rooms.map((r) => [r.id, r.name])])}
       ${svcFields}
+      ${(D.place || D.room) === "home" ? "" : `${L("Show in the room", "as part of the service page, or as its own tile")}${sel("tile", [["", "Grouped under its service (e.g. More)"], ["1", "Its own tile in the room page"]])}`}
       ${body}
       <div class="err" id="cc-err"></div><div class="btns"><button data-cc="cancel">Cancel</button><button class="pri" data-cc="save">Add card</button></div></div></div>`;
   }
@@ -1281,9 +1299,10 @@ class QuintDashboard extends HTMLElement {
     }
     if (place !== "home") { item.svc = v("cc-sn").replace(/['"<>\\&]/g, "").slice(0, 24); const ic = v("cc-sico"); if (/^mdi:[a-z0-9-]+$/i.test(ic)) item.svcIcon = ic; }
     item.uid = this._uid();
+    if (place !== "home" && D.tile === "1") item.tile = true;
     (this._c.custom[place] = this._c.custom[place] || []).push(item);
     this._save(true); this._dlg = null; this._syncTpl();
-    this._v = place === "home" ? { p: "home" } : { p: "rooms", svc: this._csKey(item) };
+    this._v = place === "home" ? { p: "home" } : item.tile ? { p: "room", room: place } : { p: "rooms", svc: this._csKey(item) };
     this._last = null; this._draw(true);
   }
   async _mountLv() {
@@ -1684,6 +1703,7 @@ class QuintDashboard extends HTMLElement {
     const sec = [];
     [...L.filter((x) => ["lights", "shades", "climate"].includes(x)).sort((p, q) => ["lights", "shades", "climate"].indexOf(p) - ["lights", "shades", "climate"].indexOf(q)), ...L.filter((x) => !["lights", "shades", "climate"].includes(x))].forEach((s) => {
       if (!has(room, s)) return;
+      if (isCs(s) && !this._csItems(rid, s).some((x) => !x.it.tile)) return;
       if (s === "lights") {
         const rows = lights.map((i) => {
           const a = H[i].attributes, isOn = st(i) === "on", b = a.brightness || 0, dim = !(a.supported_color_modes || []).every((m) => m === "onoff") && st(i) !== "unavailable";
@@ -1703,10 +1723,11 @@ class QuintDashboard extends HTMLElement {
         }).join("");
         sec.push(`<div class="bc" data-sk="climate" data-id="a:climate"><div class="bh" ${this._tileGo(s)}><span>${SV.climate.n}</span>${cl.length > 1 ? `<span class="bs">${cl.length} thermostats</span>` : ""}</div>${rows}</div>`);
       } else {
-        const inner = isCs(s) ? this._customCards(rid, "room:" + rid + ":" + s, s) : this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s);
+        const inner = isCs(s) ? this._customCards(rid, "room:" + rid + ":" + s, s, false, true) : this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s);
         sec.push(`<div class="bc ${s === "media" || s === "cameras" ? "span2" : ""}" data-sk="${E(s)}" data-id="a:${E(s)}"><div class="bh" ${this._tileGo(s)}><span>${SV[s].n}</span></div><div class="grid" data-grid="room:${rid}:${s}">${inner}</div></div>`);
       }
     });
+    { const tl = this._roomTiles(rid), ci = sec.findIndex((h) => !/data-sk="(lights|shades|climate)"/.test(h)); sec.splice(ci < 0 ? sec.length : ci, 0, ...tl); }
     if (!sec.length) sec.push(`<div class="bc span2" data-id="a:none"><div class="lbl">Nothing in this room yet.</div></div>`);
     if (adm) sec.push(`<div class="tile add span2" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
     return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}<div class="abody">${sec.join("")}</div></div></div>`;
@@ -1733,7 +1754,7 @@ class QuintDashboard extends HTMLElement {
       const go = rid ? `data-go='${JSON.stringify({ p: "room", room: rid, svc: s })}'` : "";
       return `<section><div class="rh"><div class="grow" ${go}><div class="rn">${title}</div><div class="lbl">${on} active of ${ids.length}</div></div><div class="btns rb">${btn}</div></div><div class="grid" data-grid="svc:${s}:${rid || "other"}" ${s === "shades" ? 'style="grid-template-columns:repeat(auto-fill,minmax(310px,1fr))"' : ""}>${this._cardsOf(ids, "svc:" + s + ":" + (rid || "other"))}</div></section>`;
     };
-    const rs = this._rooms(), known = new Set(rs.map((r) => r.id));
+    const rs = this._svcRooms(s), known = new Set(this._rooms().map((r) => r.id));
     const parts = rs.map((r) => [r, this._ents(s, r.id)]).filter(([, e]) => e.length).map(([r, e]) => sec(r.name, e, r.id));
     const other = this._ents(s).filter((i) => !known.has(this._roomOf(i)));
     if (other.length) parts.push(sec("Other", other, ""));
@@ -1749,7 +1770,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     let tab2 = tab;
     if (!adm) tab2 = tab === "bg" || tab === "rphoto" || ((tab === "users" || tab === "updates") && this._mgr()) ? tab : "scenes";
@@ -1799,6 +1820,15 @@ class QuintDashboard extends HTMLElement {
       const list = Object.keys(this._h.states).filter((i) => this._svcOf(i)).filter((i) => !q || i.includes(q) || this._nm(i).toLowerCase().includes(q));
       body = sec("Devices", `${Math.min(list.length, 500)} of ${list.length} shown`, row("Search", "filter by name or entity id", `<input type="text" data-dfilter value="${E(this._dflt || "")}" placeholder="light.kitchen">`) +
         list.slice(0, 500).map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<select data-map="${E(id)}"><option value="">(no room)</option>${c.rooms.map((r) => `<option value="${E(r.id)}" ${this._roomOf(id) === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>${tg(!H.includes(id), `data-tog="hide:${E(id)}"`)}`)).join(""));
+    } else if (tab === "srooms") {
+      const sv = this._svcsAll().filter((k) => k !== "intercom" && k !== "automations"), cur = sv.includes(this._sr) ? this._sr : sv[0], rs = (c.rooms || []).filter((r) => r.on !== false), HH = (c.roomHide || {})[cur] || [];
+      const cnt = (r) => (isCs(cur) ? this._csItems(r.id, cur).length : this._ents(cur, r.id).length);
+      body = !cur ? sec("Service rooms", "", '<div class="lbl" style="padding:6px 4px 12px">No services yet.</div>') :
+        sec("Service", "choose a service, then switch off the rooms that do not use it. They disappear from that service's page",
+          `<div class="seg" style="flex-wrap:wrap;margin:4px 4px 10px">${sv.map((k) => `<button class="${k === cur ? "on" : ""}" data-s="srsel|${E(k)}">${E(SV[k] ? SV[k].n : k)}</button>`).join("")}</div>`) +
+        sec(E(SV[cur] ? SV[cur].n : cur), `${rs.length - rs.filter((r) => HH.includes(r.id)).length} of ${rs.length} rooms shown`,
+          rs.map((r) => row(E(r.name), `${cnt(r)} ${cnt(r) === 1 ? "item" : "items"}`, tg(!HH.includes(r.id), `data-s="srt|${E(r.id)}"`))).join("") +
+          `<div class="btns"><button data-s="srempty|">Hide rooms with nothing</button><button data-s="srall|">Show all rooms</button></div>`);
     } else if (tab === "rdev") {
       const rs = (c.rooms || []).filter((r) => r.on !== false), H = c.hide || [], cur = rs.find((r) => r.id === this._rd) || rs[0];
       if (!cur) body = sec("Room devices", "", '<div class="lbl" style="padding:6px 4px 12px">No rooms yet. Add rooms in Settings → Rooms.</div>');
@@ -1813,8 +1843,8 @@ class QuintDashboard extends HTMLElement {
           (inR.length ? `<div class="btns"><button data-s="rdall|show">Show all</button><button data-s="rdall|hide">Hide all</button></div>` : "")) +
         (() => {
           const cc = (c.custom[cur.id] || []).map((it, i) => ({ it, i }));
-          return cc.length ? sec("Cards in " + E(cur.name), "the cards you added (shown on the More page and in the room)",
-            cc.map(({ it, i }) => { const st = it.entity && this._h.states[it.entity], nm = it.name || (st && st.attributes.friendly_name) || it.text || it.entity || "Card"; return row(E(nm), `${E(this._csKey(it) === "more" ? "More" : this._csKey(it).slice(3))} · ${E(it.type === "entity" ? it.entity : it.type)}`, tg(!it.off, `data-cc="vis:${E(cur.id)}:${i}"`)); }).join("")) : "";
+          return cc.length ? sec("Cards in " + E(cur.name), "the cards you added. Show = visible to users. Room tile = also shown in the room page as its own tile",
+            cc.map(({ it, i }) => { const st = it.entity && this._h.states[it.entity], nm = it.name || (st && st.attributes.friendly_name) || it.text || it.entity || "Card"; return row(E(nm), `${E(this._csKey(it) === "more" ? "More" : this._csKey(it).slice(3))} · ${E(it.type === "entity" ? it.entity : it.type)}`, `<span class="lbl" style="margin-right:6px">Show</span>${tg(!it.off, `data-cc="vis:${E(cur.id)}:${i}"`)}<span class="lbl" style="margin:0 6px 0 14px">Room tile</span>${tg(!!it.tile, `data-cc="pin:${E(cur.id)}:${i}"`)}`); }).join("")) : "";
         })() +
         (free.length ? sec("Not in any room", "add a device to " + E(cur.name),
           free.map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<button class="sbtn" data-s="rdadd|${E(id)}">Add here</button>`)).join("")) : "");
@@ -1931,8 +1961,8 @@ class QuintDashboard extends HTMLElement {
       body = sec("Cards", "custom cards you added", (items.map(({ pl, it, i }) => {
         const room = pl === "home" ? "Home page" : (c.rooms.find((r) => r.id === pl) || { name: pl }).name, k = this._csKey(it);
         const st = this._h.states[it.entity], nm = it.name || (it.type === "lovelace" ? (it.config && it.config.type) || "Lovelace card" : it.text) || (st && st.attributes.friendly_name) || it.entity;
-        return row(E(nm), `${E(room)} · ${pl === "home" ? "My cards" : k === "more" ? "More" : E(k.slice(3))} · ${it.type}`, `<button class="ib2" data-cc="del:${pl}:${i}">✕</button>`);
-      }).join("") || '<div class="lbl" style="padding:6px 4px 12px">No custom cards yet.</div>') + `<div class="btns"><button class="pri" data-cc="open:home">＋ Add card</button></div>`);
+        return row(E(nm), `${E(room)} · ${pl === "home" ? "My cards" : k === "more" ? "More" : E(k.slice(3))} · ${it.type}`, (pl === "home" ? "" : `<span class="lbl" style="margin-right:6px">Room tile</span>${tg(!!it.tile, `data-cc="pin:${pl}:${i}"`)}`) + `<button class="ib2" data-cc="del:${pl}:${i}">✕</button>`);
+      }).join("") || '<div class="lbl" style="padding:6px 4px 12px">No custom cards yet.</div>') + `<div class="btns"><button class="pri" data-cc="open:home">＋ Add card (home page or a room)</button></div>`);
     }
     const tabsHtml = tabs.map(([id, t, sub]) => `<button class="sti ${tab === id ? "act" : ""}" data-go='${JSON.stringify({ p: "settings", tab: id })}'>${SET_I[id]}<span><b>${t}</b><small>${sub}</small></span></button>`).join("");
     return `${this._top(false)}<div class="sbar"><div><h1>Settings</h1><div class="sub">${adm ? `Stored on the server for every user · Quint v${VER} · ${this._rn || 0} screen updates` : "Saved on this device only"}</div></div><div class="sbtns">${adm ? `<button class="sbtn ${this._dirty ? "pri2" : ""}" data-s="save|">Save</button><button class="sbtn" data-s="reset|">Reset everything</button><button class="sbtn" data-out="1">Sign out</button><button class="sbtn" data-s="close|">Close</button>` : `<button class="sbtn" data-out="1">Sign out</button><button class="sbtn" data-go='{"p":"home"}'>Close</button>`}</div></div><div class="sg"><div class="snav">${tabsHtml}</div><div>${body}</div></div>`;
