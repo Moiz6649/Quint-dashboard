@@ -3,6 +3,7 @@ const ic = (p) => `<svg class="si" viewBox="0 0 24 24">${p}</svg>`;
 const SV = {
   security:{ n: "Security", c: "#34c98b", i: ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>') },
   cameras: { n: "Cameras",  c: "#4aa3ff", i: ic('<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>') },
+  camwall: { n: "Cam wall", c: "#38bdf8", i: ic('<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>') },
   intercom: { n: "Intercom", c: "#4ade80", i: ic('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>') },
   lights:  { n: "Lighting", c: "#f5a623", i: ic('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>') },
   climate: { n: "Climate",  c: "#ff7a59", i: ic('<path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/>') },
@@ -61,12 +62,12 @@ const SET_I = {
   rooms: ICONS.door, devices: ICONS.plug, home: ICONS.home,
   cards: ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'),
 };
-SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.rdev = ICONS.plug; SET_I.srooms = ICONS.door; SET_I.users = ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M17 5.5a3.2 3.2 0 0 1 0 6M18.5 14.8c1.9.7 3.1 2.4 3.5 5.2"/>');  SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
+SET_I.wall = ICONS.camera; SET_I.updates = ic('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>'); SET_I.access = ICONS.door; SET_I.rdev = ICONS.plug; SET_I.srooms = ICONS.door; SET_I.users = ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M17 5.5a3.2 3.2 0 0 1 0 6M18.5 14.8c1.9.7 3.1 2.4 3.5 5.2"/>');  SET_I.autos = SV.automations.i; SET_I.bg = PALETTE_I; SET_I.rphoto = ICONS.camera; SET_I.tiles = TILES_I; SET_I.intercom = SV.intercom.i; SET_I.scenes = SCENE_I;
 const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.20.0";
+const VER = "1.21.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const TSIZES = { xl: { n: "Extra large", z: 1.3, m: 1.3 }, l: { n: "Large", z: 1, m: 1 }, s: { n: "Small", z: 0.8, m: 0.9 }, xs: { n: "Very small", z: 0.62, m: 0.8 } };
@@ -133,6 +134,12 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .bwide{margin-top:16px}
 .bc.cam1{padding:8px}
 .cam1 .cvw{aspect-ratio:16/9;min-height:0;flex:none}
+.wallpage{max-width:none;padding-top:26px;padding-bottom:20px}
+.wallg{display:grid;width:100%}
+.wallg .wt{min-height:0;height:100%;border-radius:12px}
+.wallg .wt .wo{font-size:13px;color:#8b7d6c}
+.wallg.sm .wt .cn{font-size:10px;left:7px;top:6px}.wallg.sm .wt .live{font-size:9px;right:7px;top:6px}
+.wallg .wt img.wallx{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;margin:0}
 .scb{width:100%}
 .cvw .xp{position:absolute;right:12px;bottom:8px;z-index:1;font-size:18px;text-shadow:0 1px 4px #000a;opacity:.9}
 .bc{background:var(--cd);border:1px solid var(--bd);border-radius:20px;padding:20px 22px 20px;position:relative;min-width:0;display:flex;flex-direction:column}
@@ -453,7 +460,7 @@ class QuintDashboard extends HTMLElement {
     R.addEventListener("input", (e) => this._input(e));
     R.addEventListener("touchmove", (e) => { if (this._mv) e.preventDefault(); }, { passive: false });
     R.addEventListener("contextmenu", (e) => { if (this._hold || this._mv) e.preventDefault(); });
-    R.addEventListener("error", (e) => { const t = e.target; if (t && t.classList && t.classList.contains("camx") && !this._camFb) { this._camFb = true; if (t.dataset.snap) t.src = t.dataset.snap; } }, true);
+    R.addEventListener("error", (e) => { const t = e.target; if (t && t.classList && t.classList.contains("camx") && !this._camFb) { this._camFb = true; if (t.dataset.snap) t.src = t.dataset.snap; } if (t && t.classList && t.classList.contains("wallx") && t.dataset.wid) { (this._wallFb = this._wallFb || new Set()).add(t.dataset.wid); this._last = null; this._draw(true); } }, true);
   }
   _pdown(e) {
     if (e.button > 0 || e.target.type === "range" || this._mv) return;
@@ -600,7 +607,7 @@ class QuintDashboard extends HTMLElement {
     if (this.getAttribute("data-wide") !== wide) this.setAttribute("data-wide", wide);
     if (this.getAttribute("data-nav") !== "bar") this.setAttribute("data-nav", "bar");
     this._applyTs();
-    if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; this._slide(); if (this._loaded && this._v.p === "home" && this._cols() !== this._colsN) this._draw(true); }
+    if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; this._slide(); if (this._loaded && this._v.p === "home" && this._cols() !== this._colsN) this._draw(true); if (this._loaded && this._v.p === "camwall") this._draw(true); }
   }
   _slide() {
     try {
@@ -716,6 +723,7 @@ class QuintDashboard extends HTMLElement {
     if (Array.isArray(o.scenes)) o.scenes.forEach((x) => { if (x && x.id && !(c.scenes || []).some((y) => y.id === x.id)) (c.scenes = c.scenes || []).push(x); });
     ["noClock", "noScenes", "noWeather", "noRooms"].forEach((k) => { if (typeof o[k] === "boolean") c[k] = o[k]; });
     if (TSIZES[o.tsz]) c.tsz = o.tsz;
+    if (o.wall && typeof o.wall === "object") c.wall = o.wall;
     c.svcTitle = { ...(c.svcTitle || {}), ...(o.svcTitle || {}) };
     c.svcHide = [...new Set([...(c.svcHide || []), ...(o.svcHide || [])])];
     if (o.svcOrder) c.svcOrder = o.svcOrder;
@@ -751,12 +759,20 @@ class QuintDashboard extends HTMLElement {
     else if (a === "autoclear") c.autos = [];
     else if (a === "icadd") { this._ics().push({ id: "ic" + Date.now().toString(36) }); this._icSel = this._ics().length - 1; }
     else if (a === "icdel") { const l = this._ics(); l.splice(this._icSel || 0, 1); this._icSel = Math.max(0, Math.min(this._icSel || 0, l.length - 1)); }
+    else if (a === "wall") {
+      const w = (c.wall = c.wall || {}), i = v.indexOf("|"), k = i < 0 ? v : v.slice(0, i), id = i < 0 ? "" : v.slice(i + 1);
+      if (k === "live") w.live = !w.live;
+      else if (k === "names") w.names = w.names === false;
+      else if (k === "cam") { const l = new Set(w.ids || []); l.has(id) ? l.delete(id) : l.add(id); w.ids = [...l]; }
+      else if (k === "auto") w.ids = [];
+      else if (k === "up" || k === "dn") { const l = [...(w.ids || [])], j = l.indexOf(id); if (j >= 0) { this._swap(l, j, k === "up" ? -1 : 1); w.ids = l; } }
+    }
     else if (a === "tsz") { if (TSIZES[v]) c.tsz = v; }
     else if (a === "clk") c.noClock = !c.noClock;
     else if (a === "flag" && ["noClock", "noScenes", "noWeather", "noRooms", "dflt", "lock"].includes(v)) c[v] = !c[v];
     else if (a === "srsel") { this._sr = v; return this._draw(true); }
     else if (a === "srt" || a === "srempty" || a === "srall") {
-      const sv = this._svcsAll().filter((k) => k !== "intercom" && k !== "automations"), cur = sv.includes(this._sr) ? this._sr : sv[0]; if (!cur) return;
+      const sv = this._svcsAll().filter((k) => k !== "intercom" && k !== "automations" && k !== "camwall"), cur = sv.includes(this._sr) ? this._sr : sv[0]; if (!cur) return;
       const rh = (c.roomHide = c.roomHide || {}), l = new Set(rh[cur] || []), rs = (c.rooms || []).filter((r) => r.on !== false);
       if (a === "srt") l.has(v) ? l.delete(v) : l.add(v);
       else if (a === "srall") l.clear();
@@ -930,7 +946,7 @@ class QuintDashboard extends HTMLElement {
   }
   _nm(id) { return this._h.states[id].attributes.friendly_name || id; }
   _svcsAll() {
-    const o = this._svcOrder(), keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
+    const o = this._svcOrder(), keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "camwall" ? this._wallCams().length > 0 : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
     const r = (k) => { const i = o.indexOf(k); return i < 0 ? 1000 + keys.indexOf(k) : i; };
     return keys.filter((k) => this._svOk(k)).sort((p, q) => r(p) - r(q));
   }
@@ -968,7 +984,7 @@ class QuintDashboard extends HTMLElement {
     if (p === "settings" && this._v.p !== "settings") { this._snap = JSON.stringify(this._c); this._dirty = false; }
     this._v = { p, ...x }; this._draw(true);
   }
-  _tileGo(s) { return s === "cameras" || s === "security" || s === "intercom" || s === "automations" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
+  _tileGo(s) { return s === "cameras" || s === "security" || s === "intercom" || s === "automations" || s === "camwall" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
 
   /* ---------- events ---------- */
   _click(e) {
@@ -991,7 +1007,7 @@ class QuintDashboard extends HTMLElement {
       return this._draw(true);
     }
     if (d.cam) {
-      const v = d.cam, cams = this._ents("cameras").filter((i) => this._h.states[i].attributes.entity_picture);
+      const v = d.cam, cams = this._camList();
       if (v === "keep") return;
       if (v === "prev" || v === "next") { const n = cams.length, i = cams.indexOf(this._cam); if (n) this._cam = cams[(i + (v === "next" ? 1 : -1) + n) % n]; }
       else this._cam = v === "close" || v === "bg" ? null : v;
@@ -1039,6 +1055,7 @@ class QuintDashboard extends HTMLElement {
       t.value = ""; return;
     }
     if (adm && d.bg) { this._save(); return; }
+    if (adm && d.wn !== undefined) { const w = (this._c.wall = this._c.wall || {}); w.n = Math.max(1, Math.min(32, +t.value || 4)); this._save(); this._draw(true); return; }
     if (adm && d.cred !== undefined) { this._c.credit = t.value.trim().slice(0, 30); this._save(); this._draw(true); return; }
     if (adm && d.ttl !== undefined) { this._c.title = t.value.trim().slice(0, 30); this._save(); this._draw(true); return; }
     if (adm && d.svct) { this._c.svcTitle = this._c.svcTitle || {}; this._c.svcTitle[d.svct] = t.value.trim().replace(/['"<>\\&]/g, "").slice(0, 24); this._save(); this._draw(true); return; }
@@ -1630,6 +1647,7 @@ class QuintDashboard extends HTMLElement {
   _bento(k) { const r = this._bentoOne(k); return (Array.isArray(r) ? r : [r]).map((p) => ({ ...p, h: p.h.replace(/^<div /, `<div data-sk="${this._esc(k)}" `) })); }
   _bentoOne(k) {
     const c = this._c, H = this._h.states, st = (i) => H[i].state, S = SV[k], go = this._tileGo(k), E = (t) => this._esc(t), tiles = c.tiles || {};
+    if (k === "camwall") return [];
     if (k === "automations") return { h: this._autoCard(false), w: 3.2 };
     if (k === "intercom") return this._icList().map((ic) => ({ h: this._icCard(ic, false), w: 4.4 }));
     const hd = (r, ic) => `<div class="bh" ${go}><span>${S.n}</span><span class="bs">${r || ""}${ic || ""}</span></div>`;
@@ -1776,10 +1794,46 @@ class QuintDashboard extends HTMLElement {
     if (adm) sec.push(`<div class="tile add span2" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
     return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}<div class="abody">${sec.join("")}</div></div></div>`;
   }
+  /* ---------- camera wall: one screen with 1 to 32 cameras ---------- */
+  _wallCfg() { const w = this._c.wall || {}; return { n: Math.max(1, Math.min(32, Math.round(+w.n) || 4)), ids: Array.isArray(w.ids) ? w.ids : [], live: !!w.live, names: w.names !== false }; }
+  _wallAll() { return Object.keys(this._h.states).filter((id) => this._svcOf(id) === "cameras" && !this._c.hide.includes(id) && this._rmOk(this._roomOf(id))).sort((a, b) => this._nm(a).localeCompare(this._nm(b))); }
+  _wallCams() {
+    const w = this._wallCfg(), all = this._wallAll(), ch = w.ids.filter((i) => all.includes(i));
+    return (ch.length ? ch : all).slice(0, w.n);
+  }
+  _camList() { return (this._v.p === "camwall" ? this._wallCams() : this._ents("cameras")).filter((i) => this._h.states[i] && this._h.states[i].attributes.entity_picture); }
+  _wallGrid(n) {
+    const dev = this.getAttribute("data-dev") || "desktop", padX = dev === "phone" ? 28 : dev === "tablet" ? 56 : 88;
+    const W = Math.max(240, (this._w || 1024) - padX), H = Math.max(200, (this.clientHeight || 700) - (dev === "phone" ? 150 : 190)), gap = n > 16 ? 6 : 10;
+    let best = null;
+    for (let c = 1; c <= n; c++) {
+      const r = Math.ceil(n / c), cw = (W - gap * (c - 1)) / c, ch = (H - gap * (r - 1)) / r;
+      if (cw <= 20 || ch <= 20) continue;
+      const score = Math.abs(Math.log(cw / ch / (16 / 9))) + (r * c - n) * 0.12;
+      if (!best || score < best.score) best = { c, r, score };
+    }
+    if (!best) best = { c: Math.ceil(Math.sqrt(n)), r: Math.ceil(n / Math.ceil(Math.sqrt(n))), score: 0 };
+    const minH = 96, height = Math.max(H, best.r * minH + gap * (best.r - 1));
+    return { ...best, gap, height };
+  }
+  _wallPage() {
+    const E = (t) => this._esc(t), H = this._h.states, w = this._wallCfg(), ids = this._wallCams();
+    if (!ids.length) return `${this._top()}<h1>${SV.camwall.i} ${E(SV.camwall.n)}</h1><div class="bc" style="max-width:640px;margin-top:10px"><div class="lbl">No cameras to show yet.${this._admin() ? " Choose them in Settings → Camera wall." : ""}</div></div>`;
+    const g = this._wallGrid(ids.length), small = g.c >= 5 || ids.length > 12;
+    this._wallKey = `${ids.length}:${g.c}:${g.r}`;
+    const tiles = ids.map((id) => {
+      const a = H[id].attributes, off = ["unavailable", "unknown"].includes(H[id].state) || !a.entity_picture, nm = w.names ? `<span class="cn">${E(this._nm(id))}</span>` : "";
+      if (off) return `<div class="cvw wt" data-id="w:cam:${E(id)}" style="cursor:default">${nm}<span class="wo">Offline</span></div>`;
+      const snap = this._h.hassUrl(a.entity_picture), live = w.live && !(this._wallFb || new Set()).has(id);
+      const img = live ? `<img class="wallx" data-wid="${E(id)}" data-src="${E(snap.replace("/camera_proxy/", "/camera_proxy_stream/"))}" src="${E(snap.replace("/camera_proxy/", "/camera_proxy_stream/"))}">` : `<img class="cam" data-src="${E(snap)}" src="${E(snap)}">`;
+      return `<div class="cvw wt" data-cam="${E(id)}" data-id="w:cam:${E(id)}">${img}${nm}<span class="live">Live</span></div>`;
+    }).join("");
+    return `${this._top()}<div class="wallg ${small ? "sm" : ""}" style="grid-template-columns:repeat(${g.c},minmax(0,1fr));grid-template-rows:repeat(${g.r},minmax(0,1fr));gap:${g.gap}px;height:${g.height}px">${tiles}</div>`;
+  }
   _camView() {
     const id = this._cam, s = id && this._h.states[id];
     if (!s || !s.attributes.entity_picture) return "";
-    const E = (t) => this._esc(t), cams = this._ents("cameras").filter((i) => this._h.states[i].attributes.entity_picture);
+    const E = (t) => this._esc(t), cams = this._camList();
     const snap = this._h.hassUrl(s.attributes.entity_picture), stream = snap.replace("/camera_proxy/", "/camera_proxy_stream/");
     const ic = this._icList().find((x) => x.camera === id) || {}, armed = this._arm === "door:" + ic.id;
     const vb = [!ic.noAudio && `<button class="icb" data-ic="audio|${E(ic.id || "")}">${PHONE_I}<span>Audio call</span></button>`, !ic.noDoor && `<button class="icb door ${armed ? "armed" : ""}" data-ic="door|${E(ic.id || "")}">${KEY_I}<span>${armed ? "Tap again to open" : "Open door"}</span></button>`].filter(Boolean);
@@ -1814,7 +1868,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     const tsSeg = (cur, attr, none) => `<div class="seg sm" style="flex-wrap:wrap">${Object.entries(TSIZES).map(([k, t]) => `<button class="${cur === k ? "on" : ""}" ${attr}="${attr === "data-s" ? "tsz|" : "tsd|"}${k}">${t.n}</button>`).join("")}${none ? `<button ${attr}="tsd|">Same as shared</button>` : ""}</div>`;
     let tab2 = tab;
@@ -1870,7 +1924,7 @@ class QuintDashboard extends HTMLElement {
       body = sec("Devices", `${Math.min(list.length, 500)} of ${list.length} shown`, row("Search", "filter by name or entity id", `<input type="text" data-dfilter value="${E(this._dflt || "")}" placeholder="light.kitchen">`) +
         list.slice(0, 500).map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<select data-map="${E(id)}"><option value="">(no room)</option>${c.rooms.map((r) => `<option value="${E(r.id)}" ${this._roomOf(id) === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>${tg(!H.includes(id), `data-tog="hide:${E(id)}"`)}`)).join(""));
     } else if (tab === "srooms") {
-      const sv = this._svcsAll().filter((k) => k !== "intercom" && k !== "automations"), cur = sv.includes(this._sr) ? this._sr : sv[0], rs = (c.rooms || []).filter((r) => r.on !== false), HH = (c.roomHide || {})[cur] || [];
+      const sv = this._svcsAll().filter((k) => k !== "intercom" && k !== "automations" && k !== "camwall"), cur = sv.includes(this._sr) ? this._sr : sv[0], rs = (c.rooms || []).filter((r) => r.on !== false), HH = (c.roomHide || {})[cur] || [];
       const cnt = (r) => (isCs(cur) ? this._csItems(r.id, cur).length : this._ents(cur, r.id).length);
       body = !cur ? sec("Service rooms", "", '<div class="lbl" style="padding:6px 4px 12px">No services yet.</div>') :
         sec("Service", "choose a service, then switch off the rooms that do not use it. They disappear from that service's page",
@@ -1916,6 +1970,18 @@ class QuintDashboard extends HTMLElement {
             all.map((id) => { const r = this._rooms().find((x) => x.id === this._roomOf(id)); return row(E(this._nm(id)), `${E(r ? r.name + " · " : "")}${E(id)}`, tg(sel.has(id), `data-s="tile|${k}|${E(id)}"`)); }).join("") +
             (explicit ? `<div class="btns"><button data-s="tileauto|${k}">Back to automatic</button></div>` : ""));
         }).join("") || sec("Tiles", "", '<div class="lbl">No devices found yet.</div>'));
+    } else if (tab === "wall") {
+      const w = this._wallCfg(), all = this._wallAll(), chosen = w.ids.filter((i) => all.includes(i)), H = c.svcHide || [], shown = this._wallCams().length;
+      const camRow = (id, on, pos) => row(E(this._nm(id)), E(id), `${on ? `<button class="ib2" data-s="wall|up|${E(id)}" ${pos === 0 ? "disabled" : ""}>▲</button><button class="ib2" data-s="wall|dn|${E(id)}" ${pos === chosen.length - 1 ? "disabled" : ""}>▼</button>` : ""}${tg(on, `data-s="wall|cam|${E(id)}"`)}`);
+      body = sec("Camera wall", "one dedicated screen that shows many cameras at once",
+        row("Cameras on the screen", "1 to 32. The tiles are laid out to fill the screen for this number", `<select data-wn="1">${Array.from({ length: 32 }, (_, i) => i + 1).map((n) => `<option value="${n}" ${n === w.n ? "selected" : ""}>${n}</option>`).join("")}</select>`) +
+        row("Show in the bottom bar", "switch off to hide the page for everyone", tg(!H.includes("camwall"), 'data-s="svcvis|camwall"')) +
+        row("Live video", "play the live stream. Off = a picture that refreshes every 5 seconds, lighter with many cameras", tg(w.live, 'data-s="wall|live"')) +
+        row("Camera names", "write the name on each tile", tg(w.names, 'data-s="wall|names"'))) +
+      sec("Cameras", `${chosen.length ? chosen.length + " chosen" : "automatic: the first " + w.n} · ${shown} on the screen`,
+        (all.length ? chosen.map((id, i) => camRow(id, true, i)).join("") + all.filter((i) => !chosen.includes(i)).map((id) => camRow(id, false, -1)).join("") : '<div class="lbl" style="padding:6px 4px 12px">No cameras found in Home Assistant.</div>') +
+        `<div class="lbl" style="padding:8px 4px 4px">Switch on the cameras you want, in the order you want. If none are chosen, the first cameras are shown automatically. Only as many as the number above are shown.</div>` +
+        (chosen.length ? '<div class="btns"><button data-s="wall|auto">Back to automatic</button></div>' : ""));
     } else if (tab === "intercom") {
       const L = this._ics(), cams = Object.keys(this._h.states).filter((i) => i.startsWith("camera.")), ic = this._icCur();
       const pick = `<div class="seg sm" style="margin:0 0 14px">${L.map((x, i) => `<button class="${x === ic ? "on" : ""}" data-s="icsel|${i}">${E(this._icName(x))}</button>`).join("")}</div>`;
@@ -2024,7 +2090,7 @@ class QuintDashboard extends HTMLElement {
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "intercom" && !this._icOn()) this._v = { p: "home" };
-    if (this._perm()) { const v = this._v; if ((["cameras", "security", "intercom", "automations"].includes(v.p) && !this._svOk(v.p)) || (v.p === "rooms" && v.svc && !this._svOk(v.svc)) || (v.p === "room" && !this._svOk("rooms"))) this._v = { p: "home" }; }
+    if (this._perm()) { const v = this._v; if ((["cameras", "security", "intercom", "automations", "camwall"].includes(v.p) && !this._svOk(v.p)) || (v.p === "rooms" && v.svc && !this._svOk(v.svc)) || (v.p === "room" && !this._svOk("rooms"))) this._v = { p: "home" }; }
     const c = this._c;
     this._track = new Set(Object.keys(this._h.states).filter((i) => this._svcOf(i) || i.startsWith("scene.") || i.startsWith("weather.") || i === "sun.sun"));
     Object.values(c.custom).flat().forEach((x) => x.entity && this._track.add(x.entity));
@@ -2039,8 +2105,8 @@ class QuintDashboard extends HTMLElement {
     const p = this._v.p, V = this._v;
     if (this._cam && !(this._h.states[this._cam] && this._h.states[this._cam].attributes.entity_picture)) this._cam = null;
     this._roomBg = "";
-    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : p === "intercom" ? this._icPage() : p === "automations" ? this._autoPage() : this._settings();
-    if (p !== "home" && p !== "room") body = `<div class="page">${body}</div>`;
+    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : p === "intercom" ? this._icPage() : p === "automations" ? this._autoPage() : p === "camwall" ? this._wallPage() : this._settings();
+    if (p !== "home" && p !== "room") body = `<div class="page${p === "camwall" ? " wallpage" : ""}">${body}</div>`;
     if ((this._roomBg || "") !== (this._rbgOn || "")) {
       this._rbgOn = this._roomBg || "";
       this._applyBg();
