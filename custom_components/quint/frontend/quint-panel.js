@@ -66,7 +66,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.15.0";
+const VER = "1.16.0";
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
   midnight: "radial-gradient(900px 560px at 88% -6%,rgba(176,122,74,.55),transparent),radial-gradient(760px 620px at -6% 92%,rgba(46,104,150,.50),transparent),linear-gradient(160deg,#17233a,#0c1220 55%,#0a0e18)",
@@ -244,7 +244,8 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:6px}.pri{background:var(--ac)!important;color:#000!important;font-weight:600}
 .rh{display:flex;align-items:center;gap:12px;margin:26px 0 12px}.rh .grow{cursor:pointer}.rn{font-family:var(--serif);font-size:30px;font-weight:400}.rb{margin:0}.rb button{flex:none;padding:8px 14px;font-size:13px}
 .kw{position:relative}.kw,.cw{border-radius:18px;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-.holding{animation:hold 5s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
+.holding{animation:hold .7s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
+[data-sk]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.dtgt{outline:3px dashed var(--ac);outline-offset:3px}
 .moving{transform:scale(1.04);box-shadow:0 20px 50px -10px #000c,0 0 0 3px var(--ac);z-index:5;opacity:.93;transition:transform .15s}
 .hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:130;white-space:nowrap}
 ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:96px}.tv{font-size:30px;font-weight:300;line-height:1.15;margin:4px 0 2px;word-break:break-word}
@@ -448,22 +449,32 @@ class QuintDashboard extends HTMLElement {
   }
   _pdown(e) {
     if (e.button > 0 || e.target.type === "range" || this._mv) return;
-    const path = e.composedPath(), k = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl);
-    if (!k || (!tp && !this._admin())) return;
-    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), tpl: tp ? tp.dataset.tpl : "" };
-    if (this._admin()) { k.classList.add("holding"); this._ht = setTimeout(() => this._startMove(), 5000); }
+    const path = e.composedPath(), kk = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl), sk = kk ? null : path.find((n) => n.dataset && n.dataset.sk), k = kk || sk;
+    if (!k || this._dlg || this._cam) return;
+    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", sk: sk ? sk.dataset.sk : "" };
+    if (!tp) { k.classList.add("holding"); this._ht = setTimeout(() => this._startMove(), 700); }
   }
   _startMove() {
     if (!this._hold) return;
     const el = this._hold.k; el.classList.remove("holding"); el.classList.add("moving");
     try { el.setPointerCapture(this._hold.id); } catch (e) {}
-    this._mv = { el }; this._hold = null;
+    this._mv = { el, sk: this._hold.sk || "", tgt: "" }; this._hold = null;
     if (navigator.vibrate) navigator.vibrate(40);
     this._hint("Drag to a new position, then release");
   }
   _pmove(e) {
-    if (this._hold && !this._mv) { if (Math.hypot(e.clientX - this._hold.x, e.clientY - this._hold.y) > 12) this._cancelHold(); return; }
+    if (this._hold && !this._mv) {
+      if (Math.hypot(e.clientX - this._hold.x, e.clientY - this._hold.y) <= 12) return;
+      if (this._hold.tpl && Date.now() - this._hold.t >= 600) { clearTimeout(this._ht); this._startMove(); } else return this._cancelHold();
+    }
     if (!this._mv) return;
+    if (this._mv.sk) {
+      const hit = this.shadowRoot.elementFromPoint(e.clientX, e.clientY), t = hit && hit.closest && hit.closest("[data-sk]");
+      this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
+      this._mv.tgt = t && t.dataset.sk !== this._mv.sk ? t.dataset.sk : "";
+      if (this._mv.tgt) t.classList.add("dtgt");
+      return;
+    }
     const el = this._mv.el, grid = el.parentNode, hit = this.shadowRoot.elementFromPoint(e.clientX, e.clientY);
     const t = hit && hit.closest && hit.closest("[data-k]");
     if (!t || t === el || t.parentNode !== grid) return;
@@ -479,8 +490,9 @@ class QuintDashboard extends HTMLElement {
     if (!this._mv) return;
     const el = this._mv.el, grid = el.parentNode;
     el.classList.remove("moving");
-    const ctx = grid && grid.dataset.grid;
-    if (ctx) { this._c.order[ctx] = Array.from(grid.children).filter((c) => c.dataset && c.dataset.k).map((c) => c.dataset.k); this._save(); }
+    this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
+    if (this._mv.sk) { if (this._mv.tgt) this._svcMove(this._mv.sk, this._mv.tgt); }
+    else { const ctx = grid && grid.dataset.grid; if (ctx) this._ordSet(ctx, Array.from(grid.children).filter((c) => c.dataset && c.dataset.k).map((c) => c.dataset.k)); }
     this._mv = null; this._sup = Date.now() + 400; this._hint("");
     this._last = null; this._draw(true);
   }
@@ -869,7 +881,7 @@ class QuintDashboard extends HTMLElement {
   }
   _nm(id) { return this._h.states[id].attributes.friendly_name || id; }
   _svcsAll() {
-    const o = this._c.svcOrder || [], keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
+    const o = this._svcOrder(), keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
     const r = (k) => { const i = o.indexOf(k); return i < 0 ? 1000 + keys.indexOf(k) : i; };
     return keys.filter((k) => this._svOk(k)).sort((p, q) => r(p) - r(q));
   }
@@ -1022,8 +1034,21 @@ class QuintDashboard extends HTMLElement {
 
   /* ---------- custom cards ---------- */
   _uid() { return Math.random().toString(36).slice(2, 9); }
+  _lo() { try { return JSON.parse(localStorage.getItem("quint_ord") || "{}") || {}; } catch (e) { return {}; } }
+  _ordOf(ctx) { return (!this._admin() && this._lo()[ctx]) || (this._c.order && this._c.order[ctx]); }
+  _ordSet(ctx, list) {
+    if (this._admin()) { this._c.order[ctx] = list; this._save(); return; }
+    try { const o = this._lo(); o[ctx] = list; localStorage.setItem("quint_ord", JSON.stringify(o)); } catch (e) { this._toast("Not enough space to save the arrangement"); }
+  }
+  _svcMove(from, to) {
+    const l = this._svcsAll(), i = l.indexOf(from), j = l.indexOf(to); if (i < 0 || j < 0) return;
+    l.splice(i, 1); l.splice(j, 0, from);
+    if (this._admin()) { this._c.svcOrder = l; this._save(); return; }
+    try { localStorage.setItem("quint_svo", JSON.stringify(l)); } catch (e) {}
+  }
+  _svcOrder() { if (!this._admin()) { try { const l = JSON.parse(localStorage.getItem("quint_svo") || "null"); if (Array.isArray(l)) return l; } catch (e) {} } return this._c.svcOrder || []; }
   _sort(ctx, arr, key) {
-    const o = this._c.order && this._c.order[ctx]; if (!o) return arr;
+    const o = this._ordOf(ctx); if (!o) return arr;
     const r = (x) => { const i = o.indexOf(key(x)); return i < 0 ? 1e6 : i; };
     return arr.map((x, i) => [x, i]).sort((p, q) => r(p[0]) - r(q[0]) || p[1] - q[1]).map((x) => x[0]);
   }
@@ -1436,6 +1461,7 @@ class QuintDashboard extends HTMLElement {
   _scAct(a, v) {
     const find = (key) => { const [k, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)]; return this._myScenes().find((s) => s.sc === k && s.id === id); };
     if (a === "run") { const s = find(v); if (s) this._applyScene(s); return; }
+    if (a === "ordreset") { try { localStorage.removeItem("quint_ord"); localStorage.removeItem("quint_svo"); } catch (e) {} this._toast("Back to the shared order"); return this._draw(true); }
     if (a === "new") { this._sd = { name: "", scope: this._admin() ? "s" : "l", room: "", q: "", sel: new Set(Object.keys(this._h.states).filter((i) => ["lights", "shades", "climate"].includes(this._svcOf(i)) && !this._c.hide.includes(i))) }; return this._draw(true); }
     if (a === "re") { const s = find(v); if (!s) return; this._sd = { name: s.name, scope: s.sc, room: s.room || "", q: "", edit: v, sel: new Set((s.items || []).map((x) => x.e)) }; return this._draw(true); }
     if (a === "del") {
@@ -1539,7 +1565,7 @@ class QuintDashboard extends HTMLElement {
       ${this._pbControls(u, b)}
       <div class="btns" style="margin-top:16px"><button class="pri" data-pers="close">Done</button></div></div></div>`;
   }
-  _bento(k) { const r = this._bentoOne(k); return Array.isArray(r) ? r : [r]; }
+  _bento(k) { const r = this._bentoOne(k); return (Array.isArray(r) ? r : [r]).map((p) => ({ ...p, h: p.h.replace(/^<div /, `<div data-sk="${this._esc(k)}" `) })); }
   _bentoOne(k) {
     const c = this._c, H = this._h.states, st = (i) => H[i].state, S = SV[k], go = this._tileGo(k), E = (t) => this._esc(t), tiles = c.tiles || {};
     if (k === "automations") return { h: this._autoCard(false), w: 3.2 };
@@ -1655,18 +1681,18 @@ class QuintDashboard extends HTMLElement {
           const a = H[i].attributes, isOn = st(i) === "on", b = a.brightness || 0, dim = !(a.supported_color_modes || []).every((m) => m === "onoff") && st(i) !== "unavailable";
           return `<div class="lr" data-id="l:${i}"><button class="ln" data-act="light.toggle" data-e="${i}">${E(this._nm(i))}</button>${dim ? `<input type=range min=1 max=255 value=${b} data-slider="light|turn_on|brightness|1" data-e="${i}"><span class="lp">${isOn ? Math.round(b / 2.55) + "%" : "Off"}</span>` : `<span></span>${this._sw(isOn, "light.toggle", [i])}`}</div>`;
         }).join("");
-        sec.push(`<div class="bc tall" data-id="a:lights"><div class="bh" ${this._tileGo(s)}><span>${SV.lights.n}</span><span class="bs">${onL.length} on</span></div>${rows}</div>`);
+        sec.push(`<div class="bc tall" data-sk="lights" data-id="a:lights"><div class="bh" ${this._tileGo(s)}><span>${SV.lights.n}</span><span class="bs">${onL.length} on</span></div>${rows}</div>`);
       } else if (s === "shades") {
         const all = sh.join(",");
-        sec.push(`<div class="bc span2" data-id="a:shades"><div class="bh" ${this._tileGo(s)}><span>${SV.shades.n}</span><span class="bs">${sh.length} window${sh.length === 1 ? "" : "s"}${avg != null ? " · " + avg + "% open" : ""}</span></div><div class="shg">${sh.map((i) => this._kw("e:" + i, this._shadeCard(i))).join("")}</div>${sh.length > 1 ? `<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open all</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close all</button></div>` : ""}</div>`);
+        sec.push(`<div class="bc span2" data-sk="shades" data-id="a:shades"><div class="bh" ${this._tileGo(s)}><span>${SV.shades.n}</span><span class="bs">${sh.length} window${sh.length === 1 ? "" : "s"}${avg != null ? " · " + avg + "% open" : ""}</span></div><div class="shg">${sh.map((i) => this._kw("e:" + i, this._shadeCard(i))).join("")}</div>${sh.length > 1 ? `<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open all</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close all</button></div>` : ""}</div>`);
       } else if (s === "climate") {
         const id = cl[0], a = H[id].attributes, off = ["off", "unavailable", "unknown"].includes(st(id)), tg = a.temperature, step = a.target_temp_step || 0.5, x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
         const verb = a.hvac_action === "heating" ? "heating to " : a.hvac_action === "cooling" ? "cooling to " : "set to ";
         const txt = `${a.current_temperature != null ? this._fmt(a.current_temperature) + "° now" : st(id)}${off ? " · off" : tg != null ? " · " + verb + this._fmt(tg) + "°" : ""}`;
-        sec.push(`<div class="bc" data-id="a:climate"><div class="bh" ${this._tileGo(s)}><span>${SV.climate.n}</span></div><div class="cl"><div class="cap2" style="margin:0;font-size:15px">${E(txt)}</div>${tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : ""}</div></div>`);
+        sec.push(`<div class="bc" data-sk="climate" data-id="a:climate"><div class="bh" ${this._tileGo(s)}><span>${SV.climate.n}</span></div><div class="cl"><div class="cap2" style="margin:0;font-size:15px">${E(txt)}</div>${tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : ""}</div></div>`);
       } else {
         const inner = isCs(s) ? this._customCards(rid, "room:" + rid + ":" + s, s) : this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s);
-        sec.push(`<div class="bc ${s === "media" || s === "cameras" ? "span2" : ""}" data-id="a:${E(s)}"><div class="bh" ${this._tileGo(s)}><span>${SV[s].n}</span></div><div class="grid" data-grid="room:${rid}:${s}">${inner}</div></div>`);
+        sec.push(`<div class="bc ${s === "media" || s === "cameras" ? "span2" : ""}" data-sk="${E(s)}" data-id="a:${E(s)}"><div class="bh" ${this._tileGo(s)}><span>${SV[s].n}</span></div><div class="grid" data-grid="room:${rid}:${s}">${inner}</div></div>`);
       }
     });
     if (!sec.length) sec.push(`<div class="bc span2" data-id="a:none"><div class="lbl">Nothing in this room yet.</div></div>`);
@@ -1719,7 +1745,9 @@ class QuintDashboard extends HTMLElement {
     let body = "";
     if (tab === "bg") {
       const u = this._bgu(), b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(u || c.bg || {}) };
-      body = sec("Background", u ? "this device only" : "using the shared look", `<div style="padding:4px 4px 12px">${this._pbControls(u, b)}</div>`);
+      body = (adm ? "" : sec("Arrangement", "hold a tile or card for a moment, then drag it to a new place",
+        row("Your own order", "tiles and cards are arranged on this device only", '<button class="sbtn" data-sc="ordreset|">Back to the shared order</button>'))) +
+        sec("Background", u ? "this device only" : "using the shared look", `<div style="padding:4px 4px 12px">${this._pbControls(u, b)}</div>`);
     } else if (tab === "general") {
       const bg = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(c.bg || {}) }, dv = localStorage.getItem("quint_dev") || "auto";
       body = sec("Settings file", "settings are stored on the server and shared by every user; a file makes them portable",
