@@ -68,7 +68,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.25.0";
+const VER = "1.26.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const TSIZES = { xl: { n: "Extra large", z: 1.3, m: 1.3 }, l: { n: "Large", z: 1, m: 1 }, s: { n: "Small", z: 0.8, m: 0.9 }, xs: { n: "Very small", z: 0.62, m: 0.8 } };
@@ -668,23 +668,24 @@ class QuintDashboard extends HTMLElement {
     for (const h of hosts) {
       if (!h.isConnected) continue;
       const id = h.dataset.ha, wall = h.classList.contains("wallh");
+      if (wall && hosts.length > 3) await new Promise((r) => setTimeout(r, 250));
       try {
         const card = await hp.createCardElement({ type: "picture-entity", entity: id, camera_view: "live", show_name: false, show_state: false, tap_action: { action: "none" }, hold_action: { action: "none" }, fit_mode: wall ? "cover" : "contain" });
         card.hass = this._h;
         ["--ha-card-border-radius:0", "--ha-card-box-shadow:none", "--ha-card-border-width:0", "--ha-card-background:transparent", "display:block", "width:100%", "height:100%"].forEach((x) => { const [k, v] = x.split(":"); card.style.setProperty(k, v); });
         if (!h.isConnected) continue;
-        h._card = card; h.appendChild(card); this._haWatch(h, id);
+        h._card = card; h.appendChild(card); this._haWatch(h, id, wall ? 28 : 12);
       } catch (e) { this._haFail(id); }
     }
   }
-  _haWatch(h, id) {
+  _haWatch(h, id, lim) {
     let n = 0;
     const iv = setInterval(() => {
       n++;
       if (!h.isConnected) return clearInterval(iv);
       const v = this._deep(h, "video"), im = this._deep(h, "img");
       if ((v && v.readyState >= 2 && !v.paused && v.currentTime > 0) || (im && im.complete && im.naturalWidth > 0)) { clearInterval(iv); this._haOkN = (this._haOkN || 0) + 1; return; }
-      if (n >= 12) { clearInterval(iv); this._haFail(id); }
+      if (n >= (lim || 12)) { clearInterval(iv); this._haFail(id); }
     }, 1000);
   }
   _haFail(id) {
@@ -895,7 +896,8 @@ class QuintDashboard extends HTMLElement {
     else if (a === "icdel") { const l = this._ics(); l.splice(this._icSel || 0, 1); this._icSel = Math.max(0, Math.min(this._icSel || 0, l.length - 1)); }
     else if (a === "wall") {
       const w = (c.wall = c.wall || {}), i = v.indexOf("|"), k = i < 0 ? v : v.slice(0, i), id = i < 0 ? "" : v.slice(i + 1);
-      if (k === "live") w.live = !w.live;
+      if (k === "live") w.live = w.live === false;
+      else if (k === "max") w.max = +id || 0;
       else if (k === "names") w.names = w.names === false;
       else if (k === "cam") { const l = new Set(w.ids || []); l.has(id) ? l.delete(id) : l.add(id); w.ids = [...l]; }
       else if (k === "auto") w.ids = [];
@@ -1959,7 +1961,7 @@ class QuintDashboard extends HTMLElement {
     return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}<div class="abody">${sec.join("")}</div></div></div>`;
   }
   /* ---------- camera wall: one screen with 1 to 32 cameras ---------- */
-  _wallCfg() { const w = this._c.wall || {}; return { n: Math.max(1, Math.min(32, Math.round(+w.n) || 4)), ids: Array.isArray(w.ids) ? w.ids : [], live: !!w.live, names: w.names !== false }; }
+  _wallCfg() { const w = this._c.wall || {}; return { n: Math.max(1, Math.min(32, Math.round(+w.n) || 4)), ids: Array.isArray(w.ids) ? w.ids : [], live: w.live !== false, max: [4, 8, 12, 16].includes(+w.max) ? +w.max : 0, names: w.names !== false }; }
   _wallAll() { return Object.keys(this._h.states).filter((id) => this._svcOf(id) === "cameras" && !this._c.hide.includes(id) && this._rmOk(this._roomOf(id))).sort((a, b) => this._nm(a).localeCompare(this._nm(b))); }
   _wallCams() {
     const w = this._wallCfg(), all = this._wallAll(), ch = w.ids.filter((i) => all.includes(i));
@@ -1985,7 +1987,7 @@ class QuintDashboard extends HTMLElement {
     if (!ids.length) return `${this._top()}<h1>${SV.camwall.i} ${E(SV.camwall.n)}</h1><div class="bc" style="max-width:640px;margin-top:10px"><div class="lbl">No cameras to show yet.${this._admin() ? " Choose them in Settings → Camera wall." : ""}</div></div>`;
     const g = this._wallGrid(ids.length), small = g.c >= 5 || ids.length > 12;
     this._wallKey = `${ids.length}:${g.c}:${g.r}`;
-    const ha = this._haOn(), liveMax = ha ? Math.min(ids.length, 6) : this._h2() ? Math.min(ids.length, 8) : ids.length <= 4 ? 4 : ids.length <= 8 ? 3 : 2, dpr = Math.min(2, window.devicePixelRatio || 1), tw = ((this._w || 1024) / g.c) * dpr, px = Math.max(320, Math.min(1280, Math.ceil(tw / 160) * 160));
+    const ha = this._haOn(), room = ha || this._h2() ? ids.length : ids.length <= 4 ? 4 : ids.length <= 8 ? 3 : 2, liveMax = Math.min(room, w.max || 99), dpr = Math.min(2, window.devicePixelRatio || 1), tw = ((this._w || 1024) / g.c) * dpr, px = Math.max(320, Math.min(1280, Math.ceil(tw / 160) * 160));
     let nl = 0;
     const tiles = ids.map((id) => {
       const a = H[id].attributes, off = ["unavailable", "unknown"].includes(H[id].state) || !a.entity_picture, nm = w.names ? `<span class="cn">${E(this._nm(id))}</span>` : "";
@@ -2150,7 +2152,8 @@ class QuintDashboard extends HTMLElement {
       body = sec("Camera wall", "one dedicated screen that shows many cameras at once",
         row("Cameras on the screen", "1 to 32. The tiles are laid out to fill the screen for this number", `<select data-wn="1">${Array.from({ length: 32 }, (_, i) => i + 1).map((n) => `<option value="${n}" ${n === w.n ? "selected" : ""}>${n}</option>`).join("")}</select>`) +
         row("Show in the bottom bar", "switch off to hide the page for everyone", tg(!H.includes("camwall"), 'data-s="svcvis|camwall"')) +
-        row("Live video", "play the live stream on the first few cameras (4 at most, fewer when there are many, so the screen stays fast). The other cameras show pictures that refresh as fast as the camera answers", tg(w.live, 'data-s="wall|live"')) +
+        row("Live video", "every camera plays live. Off = pictures that refresh as fast as the camera answers", tg(w.live, 'data-s="wall|live"')) +
+        row("Most cameras live at once", "All is best. Choose a number if the screen or Home Assistant is too slow. The other cameras then show fast pictures", `<div class="seg sm" style="flex-wrap:wrap">${[[0, "All"], [4, "4"], [8, "8"], [12, "12"], [16, "16"]].map(([k, n]) => `<button class="${w.max === k ? "on" : ""}" data-s="wall|max|${k}">${n}</button>`).join("")}</div>`) +
         row("Camera names", "write the name on each tile", tg(w.names, 'data-s="wall|names"')) +
         row("Video player", "Smooth uses the Home Assistant player (WebRTC or HLS) for live video, and falls back by itself if a camera cannot do it. Applies to every camera", `<div class="seg">${[["auto", "Smooth"], ["std", "Standard"]].map(([k, n]) => `<button class="${(c.eng || "auto") === k ? "on" : ""}" data-s="eng|${k}">${n}</button>`).join("")}</div>`)) +
       sec("Cameras", `${chosen.length ? chosen.length + " chosen" : "automatic: the first " + w.n} · ${shown} on the screen`,
