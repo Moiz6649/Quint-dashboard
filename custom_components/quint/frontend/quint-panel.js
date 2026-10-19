@@ -68,7 +68,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.26.0";
+const VER = "1.27.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const TSIZES = { xl: { n: "Extra large", z: 1.3, m: 1.3 }, l: { n: "Large", z: 1, m: 1 }, s: { n: "Small", z: 0.8, m: 0.9 }, xs: { n: "Very small", z: 0.62, m: 0.8 } };
@@ -118,15 +118,15 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .home{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding:26px 18px 22px;flex:1;align-content:start}
 .hl{display:flex;flex-direction:column;min-width:0}
 .hr{min-width:0;display:flex;flex-direction:column}
-.clk{font-family:var(--serif);font-size:84px;font-weight:400;line-height:.95;margin-top:26px;letter-spacing:-1px;white-space:nowrap;max-width:100%}
-.clk2{font-family:var(--serif);font-size:54px;font-weight:400;line-height:1;letter-spacing:-1px;white-space:nowrap}
+.clk{font-family:var(--serif);font-size:56px;font-weight:400;line-height:1.12;margin-top:20px;letter-spacing:-.5px;white-space:nowrap;max-width:100%}
+.clk2{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1;letter-spacing:-1px;white-space:nowrap}
 .clk2 small{font-family:"Inter",sans-serif;font-size:.24em;font-weight:600;letter-spacing:2px;margin-left:.45em;color:#c3cbdb;vertical-align:.85em}
 .ctk .dt{margin-top:10px}.ctk .aclk{margin:2px 0}
-.aclk{color:var(--tx)}.aclk svg{display:block;width:100%;height:100%}.aclk.left{width:190px;height:190px;margin-top:26px}.aclk.tl{width:min(100%,190px);aspect-ratio:1}
+.aclk{color:var(--tx)}.aclk svg{display:block;width:100%;height:100%}.aclk.left{width:150px;height:150px;margin-top:20px}.aclk.tl{width:min(100%,190px);aspect-ratio:1}
 .aclk .fc{fill:rgba(255,255,255,.04);stroke:rgba(255,255,255,.2);stroke-width:1.5}.aclk .tm1{stroke:rgba(255,255,255,.28);stroke-width:1}.aclk .tm5{stroke:rgba(255,255,255,.7);stroke-width:2.2;stroke-linecap:round}
 .aclk text{fill:#c3cbdb;font:600 11px var(--serif);}.aclk g{transform-origin:100px 100px;transform-box:view-box}
 .aclk .ahh line{stroke:var(--tx);stroke-width:6;stroke-linecap:round}.aclk .amh line{stroke:var(--tx);stroke-width:3.8;stroke-linecap:round}.aclk .ash line{stroke:var(--ac);stroke-width:1.6;stroke-linecap:round}.aclk .cd{fill:var(--ac)}
-:host([data-dev="phone"]) .aclk.left{width:150px;height:150px}:host([data-wide="1"]) .aclk.left{width:clamp(190px,17vw,250px);height:clamp(190px,17vw,250px);margin-top:40px}
+:host([data-dev="phone"]) .aclk.left{width:120px;height:120px;margin-top:14px}:host([data-wide="1"]) .aclk.left{width:clamp(150px,12vw,190px);height:clamp(150px,12vw,190px);margin-top:30px}
 .clk small{font-family:"Inter",sans-serif;font-size:.2em;font-weight:600;letter-spacing:2px;margin-left:.45em;color:#c3cbdb;vertical-align:.85em}
 .dt{font-size:16px;color:#d3d9e6;margin-top:8px}
 .wx{display:flex;align-items:center;gap:10px;margin-top:16px;color:#d3d9e6;font-size:15px}.wx .si{font-size:20px;color:var(--ac);flex:none}
@@ -397,7 +397,7 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-dev="phone"]) .brand{font-size:15px;letter-spacing:5px}
 :host([data-dev="phone"]) .page{padding:18px 14px 20px}
 :host([data-dev="phone"]) h1{font-size:36px}
-:host([data-dev="phone"]) .clk{font-size:72px}
+:host([data-dev="phone"]) .clk{font-size:46px;margin-top:14px}
 :host([data-dev="phone"]) .bc{padding:16px 16px 16px;border-radius:18px}
 :host([data-dev="phone"]) .grid{grid-template-columns:repeat(var(--pc,2),minmax(0,1fr));gap:10px}
 :host([data-dev="phone"]) .grid[data-grid^="list:cameras"]{grid-template-columns:minmax(0,1fr)!important}
@@ -422,7 +422,7 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-dev="phone"]) .camv .vt{font-size:24px}
 :host([data-dev="tablet"]) .home,:host([data-dev="tablet"]) .area{padding:28px 28px 22px}
 :host([data-dev="tablet"]) .page{padding:28px 28px 24px}
-:host([data-dev="tablet"]) .clk{font-size:96px}
+:host([data-dev="tablet"]) .clk{font-size:56px}
 :host([data-dev="phone"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-dev="tablet"]) .scg{grid-template-columns:repeat(3,minmax(0,1fr))}
 :host([data-dev="tablet"]) nav{padding:10px 20px calc(10px + env(safe-area-inset-bottom))}
@@ -437,7 +437,7 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-wide="1"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
 :host([data-wide="1"]) .hl{position:sticky;top:28px;align-self:start;height:max(calc(var(--vh) - 116px),540px)}
 :host([data-dev="desktop"][data-wide="1"]) .hl{top:40px;height:max(calc(var(--vh) - 132px),540px)}
-:host([data-wide="1"]) .clk{font-size:clamp(80px,8vw,124px);margin-top:48px}
+:host([data-wide="1"]) .clk{font-size:clamp(54px,4.6vw,72px);margin-top:34px}
 :host([data-wide="1"]) .gr{font-size:36px;margin-top:34px}
 :host([data-wide="1"]) .scn{margin-top:auto;padding-top:26px}
 :host([data-wide="1"]) .area{grid-template-columns:minmax(220px,270px) minmax(0,1fr);gap:40px}
