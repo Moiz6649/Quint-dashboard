@@ -69,7 +69,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.30.0";
+const VER = "1.31.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -120,7 +120,7 @@ main{flex:1;display:flex;flex-direction:column;min-width:0}
 .brand{display:flex;align-items:center;gap:12px;font-size:19px;letter-spacing:7px;font-weight:500;text-transform:uppercase;min-height:34px}
 .ib{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:50%;width:38px;height:38px;font-size:18px;display:grid;place-items:center;padding:0;flex:none;letter-spacing:0}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-.page{padding:34px 44px 30px;max-width:1500px;width:100%;margin:0 auto;flex:1}
+.page{padding:8px 44px 30px;max-width:1500px;width:100%;margin:0 auto;flex:1}
 h1{font-family:var(--serif);font-weight:400;font-size:46px;line-height:1.05;margin:6px 0 8px}
 .page>h1,.page>.top+h1{margin-bottom:14px}
 h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin:30px 0 12px}
@@ -128,7 +128,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .cap{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;color:#a9b4c9;margin-bottom:12px}
 .back{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:10px;color:#fff;padding:9px 16px;font-size:14px}
 /* ===== home ===== */
-.home{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding:26px 18px 22px;flex:1;align-content:start}
+.home{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding:0 18px 22px;flex:1;align-content:start}
 .hl{display:flex;flex-direction:column;min-width:0;min-height:56px}.hl>.bc,.hl>.cw{margin-top:16px}.hl>.cw{zoom:var(--z,1)}.hbt .gr{margin-top:0;font-size:28px}.hbt .wx{margin-top:0}.hbt .dt{margin-top:8px}.hbt .scn .cap{margin-bottom:10px}.bcol>.cw{zoom:var(--z,1)}.bwide+.bento,.bento+.bwide,.bento+.addg,.bwide+.addg{margin-top:16px}.addg{margin-top:16px}
 .hr{min-width:0;display:flex;flex-direction:column}
 .clk{font-family:var(--serif);font-size:56px;font-weight:400;line-height:1.12;margin-top:20px;letter-spacing:-.5px;white-space:nowrap;max-width:100%}
@@ -156,7 +156,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .bwide{margin-top:16px}
 .bc.cam1{padding:8px}
 .cam1 .cvw{aspect-ratio:16/9;min-height:0;flex:none}
-.wallpage{max-width:none;padding-top:26px;padding-bottom:20px}
+.wallpage{max-width:none;padding-top:0;padding-bottom:20px}
 .wallg{display:grid;width:100%}
 .wallg .wt{min-height:0;height:100%;border-radius:12px}
 .wallg .wt .wo{font-size:13px;color:#8b7d6c}
@@ -290,7 +290,7 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ac);color:#000;padding:10px 18px;border-radius:24px;font-weight:600;z-index:130;white-space:nowrap}
 ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:96px}.tv{font-size:30px;font-weight:300;line-height:1.15;margin:4px 0 2px;word-break:break-word}
 /* ===== rooms page ===== */
-.area{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;padding:22px 16px 20px;flex:1;align-content:start}
+.area{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;padding:0 16px 20px;flex:1;align-content:start}
 .rl{display:flex;flex-direction:column;min-width:0}
 .rlist{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .rli{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--bd);color:#e3e7ef;font-size:15px;text-align:left;flex:none;white-space:nowrap}
@@ -377,22 +377,70 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 .camv{position:fixed;inset:0;z-index:120;background:rgba(3,5,10,.985);display:flex;flex-direction:column}
 .camv .vh{display:flex;align-items:center;gap:14px;padding:16px 20px}
 .camv .vt{font-family:var(--serif);font-size:30px;line-height:1}
-.amo{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--tx);cursor:pointer;overflow:hidden;animation:ambin .9s ease;background:radial-gradient(110% 80% at 88% 112%,rgba(190,125,60,.24),transparent 58%),linear-gradient(180deg,#08101e,#0b1830 62%,#0f1827);-webkit-user-select:none;user-select:none}
+.amo{--aw:100vw;--ah:100vh;position:fixed;inset:0;z-index:200;overflow:hidden;color:var(--tx);cursor:pointer;animation:ambin .9s ease;-webkit-user-select:none;user-select:none;background:#070b18}
 @keyframes ambin{from{opacity:0}to{opacity:1}}
-.amo.c{background:#03050a;cursor:pointer}
-.amo .ab{font-size:11px;letter-spacing:5px;text-transform:uppercase;font-weight:600;color:#e7ebf4}.amo.a .ab{margin-bottom:22px}
-.amo .ab.tl{position:absolute;left:clamp(22px,4vw,56px);top:clamp(20px,4vh,44px)}
-.amo .awt{position:absolute;right:clamp(22px,4vw,56px);top:clamp(20px,4vh,44px);display:flex;gap:8px;align-items:center;font-size:12px;color:#c3cbdb}.amo .awt .si{font-size:14px;color:var(--ac)}
-.aclk.am{width:min(44vh,70vw,360px);height:min(44vh,70vw,360px)}
-.amo .ad{font-family:var(--serif);font-style:italic;font-size:clamp(24px,3.4vh,34px);margin-top:22px;color:#f1ece0}
-.amo .aw{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px;color:#c3cbdb}.amo .aw .si{font-size:16px;color:var(--ac)}
-.amo .atw,.amo .acr{position:absolute;bottom:clamp(16px,3vh,30px);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(195,203,219,.55)}
-.amo .atw{left:clamp(22px,4vw,56px)}.amo .acr{right:clamp(22px,4vw,56px)}
-.amo .amid{position:absolute;left:clamp(22px,6vw,90px);top:50%;transform:translateY(-54%);display:flex;flex-direction:column}
-.clk2.big{font-size:clamp(72px,12vw,170px);letter-spacing:-2px;line-height:.95}.clk2.big small{font-size:.2em}
-.amo .ag{font-family:var(--serif);font-style:italic;font-size:clamp(24px,3.4vw,40px);margin-top:14px}
-.amo .ad2{font-size:clamp(13px,1.3vw,16px);color:#c3cbdb;margin-top:6px}
-.amo .ach{position:absolute;left:clamp(22px,4vw,56px);bottom:clamp(44px,8vh,80px);display:flex;gap:10px;flex-wrap:wrap}
+.amo.pv{position:absolute;inset:auto;left:0;top:0;width:1280px;height:720px;--aw:1280px;--ah:720px;transform-origin:0 0;transform:scale(var(--s,.3));animation:none;pointer-events:none;z-index:0}
+.amfg{position:absolute;inset:0}
+.amo .ab{font-size:11px;letter-spacing:5px;text-transform:uppercase;font-weight:600;color:#e7ebf4}
+.amo .ab.tl{position:absolute;left:clamp(22px,calc(var(--aw)*.04),56px);top:clamp(20px,calc(var(--ah)*.05),44px)}
+.amo .awt{position:absolute;right:clamp(22px,calc(var(--aw)*.04),56px);top:clamp(20px,calc(var(--ah)*.05),44px);display:flex;gap:8px;align-items:center;font-size:13px;color:#d3d9e6}.amo .awt .si{font-size:16px;color:var(--ac)}
+.amo .atw{position:absolute;left:50%;transform:translateX(-50%);bottom:clamp(14px,calc(var(--ah)*.03),28px);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(195,203,219,.5);white-space:nowrap}
+.amo .acn{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px}
+.amo .ad{font-family:var(--serif);font-style:italic;font-size:clamp(22px,calc(var(--ah)*.034),34px);margin-top:18px;color:#f1ece0}
+.amo .ag{font-size:12px;letter-spacing:5px;text-transform:uppercase;color:#c3cbdb;margin-top:10px}
+.amo .ach{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px}
+.clk2.big{font-size:clamp(72px,calc(var(--aw)*.12),170px);letter-spacing:-2px;line-height:.95}.clk2.big small{font-size:.2em}
+.aclk.am{width:min(calc(var(--ah)*.42),calc(var(--aw)*.7),360px);height:min(calc(var(--ah)*.42),calc(var(--aw)*.7),360px)}
+/* notifications on the screen saver */
+.amo .anf{position:absolute;right:clamp(22px,calc(var(--aw)*.04),56px);bottom:clamp(40px,calc(var(--ah)*.08),72px);display:flex;flex-direction:column;gap:9px;width:min(340px,calc(var(--aw) - 44px))}
+.amo .anh{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(195,203,219,.75);text-align:right}
+.amo .anc{display:flex;gap:11px;align-items:flex-start;padding:11px 15px;border-radius:15px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);text-align:left}
+.amo .anc i{width:8px;height:8px;border-radius:50%;background:var(--ac);margin-top:5px;flex:none}.amo .anc.crit{background:rgba(120,30,40,.45);border-color:rgba(255,107,107,.55)}.amo .anc.crit i{background:var(--bad)}
+.amo .anc b{display:block;font-size:14px;font-weight:600}.amo .anc span{display:block;font-size:12px;color:#c3cbdb;margin-top:2px}
+/* 1 Aurora */
+.amo.aurora{background:radial-gradient(120% 90% at 50% 0%,#101a3a,#060914 70%)}
+.amo .bl{position:absolute;width:72%;aspect-ratio:1;border-radius:50%;will-change:transform;pointer-events:none}
+.amo .b1{left:-18%;top:-34%;background:radial-gradient(closest-side,rgba(45,212,191,.55),transparent);animation:dr1 38s ease-in-out infinite alternate}
+.amo .b2{right:-22%;top:8%;background:radial-gradient(closest-side,rgba(139,92,246,.55),transparent);animation:dr2 46s ease-in-out infinite alternate}
+.amo .b3{left:14%;bottom:-52%;background:radial-gradient(closest-side,rgba(244,114,182,.42),transparent);animation:dr3 54s ease-in-out infinite alternate}
+@keyframes dr1{to{transform:translate(34%,22%) scale(1.2)}}@keyframes dr2{to{transform:translate(-30%,18%) scale(.85)}}@keyframes dr3{to{transform:translate(26%,-26%) scale(1.15)}}
+.amo.aurora .clk2.big{font-size:clamp(84px,calc(var(--aw)*.15),220px);text-shadow:0 0 60px rgba(160,200,255,.35);font-weight:300}
+/* 2 Starry night */
+.amo.night{background:radial-gradient(120% 100% at 50% 100%,#0c1630,#03050c 70%);cursor:pointer}
+.amo .sk{position:absolute;inset:0}.amo .sk i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.2;animation:twk 4s ease-in-out infinite}.amo .sk i.s2{width:3px;height:3px;animation-duration:6s}
+@keyframes twk{0%,100%{opacity:.15}50%{opacity:.9}}
+.amo .moon{position:absolute;right:calc(var(--aw)*.16);top:calc(var(--ah)*.16);width:clamp(48px,calc(var(--ah)*.12),92px);aspect-ratio:1;border-radius:50%;box-shadow:inset -.32em .1em 0 0 #ebe4cc;font-size:clamp(48px,calc(var(--ah)*.12),92px);opacity:.85;filter:drop-shadow(0 0 22px rgba(235,228,204,.35))}
+.amo .nmid{position:absolute;left:clamp(22px,calc(var(--aw)*.07),90px);bottom:calc(var(--ah)*.2);animation:shf 120s ease-in-out infinite alternate}
+@keyframes shf{to{transform:translate(18px,-14px)}}
+.amo.night .clk2.big{color:rgba(238,241,246,.5);font-size:clamp(64px,calc(var(--aw)*.11),150px)}
+.amo.night .ad3{margin-top:12px;font-size:12px;letter-spacing:5px;color:rgba(238,241,246,.32);text-transform:uppercase}
+.amo.night .anf{opacity:.7}.amo.night .anc{background:rgba(255,255,255,.04)}
+/* 3 Classic analog */
+.amo.analog{background:radial-gradient(90% 80% at 50% 38%,#18233f,#070a12 75%)}
+.amo.analog .aclk.am{filter:drop-shadow(0 0 44px rgba(232,201,143,.2))}
+.amo.analog .aclk .fc{fill:rgba(255,255,255,.05);stroke:rgba(232,201,143,.45);stroke-width:2}
+/* 4 Photo frame */
+.amo.frame{background:#06090f}
+.amo .fb{position:absolute;inset:-6%;background-image:var(--qbg-img,none);background-size:cover;background-position:center;animation:kb 50s ease-in-out infinite alternate;will-change:transform}
+@keyframes kb{from{transform:scale(1) translate(0,0)}to{transform:scale(1.12) translate(-2%,-1.5%)}}
+.amo .fs{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.05) 38%,rgba(0,0,0,.78))}
+.amo .fmid{position:absolute;left:clamp(22px,calc(var(--aw)*.05),70px);bottom:clamp(40px,calc(var(--ah)*.1),90px);display:flex;flex-direction:column;align-items:flex-start;max-width:62%}
+.amo.frame .clk2.big{text-shadow:0 4px 40px rgba(0,0,0,.6)}.amo.frame .ad{margin-top:12px}.amo.frame .ach{justify-content:flex-start;margin-top:16px}
+:host([data-dev="phone"]) .amo:not(.pv) .bl{width:140%}
+:host([data-dev="phone"]) .amo:not(.pv) .anf{left:16px;right:16px;width:auto;bottom:46px}
+:host([data-dev="phone"]) .amo:not(.pv) .fmid{bottom:240px;max-width:none;right:22px}
+:host([data-dev="phone"]) .amo:not(.pv) .nmid{bottom:300px}
+:host([data-dev="phone"]) .amo:not(.pv) .moon{right:22px}
+/* choosing a screen saver in Settings */
+.ssub{padding:10px 4px 2px}.ssub .sn{font-size:15px;font-weight:600}.ssub .ss{font-size:12px;color:var(--mu);margin-top:3px}
+.hbt .ckr{display:flex;align-items:center;gap:18px}.hbt .ckr .aclk.tl{width:104px;flex:none}.hbt .ckr .clk2{font-size:44px;flex:none}.hbt .ckd{min-width:0}.hbt .ckd .dt{margin-top:0;font-size:15px}
+.svgrid{align-items:start;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin:6px 0 16px}
+.svc{border:2px solid var(--bd);border-radius:16px;padding:8px 8px 10px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:8px;min-width:0}
+.svc.on{border-color:var(--ac);background:rgba(255,255,255,.07)}
+.svp{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:10px;background:#000;cursor:pointer}
+.svp.off{display:grid;place-items:center;color:#8d9ab8;font-size:13px;letter-spacing:3px;text-transform:uppercase;background:repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 8px,transparent 8px 16px)}
+.svf{display:flex;flex-direction:column;gap:3px;padding:0 4px}.svf b{font-size:14px}.svf small{font-size:12px;color:var(--mu)}
+.svf .sbtn{margin-top:6px;align-self:flex-start}
 .amc{display:inline-flex;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);font-size:13px;color:#dfe5f1}
 .amc i{width:7px;height:7px;border-radius:50%;background:var(--ok)}.amc.warn{border-color:rgba(240,179,90,.5);background:rgba(240,179,90,.12);color:#ffd9a0}.amc.warn i{background:var(--warn)}.amc.bad{border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.12);color:#ffc2c2}.amc.bad i{background:var(--bad)}
 .amo.c .clk2.big{color:rgba(238,241,246,.34);font-size:clamp(64px,10vw,130px)}.amo.c .ad3{margin-top:12px;font-size:12px;letter-spacing:5px;color:rgba(238,241,246,.2)}
@@ -402,7 +450,7 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 @keyframes nbin{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
 .nb b{font-size:15px}.nb span{font-size:13px;color:#c3cbdb}.nb small{font-size:11px;color:var(--mu)}
 .nb.crit{border-color:rgba(255,107,107,.65);background:rgba(52,17,21,.97)}.nb.crit b{color:#ffb3b3}
-.nbell{position:relative}.nbd{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px;font-family:Inter,sans-serif}
+.app::before{content:"";display:block;height:46px;flex:none}.nbell.tbell{position:fixed;top:10px;right:14px;z-index:30;background:rgba(14,19,30,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}.nbell{position:relative}.nbd{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px;font-family:Inter,sans-serif}
 .nlist{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;margin-top:10px}
 .nli{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--bd);border-radius:14px;background:rgba(255,255,255,.03)}
 .nli>i{width:8px;height:8px;border-radius:50%;background:var(--ac);margin-top:6px;flex:none}.nli.crit>i{background:var(--bad)}
@@ -910,7 +958,7 @@ class QuintDashboard extends HTMLElement {
     if (o.eng === "std" || o.eng === "auto") c.eng = o.eng;
     if (o.cks === "analog" || o.cks === "digital") c.cks = o.cks;
     if (o.ntf && typeof o.ntf === "object") { const x = o.ntf, y = {}; if (typeof x.on === "boolean") y.on = x.on; if ([3, 5, 10, 30].includes(+x.mins)) y.mins = +x.mins; if (x.types && typeof x.types === "object") { y.types = {}; Object.keys(NT).forEach((k) => { if (typeof x.types[k] === "boolean") y.types[k] = x.types[k]; }); } c.ntf = y; }
-    if (o.scr && typeof o.scr === "object") { const x = o.scr, y = {}; if (typeof x.awake === "boolean") y.awake = x.awake; if (typeof x.night === "boolean") y.night = x.night; if (["off", "a", "b", "c"].includes(x.idle)) y.idle = x.idle; ["mins", "n1", "n2"].forEach((k) => { if (Number.isFinite(+x[k])) y[k] = +x[k]; }); c.scr = y; }
+    if (o.scr && typeof o.scr === "object") { const x = o.scr, y = {}; if (typeof x.awake === "boolean") y.awake = x.awake; if (typeof x.night === "boolean") y.night = x.night; if (["off", "aurora", "night", "analog", "frame", "a", "b", "c"].includes(x.idle)) y.idle = { a: "analog", b: "aurora", c: "night" }[x.idle] || x.idle; ["mins", "n1", "n2"].forEach((k) => { if (Number.isFinite(+x[k])) y[k] = +x[k]; }); c.scr = y; }
     if (typeof o.clockTile === "boolean") c.clockTile = o.clockTile;
     if (o.wall && typeof o.wall === "object") c.wall = o.wall;
     c.svcTitle = { ...(c.svcTitle || {}), ...(o.svcTitle || {}) };
@@ -1149,7 +1197,7 @@ class QuintDashboard extends HTMLElement {
   _svcsList() { return this._svcsAll().filter((x) => x !== "clock"); }
   _svcs() { const h = this._c.svcHide || []; return this._svcsAll().filter((x) => x !== "clock" && !h.includes(x)); }
   _svcsHome() { const h = this._c.svcHide || []; return this._svcsAll().filter((x) => !h.includes(x)); }
-  _clockTile() { let v = ""; try { v = localStorage.getItem("quint_ct") || ""; } catch (e) {} return v === "1" ? true : v === "0" ? false : !!this._c.clockTile; }
+  _clockTile() { return false; }   // the clock is a home block (drag it anywhere); there is no separate clock tile
   _clockStyle() { let v = ""; try { v = localStorage.getItem("quint_ck") || ""; } catch (e) {} return v === "analog" || v === "digital" ? v : this._c.cks === "analog" ? "analog" : "digital"; }
   _titles() { const T = this._c.svcTitle || {}; Object.keys(SV).forEach((k) => { SV[k].n = T[k] || (k.startsWith("cs:") ? k.slice(3) : SV_DEF[k]); }); }
   _svcRooms(s) { const h = (this._c.roomHide || {})[s] || []; return this._rooms().filter((r) => !h.includes(r.id)); }
@@ -1727,7 +1775,7 @@ class QuintDashboard extends HTMLElement {
     let p = {}; try { p = JSON.parse(localStorage.getItem("quint_scr") || "{}") || {}; } catch (e) {}
     const o = { ...d, ...(this._c.scr || {}), ...p };
     o.awake = o.awake !== false; o.night = o.night !== false;
-    if (!["off", "a", "b", "c"].includes(o.idle)) o.idle = "off";
+    o.idle = { a: "analog", b: "aurora", c: "night" }[o.idle] || o.idle; if (!["off", "aurora", "night", "analog", "frame"].includes(o.idle)) o.idle = "off";
     o.mins = [1, 2, 5, 10, 30].includes(+o.mins) ? +o.mins : 5;
     o.n1 = Math.max(0, Math.min(23, Math.round(+o.n1))); if (isNaN(o.n1)) o.n1 = 22;
     o.n2 = Math.max(0, Math.min(23, Math.round(+o.n2))); if (isNaN(o.n2)) o.n2 = 6;
@@ -1763,9 +1811,13 @@ class QuintDashboard extends HTMLElement {
   }
   _act() { this._lastAct = Date.now(); if (this._nsNeed) { this._nsNeed = false; this._nsOn(); } }
   _inNight(sc) { const h = new Date().getHours(); return sc.n1 > sc.n2 ? h >= sc.n1 || h < sc.n2 : h >= sc.n1 && h < sc.n2; }
-  _ambStyle(sc) { if (sc.idle === "off") return ""; if (sc.idle === "c") return "c"; return sc.night && this._inNight(sc) ? "c" : sc.idle; }
+  _ambStyle(sc) { if (sc.idle === "off") return ""; if (sc.idle === "night") return "night"; return sc.night && this._inNight(sc) ? "night" : sc.idle; }
   _ambTick() {
     if (!this._h || !this._loaded) return;
+    if (this._amb && this._amb.pv) {   // a preview from Settings: closes on touch, or after half a minute
+      if ((this._lastAct || 0) > this._amb.t || document.hidden || Date.now() - this._amb.t > 30000) return this._ambHide();
+      return this._ambDraw(this._amb.st0, true);
+    }
     const sc = this._scr(), st = this._ambStyle(sc);
     const busy = this._cam || this._dlg || this._nc || this._mv || this._hold || (this._v && this._v.p === "settings") || document.hidden || this._icList().some((x) => this._ringing(x));
     if (this._amb) {
@@ -1775,18 +1827,31 @@ class QuintDashboard extends HTMLElement {
     if (!st || busy) return;
     if (Date.now() - (this._lastAct || 0) >= sc.mins * 60000) this._ambShow(st);
   }
-  _ambShow(st) {
+  _ambShow(st, pv) {
     const d = document.createElement("div"); d.id = "amo"; d.className = "amo " + st;
     d.addEventListener("pointerdown", (e) => { e.stopPropagation(); this._lastAct = Date.now(); }, true);
     d.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); this._ambHide(); });
-    this.shadowRoot.appendChild(d); this._amb = { el: d, t: Date.now(), st: "", html: "" };
-    this._ambDraw(st);
+    this.shadowRoot.appendChild(d); this._amb = { el: d, t: Date.now(), st: "", fg: "", pv: !!pv, st0: st };
+    this._ambDraw(st, pv);
   }
   _ambHide() { const a = this._amb; this._amb = null; this._lastAct = Date.now(); if (a && a.el) a.el.remove(); }
-  _ambDraw(st) {
-    const a = this._amb, html = this._ambHtml(st);
-    if (a.st !== st || a.html !== html) { a.st = st; a.html = html; a.el.className = "amo " + st; a.el.innerHTML = html.replaceAll("@@C@@", this._clockHtml()); }
+  _ambDraw(st, pv) {
+    const a = this._amb, [bg, fg] = this._ambParts(st, pv);
+    if (a.st !== st) { a.st = st; a.fg = ""; a.el.className = "amo " + st; a.el.innerHTML = bg + '<div class="amfg"></div>'; }
+    if (a.fg !== fg) { a.fg = fg; a.el.querySelector(".amfg").innerHTML = fg.replaceAll("@@C@@", this._clockHtml()); }
     this._tickClock();
+  }
+  _ambPrev(st) { const [bg, fg] = this._ambParts(st, true); return `<div class="amo pv ${st}" data-ks="1">${bg}<div class="amfg">${fg}</div></div>`; }
+  _fitPrev() {
+    const R = this.shadowRoot; if (!R) return;
+    R.querySelectorAll(".svp .amo.pv").forEach((e) => { const w = e.parentNode.clientWidth; if (w > 0) { const v = `scale(${(w / 1280).toFixed(4)})`; if (e.style.transform !== v) e.style.transform = v; } });
+  }
+  _ambNtf(pv) {
+    const E = (t) => this._esc(t), phone = this.getAttribute("data-dev") === "phone", l = this._nList().filter((x) => !x.read);
+    let it = l.slice(0, phone ? 2 : 3), n = l.length;
+    if (!it.length && pv) { it = [{ title: "Front gate left open", msg: "Open for 5 minutes" }, { title: "Motion detected", msg: "Garden camera" }]; n = 2; }
+    if (!it.length) return "";
+    return `<div class="anf"><div class="anh">${n} new notification${n === 1 ? "" : "s"}</div>${it.map((x) => `<div class="anc ${x.crit ? "crit" : ""}"><i></i><div><b>${E(x.title)}</b>${x.msg ? `<span>${E(x.msg)}</span>` : ""}</div></div>`).join("")}${n > it.length ? `<div class="anh">+ ${n - it.length} more</div>` : ""}</div>`;
   }
   _ambStatus() {
     const H = this._h.states, E = (t) => this._esc(t), out = [], ids = this._tileIds("security");
@@ -1800,15 +1865,25 @@ class QuintDashboard extends HTMLElement {
     if (n) { const mo = Object.keys(H).some((i) => i.startsWith("binary_sensor.") && H[i].state === "on" && ["motion", "occupancy"].includes(H[i].attributes.device_class)); out.push(`<span class="amc ${mo ? "warn" : ""}"><i></i>${n} camera${n > 1 ? "s" : ""} · ${mo ? "motion" : "no motion"}</span>`); }
     return out.join("");
   }
-  _ambHtml(st) {
+  _stars() {
+    if (this._starH) return this._starH;
+    let r = 7, h = ""; const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 52; i++) h += `<i class="${i % 5 === 0 ? "s2" : ""}" style="left:${(rnd() * 100).toFixed(1)}%;top:${(rnd() * 78).toFixed(1)}%;animation-delay:-${(rnd() * 6).toFixed(1)}s"></i>`;
+    return (this._starH = `<div class="sk">${h}</div>`);
+  }
+  _ambParts(st, pv) {
     const E = (t) => this._esc(t), c = this._c, wx = c.noWeather ? null : this._wx(), L = this._h.locale, lang = (L && L.language) || undefined, now = new Date();
     const brand = E(c.title || this._title || "Quint"), cr = this._credit(), hr = now.getHours();
     const dl = now.toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }), ds = now.toLocaleDateString(lang, { weekday: "short", day: "numeric", month: "short" }).toUpperCase().replace(/,/g, "");
-    const g = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening", crh = cr ? `<span class="acr">${cr}</span>` : "";
-    if (st === "a") return `<div class="ab">${brand}</div>${this._clockBlock("am", "analog")}<div class="ad">${E(dl)}</div>${wx ? `<div class="aw">${wx.ic}<span>${wx.t}</span></div>` : ""}<span class="atw">Tap to wake</span>${crh}`;
-    if (st === "c") return `<div class="amid"><div class="clk2 big" data-clk="d">@@C@@</div><div class="ad3">${E(ds)}</div></div>`;
+    const g = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening";
     const wshort = wx ? wx.t.split(" · ").slice(0, 2).join(" · ") : "";
-    return `<div class="ab tl">${brand}</div>${wx ? `<div class="awt">${wx.ic}<span>${wshort}</span></div>` : ""}<div class="amid"><div class="clk2 big" data-clk="d">@@C@@</div><div class="ag">${g}</div><div class="ad2">${E(dl)}</div></div><div class="ach">${this._ambStatus()}</div>${crh}`;
+    const top = `<div class="ab tl">${brand}</div>${wx ? `<div class="awt">${wx.ic}<span>${wshort}</span></div>` : ""}`;
+    const foot = `${this._ambNtf(pv)}${pv ? "" : `<span class="atw">Tap to wake${cr ? " · " + cr : ""}</span>`}`;
+    const chips = `<div class="ach">${this._ambStatus()}</div>`;
+    if (st === "aurora") return ['<i class="bl b1"></i><i class="bl b2"></i><i class="bl b3"></i>', `${top}<div class="acn"><div class="clk2 big" data-clk="d">@@C@@</div><div class="ad">${E(dl)}</div><div class="ag">${g}</div>${chips}</div>${foot}`];
+    if (st === "night") return [`${this._stars()}<i class="moon"></i>`, `<div class="nmid"><div class="clk2 big" data-clk="d">@@C@@</div><div class="ad3">${E(ds)}</div></div>${foot}`];
+    if (st === "analog") return ["", `${top}<div class="acn">${this._clockBlock("am", "analog")}<div class="ad">${E(dl)}</div>${chips}</div>${foot}`];
+    return ['<div class="fb"></div><div class="fs"></div>', `${top}<div class="fmid"><div class="clk2 big" data-clk="d">@@C@@</div><div class="ag">${g}</div><div class="ad">${E(dl)}</div>${chips}</div>${foot}`];
   }
   _clockBlock(where, force) {
     if ((force || this._clockStyle()) === "analog") {
@@ -1827,6 +1902,7 @@ class QuintDashboard extends HTMLElement {
       const set = (c, deg) => { const g = el.querySelector("." + c); if (g) { const v = `rotate(${deg.toFixed(2)}deg)`; if (g.style.transform !== v) g.style.transform = v; } };
       set("ahh", hr * 30); set("amh", mi * 6); set("ash", sec * 6);
     });
+    this._fitPrev();
     const h = this._clockHtml(); R.querySelectorAll('[data-clk="d"]').forEach((el) => { if (el.innerHTML !== h) el.innerHTML = h; });
   }
   _clockHtml() {
@@ -2005,6 +2081,7 @@ class QuintDashboard extends HTMLElement {
       try { if (!v) localStorage.removeItem("quint_scr"); else { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = this._scrPers() || {}; if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (k === "idle") o.idle = x; else o[k] = +x; localStorage.setItem("quint_scr", JSON.stringify(o)); } } catch (e) {}
       this._wkT = 0; this._ambHide(); this._last = null; return this._draw(true);
     }
+    if (a === "ambprev") { if (["aurora", "night", "analog", "frame"].includes(v)) { this._ambHide(); this._ambShow(v, true); } return; }
     if (a === "ckd") { try { if (v === "analog" || v === "digital") localStorage.setItem("quint_ck", v); else localStorage.removeItem("quint_ck"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "ctd") { try { if (v === "1" || v === "0") localStorage.setItem("quint_ct", v); else localStorage.removeItem("quint_ct"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "tsd") { try { if (TSIZES[v]) localStorage.setItem("quint_ts", v); else localStorage.removeItem("quint_ts"); } catch (e) {} this._applyTs(); return this._draw(true); }
@@ -2209,7 +2286,7 @@ class QuintDashboard extends HTMLElement {
       scenes: scn,
     };
         const tileB = {
-      clock: { h: `${c.noClock ? "" : this._clockBlock("tl")}<div class="dt">${E(date)}</div>`, w: 3 },
+      clock: { h: `<div class="ckr">${c.noClock ? "" : this._clockBlock("tl")}<div class="ckd"><div class="dt">${E(date)}</div></div></div>`, w: 1.7 },
       wx: { h: wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : "", w: 1.2 },
       greet: { h: `<div class="gr">${g}${who ? ", " + E(who) : ""}</div>`, w: 1.5 },
       scenes: { h: scn, w: 1.6 + Math.ceil(sc.length / 2) * 0.9 },
@@ -2375,14 +2452,14 @@ class QuintDashboard extends HTMLElement {
     const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["ntf", "Notifications", "choose which alerts you see"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["ntf", "Notifications", "alerts for everyone"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     const tsSeg = (cur, attr, none) => `<div class="seg sm tsz">${Object.entries(TSIZES).map(([k, t]) => `<button class="${cur === k ? "on" : ""}" ${attr}="${attr === "data-s" ? "tsz|" : "tsd|"}${k}">${t.n}</button>`).join("")}${none ? `<button ${attr}="tsd|">Same as shared</button>` : ""}</div>`;
-    const SCI = [["off", "Off"], ["a", "Quiet clock"], ["b", "Time and status"], ["c", "Night mode"]];
+    const SCI = [["aurora", "Aurora", "Soft moving colours with a big clock. Shows home status and notifications"], ["night", "Starry night", "Dark sky with a moon and a dim clock. Easy on the eyes at night"], ["analog", "Classic analog", "A large analog clock with the date, home status and notifications"], ["frame", "Photo frame", "Your background picture slowly moving, with the time on top"]];
     const scrRows = (cur, att) => {
       const A = (k, v) => `${att}="${att === "data-s" ? "scr|" : "scrd|"}${k}|${v}"`, seg = (k, list, on) => `<div class="seg sm" style="flex-wrap:wrap">${list.map(([v, n]) => `<button class="${String(on) === String(v) ? "on" : ""}" ${A(k, v)}>${n}</button>`).join("")}</div>`;
       return row("Keep the screen on", "the screen never goes off while this page is open", tg(cur.awake, A("awake", cur.awake ? "0" : "1"))) +
-        row("Screen when idle", "after a while with no touch, show a calm clock screen. Tap anywhere to wake it", seg("idle", SCI, cur.idle)) +
+        `<div class="ssub"><div class="sn">Screen saver</div><div class="ss">after a while with no touch, show one of these. Tap one to choose it, or see it full screen first. Tap anywhere to wake the screen</div></div><div class="svgrid"><div class="svc ${cur.idle === "off" ? "on" : ""}"><div class="svp off" ${A("idle", "off")}>Off</div><div class="svf"><b>Off</b><small>No screen saver</small></div></div>${SCI.map(([k, n, d]) => `<div class="svc ${cur.idle === k ? "on" : ""}"><div class="svp" ${A("idle", k)}>${this._ambPrev(k)}</div><div class="svf"><b>${n}${cur.idle === k ? " ✓" : ""}</b><small>${d}</small><button class="sbtn" data-sc="ambprev|${k}">See full screen</button></div></div>`).join("")}</div>` +
         (cur.idle === "off" ? "" : row("Start after", "minutes without a touch", seg("mins", [1, 2, 5, 10, 30].map((m) => [m, m + " min"]), cur.mins)) +
-          (cur.idle === "c" ? "" : row("Night mode at night", "switch to the dark night screen between these hours", tg(cur.night, A("night", cur.night ? "0" : "1")))) +
-          (cur.idle === "c" || !cur.night ? "" : row("Night starts", "", seg("n1", [20, 21, 22, 23].map((h) => [h, h + ":00"]), cur.n1)) + row("Night ends", "", seg("n2", [5, 6, 7, 8].map((h) => [h, "0" + h + ":00"]), cur.n2))));
+          (cur.idle === "night" ? "" : row("Starry night at night", "switch to the dark Starry night screen between these hours", tg(cur.night, A("night", cur.night ? "0" : "1")))) +
+          (cur.idle === "night" || !cur.night ? "" : row("Night starts", "", seg("n1", [20, 21, 22, 23].map((h) => [h, h + ":00"]), cur.n1)) + row("Night ends", "", seg("n2", [5, 6, 7, 8].map((h) => [h, "0" + h + ":00"]), cur.n2))));
     };
     const ntfRows = (cur, att, pers) => {
       const A = (k, v) => `${att}="${att === "data-s" ? "ntf|" : "ntfd|"}${k}|${v}"`;
@@ -2398,12 +2475,11 @@ class QuintDashboard extends HTMLElement {
     if (tab === "bg") {
       const u = this._bgu(), b = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(u || c.bg || {}) };
       let mine = ""; try { mine = localStorage.getItem("quint_ts") || ""; } catch (e) {}
-      let mk = "", mt = ""; try { mk = localStorage.getItem("quint_ck") || ""; mt = localStorage.getItem("quint_ct") || ""; } catch (e) {}
+      let mk = ""; try { mk = localStorage.getItem("quint_ck") || ""; localStorage.removeItem("quint_ct"); } catch (e) {}
       const ckSeg = `<div class="seg sm" style="flex-wrap:wrap">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${this._clockStyle() === k ? "on" : ""}" data-sc="ckd|${k}">${n}</button>`).join("")}${mk ? '<button data-sc="ckd|">Same as shared</button>' : ""}</div>`;
-      const ctSeg = `<div class="seg sm" style="flex-wrap:wrap">${[["1", "Show"], ["0", "Hide"]].map(([k, n]) => `<button class="${this._clockTile() === (k === "1") ? "on" : ""}" data-sc="ctd|${k}">${n}</button>`).join("")}${mt ? '<button data-sc="ctd|">Same as shared</button>' : ""}</div>`;
       const pers = this._scrPers();
       body = sec("Screen", pers ? "this device only" : "using the shared setting", scrRows(this._scr(), "data-sc") + (pers ? row("Shared setting", "forget the choices on this device", '<button class="sbtn" data-sc="scrd|">Same as shared</button>') : "")) +
-        sec("Clock", mk || mt ? "this device only" : "using the shared clock", row("Clock style", "digital numbers or an analog face", ckSeg) + row("Clock tile", "show the clock as a tile among the home tiles", ctSeg)) + sec("Tile size", mine && TSIZES[mine] ? "this device only" : "using the shared size", row("Size on this device", "extra large, large, medium, small or extra small tiles and cards", tsSeg(this._ts(), "data-sc", !!(mine && TSIZES[mine])))) +
+        sec("Clock", mk ? "this device only" : "using the shared clock", row("Clock style", "digital numbers or an analog face", ckSeg)) + sec("Tile size", mine && TSIZES[mine] ? "this device only" : "using the shared size", row("Size on this device", "extra large, large, medium, small or extra small tiles and cards", tsSeg(this._ts(), "data-sc", !!(mine && TSIZES[mine])))) +
         (adm ? "" : sec("Arrangement", "hold any item on the home page for 2 seconds, then drag it anywhere. On a phone: hold, then tap where it should go",
         row("Your own layout", "the home page is arranged on this device only", '<button class="sbtn" data-sc="ordreset|">Back to the shared order</button>'))) +
         sec("Background", u ? "this device only" : "using the shared look", `<div style="padding:4px 4px 12px">${this._pbControls(u, b)}</div>`);
@@ -2486,8 +2562,7 @@ class QuintDashboard extends HTMLElement {
       const all = this._svcsList(), H = c.svcHide || [];
       body = sec("Home screen", "what the home page shows",
         row("Clock", "the big clock on the left", tg(!c.noClock, 'data-s="flag|noClock"')) +
-        row("Clock style", "digital numbers or an analog face, for the clock on the left and the clock tile", `<div class="seg sm">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${(c.cks === "analog" ? "analog" : "digital") === k ? "on" : ""}" data-s="cks|${k}">${n}</button>`).join("")}</div>`) +
-        row("Clock tile", "a clock as its own tile among the home tiles. Drag it like any other tile", tg(!!c.clockTile, 'data-s="ctile|"')) +
+        row("Clock style", "digital numbers or an analog face, for the home clock", `<div class="seg sm">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${(c.cks === "analog" ? "analog" : "digital") === k ? "on" : ""}" data-s="cks|${k}">${n}</button>`).join("")}</div>`) +
         row("Home page layout", "everyone can drag every item (clock, weather, greeting, scenes, tiles, cards) to any place: hold for 2 seconds. What you arrange here is the layout everyone starts with", '<button class="sbtn" data-s="hbreset|">Reset the shared layout</button>') +
         row("Weather line", "temperature, condition and sunset", tg(!c.noWeather, 'data-s="flag|noWeather"')) +
         row("Scenes", "the scene buttons under the greeting", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
@@ -2654,7 +2729,7 @@ class QuintDashboard extends HTMLElement {
     const cr = this._credit(), adm = this._admin();
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="bgl"><i></i></div><div class="app"><main class="${changed ? "anim" : ""}">${body}</main><nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb nbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button><button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav></div>${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
+    const html = `<div class="bgl"><i></i></div><div class="app"><button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button><main class="${changed ? "anim" : ""}">${body}</main><nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav></div>${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
     if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
@@ -2662,7 +2737,7 @@ class QuintDashboard extends HTMLElement {
     this._morph(this._root, tpl.content);
     this._rn = (this._rn || 0) + 1;
     this.scrollTop = changed ? 0 : sy;
-    this._slide(); if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => this._slide());
+    this._slide(); this._fitPrev(); if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => { this._slide(); this._fitPrev(); });
     this._mountLv(); this._mountHa(); this._tickClock();
   }
 }
