@@ -68,7 +68,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.27.0";
+const VER = "1.28.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const TSIZES = { xl: { n: "Extra large", z: 1.3, m: 1.3 }, l: { n: "Large", z: 1, m: 1 }, s: { n: "Small", z: 0.8, m: 0.9 }, xs: { n: "Very small", z: 0.62, m: 0.8 } };
@@ -131,7 +131,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .dt{font-size:16px;color:#d3d9e6;margin-top:8px}
 .wx{display:flex;align-items:center;gap:10px;margin-top:16px;color:#d3d9e6;font-size:15px}.wx .si{font-size:20px;color:var(--ac);flex:none}
 .gr{font-family:var(--serif);font-style:italic;font-size:34px;margin-top:26px;font-weight:400;line-height:1.1}
-.scn{margin-top:26px}
+.scn{margin-top:0}.hb{min-width:0;border-radius:14px}.hb[data-hb="scenes"]{margin-top:26px}
 .scg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .scb{display:flex;align-items:center;gap:10px;text-align:left;padding:14px 14px;border-radius:8px;border:1px solid rgba(120,160,220,.22);background:rgba(28,52,90,.50);font-size:14px;font-weight:500;min-width:0;transition:background .15s}
 .scb i{width:8px;height:8px;border-radius:50%;border:1.5px solid #cfd8ea;flex:none}
@@ -267,7 +267,7 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .rh{display:flex;align-items:center;gap:12px;margin:26px 0 12px}.rh .grow{cursor:pointer}.rn{font-family:var(--serif);font-size:30px;font-weight:400}.rb{margin:0}.rb button{flex:none;padding:8px 14px;font-size:13px}
 .kw{position:relative}.kw,.cw{border-radius:18px;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .holding{animation:hold 2s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
-[data-sk],[data-k]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.dtgt{outline:3px dashed var(--ac);outline-offset:3px}
+[data-sk],[data-k],[data-hb]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.dtgt{outline:3px dashed var(--ac);outline-offset:3px}
 .moving{opacity:.28;outline:2px dashed var(--ac);outline-offset:-2px}
 .gh{position:fixed;left:0;top:0;z-index:140;pointer-events:none;will-change:transform}
 .gh.carry{left:50%;top:auto;bottom:150px;transform:translateX(-50%) scale(.5)!important;transform-origin:bottom center;pointer-events:none}
@@ -364,6 +364,26 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 .camv{position:fixed;inset:0;z-index:120;background:rgba(3,5,10,.985);display:flex;flex-direction:column}
 .camv .vh{display:flex;align-items:center;gap:14px;padding:16px 20px}
 .camv .vt{font-family:var(--serif);font-size:30px;line-height:1}
+.amo{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--tx);cursor:pointer;overflow:hidden;animation:ambin .9s ease;background:radial-gradient(110% 80% at 88% 112%,rgba(190,125,60,.24),transparent 58%),linear-gradient(180deg,#08101e,#0b1830 62%,#0f1827);-webkit-user-select:none;user-select:none}
+@keyframes ambin{from{opacity:0}to{opacity:1}}
+.amo.c{background:#03050a;cursor:pointer}
+.amo .ab{font-size:11px;letter-spacing:5px;text-transform:uppercase;font-weight:600;color:#e7ebf4}.amo.a .ab{margin-bottom:22px}
+.amo .ab.tl{position:absolute;left:clamp(22px,4vw,56px);top:clamp(20px,4vh,44px)}
+.amo .awt{position:absolute;right:clamp(22px,4vw,56px);top:clamp(20px,4vh,44px);display:flex;gap:8px;align-items:center;font-size:12px;color:#c3cbdb}.amo .awt .si{font-size:14px;color:var(--ac)}
+.aclk.am{width:min(44vh,70vw,360px);height:min(44vh,70vw,360px)}
+.amo .ad{font-family:var(--serif);font-style:italic;font-size:clamp(24px,3.4vh,34px);margin-top:22px;color:#f1ece0}
+.amo .aw{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px;color:#c3cbdb}.amo .aw .si{font-size:16px;color:var(--ac)}
+.amo .atw,.amo .acr{position:absolute;bottom:clamp(16px,3vh,30px);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(195,203,219,.55)}
+.amo .atw{left:clamp(22px,4vw,56px)}.amo .acr{right:clamp(22px,4vw,56px)}
+.amo .amid{position:absolute;left:clamp(22px,6vw,90px);top:50%;transform:translateY(-54%);display:flex;flex-direction:column}
+.clk2.big{font-size:clamp(72px,12vw,170px);letter-spacing:-2px;line-height:.95}.clk2.big small{font-size:.2em}
+.amo .ag{font-family:var(--serif);font-style:italic;font-size:clamp(24px,3.4vw,40px);margin-top:14px}
+.amo .ad2{font-size:clamp(13px,1.3vw,16px);color:#c3cbdb;margin-top:6px}
+.amo .ach{position:absolute;left:clamp(22px,4vw,56px);bottom:clamp(44px,8vh,80px);display:flex;gap:10px;flex-wrap:wrap}
+.amc{display:inline-flex;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);font-size:13px;color:#dfe5f1}
+.amc i{width:7px;height:7px;border-radius:50%;background:var(--ok)}.amc.warn{border-color:rgba(240,179,90,.5);background:rgba(240,179,90,.12);color:#ffd9a0}.amc.warn i{background:var(--warn)}.amc.bad{border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.12);color:#ffc2c2}.amc.bad i{background:var(--bad)}
+.amo.c .clk2.big{color:rgba(238,241,246,.34);font-size:clamp(64px,10vw,130px)}.amo.c .ad3{margin-top:12px;font-size:12px;letter-spacing:5px;color:rgba(238,241,246,.2)}
+:host([data-dev="phone"]) .amo .amid{left:22px;right:22px}
 .hav{position:relative;overflow:hidden;pointer-events:none}.hav>*{display:block;width:100%;height:100%}.camv .hav{width:100%;height:100%;border-radius:12px}.wallh{position:absolute;inset:0}
 .camv .vb{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 20px}
 .camv img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;border-radius:12px;background:#000}
@@ -439,7 +459,7 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-dev="desktop"][data-wide="1"]) .hl{top:40px;height:max(calc(var(--vh) - 132px),540px)}
 :host([data-wide="1"]) .clk{font-size:clamp(54px,4.6vw,72px);margin-top:34px}
 :host([data-wide="1"]) .gr{font-size:36px;margin-top:34px}
-:host([data-wide="1"]) .scn{margin-top:auto;padding-top:26px}
+:host([data-wide="1"]) .hl>.hb:last-child{margin-top:auto;padding-top:26px}
 :host([data-wide="1"]) .area{grid-template-columns:minmax(220px,270px) minmax(0,1fr);gap:40px}
 :host([data-wide="1"]) .rlist{flex-direction:column;overflow:visible}
 :host([data-wide="1"]) .rli{width:100%;padding:13px 14px;background:none;border-color:transparent;font-size:16px}
@@ -477,10 +497,10 @@ class QuintDashboard extends HTMLElement {
   }
   _pdown(e) {
     if (e.button > 0 || e.target.type === "range" || this._mv) return;
-    const path = e.composedPath(), kk = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl), sk = kk ? null : path.find((n) => n.dataset && n.dataset.sk), k = kk || sk;
+    const path = e.composedPath(), kk = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl), sk = kk ? null : path.find((n) => n.dataset && n.dataset.sk), hbn = kk || sk ? null : path.find((n) => n.dataset && n.dataset.hb), k = kk || sk || hbn;
     if (!k || this._dlg || this._cam) return;
     this._lp = { x: e.clientX, y: e.clientY };
-    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, pt: e.pointerType, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", sk: sk ? sk.dataset.sk : "" };
+    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, pt: e.pointerType, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", sk: sk ? sk.dataset.sk : "", hb: hbn ? hbn.dataset.hb : "" };
     if (!tp) { k.classList.add("holding"); this._ht = setTimeout(() => this._startMove(), HOLD_MS); }
   }
   _startMove() {
@@ -491,10 +511,10 @@ class QuintDashboard extends HTMLElement {
     // the lifted copy floats under the finger; the original stays as a faded placeholder
     const gh = document.createElement("div"), cp = el.cloneNode(true);
     gh.className = "gh"; gh.style.width = r.width + "px";
-    cp.classList.remove("moving", "holding", "dtgt"); ["data-k", "data-sk", "data-id"].forEach((a) => cp.removeAttribute(a));
+    cp.classList.remove("moving", "holding", "dtgt"); ["data-k", "data-sk", "data-id", "data-hb"].forEach((a) => cp.removeAttribute(a));
     cp.style.zoom = z; cp.style.width = r.width / z + "px";
     gh.appendChild(cp); this.shadowRoot.appendChild(gh);
-    const m = (this._mv = { el, sk: this._hold.sk || "", tgt: "", te: null, gh, pt: this._hold.pt, ox: lp.x - r.left, oy: lp.y - r.top });
+    const m = (this._mv = { el, sk: this._hold.sk || "", hb: this._hold.hb || "", tgt: "", te: null, gh, pt: this._hold.pt, ox: lp.x - r.left, oy: lp.y - r.top });
     this._hold = null;
     gh.style.transform = `translate(${lp.x - m.ox}px,${lp.y - m.oy}px)`;
     m.as = setInterval(() => this._mvStep(), 30);
@@ -513,6 +533,9 @@ class QuintDashboard extends HTMLElement {
     if (m.sk) {
       const t = hit && hit.closest && hit.closest("[data-sk]");
       if (t && t.dataset.sk !== m.sk) { m.te = t; m.tgt = t.dataset.sk; }
+    } else if (m.hb) {
+      const t = hit && hit.closest && hit.closest("[data-hb]");
+      if (t && t.dataset.hb !== m.hb) { m.te = t; m.tgt = t.dataset.hb; }
     } else {
       const t = hit && hit.closest && hit.closest("[data-k]");
       if (t && t !== m.el && t.parentNode === m.el.parentNode) m.te = t;
@@ -556,10 +579,10 @@ class QuintDashboard extends HTMLElement {
     const m = this._mv, path = e.composedPath();
     if (Date.now() < m.armed) return;
     if (path.some((n) => n.dataset && n.dataset.carry === "cancel")) return this._endMove(false);
-    const t = m.sk ? path.find((n) => n.dataset && n.dataset.sk) : path.find((n) => n.dataset && n.dataset.k && n.parentNode === m.el.parentNode);
+    const t = m.sk ? path.find((n) => n.dataset && n.dataset.sk) : m.hb ? path.find((n) => n.dataset && n.dataset.hb) : path.find((n) => n.dataset && n.dataset.k && n.parentNode === m.el.parentNode);
     if (!t) return;
     if (t === m.el) return this._endMove(false);
-    m.te = t; m.tgt = m.sk ? t.dataset.sk : "";
+    m.te = t; m.tgt = m.sk ? t.dataset.sk : m.hb ? t.dataset.hb : "";
     this._endMove(true);
   }
   _endMove(apply) {
@@ -570,6 +593,7 @@ class QuintDashboard extends HTMLElement {
     this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
     if (apply) {
       if (m.sk) { if (m.tgt) this._svcMove(m.sk, m.tgt); }
+      else if (m.hb) { if (m.tgt) this._hbMove(m.hb, m.tgt); }
       else if (m.te) {
         grid.insertBefore(el, m.te.compareDocumentPosition(el) & 2 ? m.te.nextSibling : m.te);   // the card takes the place of the one it was dropped on
         const ctx = grid.dataset.grid; if (ctx) this._ordSet(ctx, Array.from(grid.children).filter((c) => c.dataset && c.dataset.k).map((c) => c.dataset.k));
@@ -766,9 +790,13 @@ class QuintDashboard extends HTMLElement {
       if (img._busy && Date.now() - img._busy < 8000) return;
       img._busy = Date.now(); this._snapLoad(img, img.dataset.snap, () => { img._busy = 0; });
     }, 1000);
+    this._lastAct = Date.now(); this._actf = () => this._act(); this._visf = () => { if (!document.hidden) this._wake(); };
+    ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.addEventListener(ev, this._actf, { passive: true, capture: true }));
+    document.addEventListener("visibilitychange", this._visf);
+    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); }, 1000);
     this._iv = setInterval(() => { const r = this.shadowRoot; this._tickClock(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 1000);
   }
-  disconnectedCallback() { clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
+  disconnectedCallback() { clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
   set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
   set route(r) {}
@@ -850,6 +878,7 @@ class QuintDashboard extends HTMLElement {
     c.order = { ...(c.order || {}), ...(o.order || {}) };
     ["name", "title", "bg", "pills"].forEach((k) => { if (o[k]) c[k] = o[k]; });
     if (typeof o.credit === "string") c.credit = o.credit;
+    if (Array.isArray(o.hbOrder)) c.hbOrder = o.hbOrder.filter((x) => ["clock", "wx", "greet", "scenes"].includes(x));
     if (o.tiles) c.tiles = { ...(c.tiles || {}), ...o.tiles };
     if (o.intercoms) c.intercoms = o.intercoms; else if (o.intercom) { c.intercoms = [{ id: "ic1", ...o.intercom }]; delete c.intercom; }
     if (Array.isArray(o.scenes)) o.scenes.forEach((x) => { if (x && x.id && !(c.scenes || []).some((y) => y.id === x.id)) (c.scenes = c.scenes || []).push(x); });
@@ -857,6 +886,7 @@ class QuintDashboard extends HTMLElement {
     if (TSIZES[o.tsz]) c.tsz = o.tsz;
     if (o.eng === "std" || o.eng === "auto") c.eng = o.eng;
     if (o.cks === "analog" || o.cks === "digital") c.cks = o.cks;
+    if (o.scr && typeof o.scr === "object") { const x = o.scr, y = {}; if (typeof x.awake === "boolean") y.awake = x.awake; if (typeof x.night === "boolean") y.night = x.night; if (["off", "a", "b", "c"].includes(x.idle)) y.idle = x.idle; ["mins", "n1", "n2"].forEach((k) => { if (Number.isFinite(+x[k])) y[k] = +x[k]; }); c.scr = y; }
     if (typeof o.clockTile === "boolean") c.clockTile = o.clockTile;
     if (o.wall && typeof o.wall === "object") c.wall = o.wall;
     c.svcTitle = { ...(c.svcTitle || {}), ...(o.svcTitle || {}) };
@@ -904,6 +934,8 @@ class QuintDashboard extends HTMLElement {
       else if (k === "up" || k === "dn") { const l = [...(w.ids || [])], j = l.indexOf(id); if (j >= 0) { this._swap(l, j, k === "up" ? -1 : 1); w.ids = l; } }
     }
     else if (a === "tsz") { if (TSIZES[v]) c.tsz = v; }
+    else if (a === "scr") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.scr = c.scr || {}); if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (["idle"].includes(k)) o.idle = x; else o[k] = +x; this._wkT = 0; this._ambHide(); }
+    else if (a === "hbreset") { delete c.hbOrder; try { localStorage.removeItem("quint_hbo"); } catch (e) {} }
     else if (a === "cks") c.cks = v === "analog" ? "analog" : "digital";
     else if (a === "ctile") c.clockTile = !c.clockTile;
     else if (a === "eng") { c.eng = v === "std" ? "std" : "auto"; this._haOff = false; this._haBad = new Set(); this._haOkN = 0; try { localStorage.removeItem("quint_haoff"); } catch (e) {} this._last = null; }
@@ -1259,6 +1291,20 @@ class QuintDashboard extends HTMLElement {
     if (this._admin()) { this._c.svcOrder = l; this._save(); return; }
     try { localStorage.setItem("quint_svo", JSON.stringify(l)); } catch (e) {}
   }
+  _hbKeys() { const c = this._c; return ["clock", ...(!c.noWeather && this._wx() ? ["wx"] : []), "greet", ...(c.noScenes ? [] : ["scenes"])]; }
+  _hbOrder() {
+    let o = null;
+    if (!this._admin()) { try { const l = JSON.parse(localStorage.getItem("quint_hbo") || "null"); if (Array.isArray(l)) o = l; } catch (e) {} }
+    if (!o) o = Array.isArray(this._c.hbOrder) ? this._c.hbOrder : [];
+    const keys = this._hbKeys(), r = (k) => { const i = o.indexOf(k); return i < 0 ? 1000 + keys.indexOf(k) : i; };
+    return keys.slice().sort((a, b) => r(a) - r(b));
+  }
+  _hbMove(from, to) {
+    const l = this._hbOrder(), i = l.indexOf(from), j = l.indexOf(to); if (i < 0 || j < 0) return;
+    l.splice(i, 1); l.splice(j, 0, from);
+    if (this._admin()) { this._c.hbOrder = l; this._save(); return; }
+    try { localStorage.setItem("quint_hbo", JSON.stringify(l)); } catch (e) {}
+  }
   _svcOrder() { if (!this._admin()) { try { const l = JSON.parse(localStorage.getItem("quint_svo") || "null"); if (Array.isArray(l)) return l; } catch (e) {} } return this._c.svcOrder || []; }
   _sort(ctx, arr, key) {
     const o = this._ordOf(ctx); if (!o) return arr;
@@ -1517,14 +1563,102 @@ class QuintDashboard extends HTMLElement {
     return `<div class="brand">${menu}<span>${this._esc(this._c.title || this._title || "Quint")}</span></div>`;
   }
   _top(back = true) { return `<div class="top">${this._brand()}${back ? `<button class="back" data-go='{"p":"home"}'>‹ Home</button>` : ""}</div>`; }
-  _credit() { const t = this._c.credit; return this._esc(t === undefined ? "By Quinteca" : t); }
+  _credit() { const t = this._c.credit; return this._esc(t === undefined ? "Intellect by Quinteca" : t); }
   _clock(d) {
     const L = this._h && this._h.locale, f = L && L.time_format, o = { hour: "2-digit", minute: "2-digit" }, dt = d || new Date();
     if (f === "24") o.hourCycle = "h23"; else if (f === "12") o.hour12 = true;
     try { return dt.toLocaleTimeString((L && L.language) || [], o); } catch (e) { return dt.toLocaleTimeString([], o); }
   }
-  _clockBlock(where) {
-    if (this._clockStyle() === "analog") {
+  _scr() {
+    const d = { awake: true, idle: "off", mins: 5, night: true, n1: 22, n2: 6 };
+    let p = {}; try { p = JSON.parse(localStorage.getItem("quint_scr") || "{}") || {}; } catch (e) {}
+    const o = { ...d, ...(this._c.scr || {}), ...p };
+    o.awake = o.awake !== false; o.night = o.night !== false;
+    if (!["off", "a", "b", "c"].includes(o.idle)) o.idle = "off";
+    o.mins = [1, 2, 5, 10, 30].includes(+o.mins) ? +o.mins : 5;
+    o.n1 = Math.max(0, Math.min(23, Math.round(+o.n1))); if (isNaN(o.n1)) o.n1 = 22;
+    o.n2 = Math.max(0, Math.min(23, Math.round(+o.n2))); if (isNaN(o.n2)) o.n2 = 6;
+    return o;
+  }
+  _scr0() { const o = { awake: true, idle: "off", mins: 5, night: true, n1: 22, n2: 6, ...(this._c.scr || {}) }; o.awake = o.awake !== false; o.night = o.night !== false; return o; }
+  _scrPers() { try { const p = JSON.parse(localStorage.getItem("quint_scr") || "null"); return p && Object.keys(p).length ? p : null; } catch (e) { return null; } }
+  async _wake() {
+    if (!this._scr().awake || document.hidden) return this._wakeOff();
+    if (navigator.wakeLock && navigator.wakeLock.request) {
+      if (this._wl) return;
+      try { const wl = await navigator.wakeLock.request("screen"); this._wl = wl; if (wl.addEventListener) wl.addEventListener("release", () => { if (this._wl === wl) this._wl = null; }); return; } catch (e) {}
+    }
+    this._nsOn();
+  }
+  _keepAwake() {
+    const sc = this._scr(), on = !!this._wl || (this._nsv && !this._nsv.paused);
+    if (sc.awake && !on && Date.now() - (this._wkT || 0) > 20000) { this._wkT = Date.now(); this._wake(); }
+    else if (!sc.awake && on) this._wakeOff();
+  }
+  _wakeOff() { if (this._wl) { try { this._wl.release(); } catch (e) {} this._wl = null; } if (this._nsv) { try { this._nsv.pause(); } catch (e) {} } }
+  _nsOn() {
+    if (!this._nsv) {
+      const cv = document.createElement("canvas"); cv.width = 16; cv.height = 16;
+      const x = cv.getContext && cv.getContext("2d"); if (!x || !cv.captureStream) return;
+      let t = 0; this._nsi = setInterval(() => { x.fillStyle = ++t % 2 ? "#010101" : "#000"; x.fillRect(0, 0, 16, 16); }, 400);
+      const v = document.createElement("video"); v.muted = true; v.loop = true; v.setAttribute("playsinline", ""); v.setAttribute("aria-hidden", "true");
+      v.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;opacity:.02;pointer-events:none";
+      try { v.srcObject = cv.captureStream(2); } catch (e) { return; }
+      this.shadowRoot.appendChild(v); this._nsv = v;
+    }
+    const pr = this._nsv.play(); if (pr && pr.catch) pr.catch(() => { this._nsNeed = true; });
+  }
+  _act() { this._lastAct = Date.now(); if (this._nsNeed) { this._nsNeed = false; this._nsOn(); } }
+  _inNight(sc) { const h = new Date().getHours(); return sc.n1 > sc.n2 ? h >= sc.n1 || h < sc.n2 : h >= sc.n1 && h < sc.n2; }
+  _ambStyle(sc) { if (sc.idle === "off") return ""; if (sc.idle === "c") return "c"; return sc.night && this._inNight(sc) ? "c" : sc.idle; }
+  _ambTick() {
+    if (!this._h || !this._loaded) return;
+    const sc = this._scr(), st = this._ambStyle(sc);
+    const busy = this._cam || this._dlg || this._mv || this._hold || (this._v && this._v.p === "settings") || document.hidden || this._icList().some((x) => this._ringing(x));
+    if (this._amb) {
+      if (!st || busy || (this._lastAct || 0) > this._amb.t) return this._ambHide();
+      return this._ambDraw(st);
+    }
+    if (!st || busy) return;
+    if (Date.now() - (this._lastAct || 0) >= sc.mins * 60000) this._ambShow(st);
+  }
+  _ambShow(st) {
+    const d = document.createElement("div"); d.id = "amo"; d.className = "amo " + st;
+    d.addEventListener("pointerdown", (e) => { e.stopPropagation(); this._lastAct = Date.now(); }, true);
+    d.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); this._ambHide(); });
+    this.shadowRoot.appendChild(d); this._amb = { el: d, t: Date.now(), st: "", html: "" };
+    this._ambDraw(st);
+  }
+  _ambHide() { const a = this._amb; this._amb = null; this._lastAct = Date.now(); if (a && a.el) a.el.remove(); }
+  _ambDraw(st) {
+    const a = this._amb, html = this._ambHtml(st);
+    if (a.st !== st || a.html !== html) { a.st = st; a.html = html; a.el.className = "amo " + st; a.el.innerHTML = html.replaceAll("@@C@@", this._clockHtml()); }
+    this._tickClock();
+  }
+  _ambStatus() {
+    const H = this._h.states, E = (t) => this._esc(t), out = [], ids = this._tileIds("security");
+    if (ids.length) {
+      const trig = ids.some((i) => this._sec(i)[1] === "b"), open = ids.filter((i) => !i.startsWith("alarm_control_panel.") && this._sec(i)[1] === "w");
+      if (trig) out.push(`<span class="amc bad"><i></i>Alarm triggered</span>`);
+      else if (open.length) out.push(`<span class="amc warn"><i></i>${open.length === 1 ? E(this._nm(open[0]) + " " + this._sec(open[0])[0].toLowerCase()) : open.length + " open"}</span>`);
+      else out.push(`<span class="amc"><i></i>All gates and doors closed</span>`);
+    }
+    const n = this._ents("cameras").length;
+    if (n) { const mo = Object.keys(H).some((i) => i.startsWith("binary_sensor.") && H[i].state === "on" && ["motion", "occupancy"].includes(H[i].attributes.device_class)); out.push(`<span class="amc ${mo ? "warn" : ""}"><i></i>${n} camera${n > 1 ? "s" : ""} · ${mo ? "motion" : "no motion"}</span>`); }
+    return out.join("");
+  }
+  _ambHtml(st) {
+    const E = (t) => this._esc(t), c = this._c, wx = c.noWeather ? null : this._wx(), L = this._h.locale, lang = (L && L.language) || undefined, now = new Date();
+    const brand = E(c.title || this._title || "Quint"), cr = this._credit(), hr = now.getHours();
+    const dl = now.toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }), ds = now.toLocaleDateString(lang, { weekday: "short", day: "numeric", month: "short" }).toUpperCase().replace(/,/g, "");
+    const g = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening", crh = cr ? `<span class="acr">${cr}</span>` : "";
+    if (st === "a") return `<div class="ab">${brand}</div>${this._clockBlock("am", "analog")}<div class="ad">${E(dl)}</div>${wx ? `<div class="aw">${wx.ic}<span>${wx.t}</span></div>` : ""}<span class="atw">Tap to wake</span>${crh}`;
+    if (st === "c") return `<div class="amid"><div class="clk2 big" data-clk="d">@@C@@</div><div class="ad3">${E(ds)}</div></div>`;
+    const wshort = wx ? wx.t.split(" · ").slice(0, 2).join(" · ") : "";
+    return `<div class="ab tl">${brand}</div>${wx ? `<div class="awt">${wx.ic}<span>${wshort}</span></div>` : ""}<div class="amid"><div class="clk2 big" data-clk="d">@@C@@</div><div class="ag">${g}</div><div class="ad2">${E(dl)}</div></div><div class="ach">${this._ambStatus()}</div>${crh}`;
+  }
+  _clockBlock(where, force) {
+    if ((force || this._clockStyle()) === "analog") {
       let t = "";
       for (let i = 0; i < 60; i++) { const a = (i * 6 * Math.PI) / 180, mj = i % 5 === 0, r1 = mj ? 82 : 88, r2 = 94; t += `<line x1="${(100 + r1 * Math.sin(a)).toFixed(1)}" y1="${(100 - r1 * Math.cos(a)).toFixed(1)}" x2="${(100 + r2 * Math.sin(a)).toFixed(1)}" y2="${(100 - r2 * Math.cos(a)).toFixed(1)}" class="${mj ? "tm5" : "tm1"}"/>`; }
       let n = ""; for (let i = 1; i <= 12; i++) { const a = (i * 30 * Math.PI) / 180; n += `<text x="${(100 + 68 * Math.sin(a)).toFixed(1)}" y="${(100 - 68 * Math.cos(a) + 6).toFixed(1)}" text-anchor="middle">${i}</text>`; }
@@ -1702,10 +1836,14 @@ class QuintDashboard extends HTMLElement {
   _scAct(a, v) {
     const find = (key) => { const [k, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)]; return this._myScenes().find((s) => s.sc === k && s.id === id); };
     if (a === "run") { const s = find(v); if (s) this._applyScene(s); return; }
+    if (a === "scrd") {
+      try { if (!v) localStorage.removeItem("quint_scr"); else { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = this._scrPers() || {}; if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (k === "idle") o.idle = x; else o[k] = +x; localStorage.setItem("quint_scr", JSON.stringify(o)); } } catch (e) {}
+      this._wkT = 0; this._ambHide(); this._last = null; return this._draw(true);
+    }
     if (a === "ckd") { try { if (v === "analog" || v === "digital") localStorage.setItem("quint_ck", v); else localStorage.removeItem("quint_ck"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "ctd") { try { if (v === "1" || v === "0") localStorage.setItem("quint_ct", v); else localStorage.removeItem("quint_ct"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "tsd") { try { if (TSIZES[v]) localStorage.setItem("quint_ts", v); else localStorage.removeItem("quint_ts"); } catch (e) {} this._applyTs(); return this._draw(true); }
-    if (a === "ordreset") { try { localStorage.removeItem("quint_ord"); localStorage.removeItem("quint_svo"); } catch (e) {} this._toast("Back to the shared order"); return this._draw(true); }
+    if (a === "ordreset") { try { localStorage.removeItem("quint_ord"); localStorage.removeItem("quint_svo"); localStorage.removeItem("quint_hbo"); } catch (e) {} this._toast("Back to the shared order"); return this._draw(true); }
     if (a === "new") { this._sd = { name: "", scope: this._admin() ? "s" : "l", room: "", q: "", sel: new Set(Object.keys(this._h.states).filter((i) => ["lights", "shades", "climate"].includes(this._svcOf(i)) && !this._c.hide.includes(i))) }; return this._draw(true); }
     if (a === "re") { const s = find(v); if (!s) return; this._sd = { name: s.name, scope: s.sc, room: s.room || "", q: "", edit: v, sel: new Set((s.items || []).map((x) => x.e)) }; return this._draw(true); }
     if (a === "del") {
@@ -1899,7 +2037,13 @@ class QuintDashboard extends HTMLElement {
       return `<div class="scw" data-id="sc:${E(s.key)}"><button class="scb ${s.on ? "on" : ""}" data-sc="run|${E(s.key)}"><i></i><span>${E(s.nm)}</span></button></div>`;
     };
     const scn = c.noScenes ? "" : `<div class="scn"><div class="cap"><span>Scenes</span></div>${sc.length ? `<div class="scg">${sc.map(scBtn).join("")}</div>` : `<div class="hintx">${this._admin() ? "Add scenes in Settings → Scenes." : "No scenes yet."}</div>`}</div>`;
-    const left = `<div class="hl">${this._brand()}${c.noClock ? "" : this._clockBlock("left")}<div class="dt">${E(date)}</div>${wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : ""}<div class="gr">${g}${who ? ", " + E(who) : ""}</div>${scn}</div>`;
+    const hbs = {
+      clock: `${c.noClock ? "" : this._clockBlock("left")}<div class="dt">${E(date)}</div>`,
+      wx: wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : "",
+      greet: `<div class="gr">${g}${who ? ", " + E(who) : ""}</div>`,
+      scenes: scn,
+    };
+    const left = `<div class="hl">${this._brand()}${this._hbOrder().map((k) => `<div class="hb" data-hb="${k}">${hbs[k]}</div>`).join("")}</div>`;
     const parts = L.flatMap((k) => this._bento(k)), n = this._cols(), cr = this._credit();
     this._colsN = n;
     const cols = Array.from({ length: n }, () => ({ h: "", w: 0 }));
@@ -2042,6 +2186,15 @@ class QuintDashboard extends HTMLElement {
     const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     const tsSeg = (cur, attr, none) => `<div class="seg sm" style="flex-wrap:wrap">${Object.entries(TSIZES).map(([k, t]) => `<button class="${cur === k ? "on" : ""}" ${attr}="${attr === "data-s" ? "tsz|" : "tsd|"}${k}">${t.n}</button>`).join("")}${none ? `<button ${attr}="tsd|">Same as shared</button>` : ""}</div>`;
+    const SCI = [["off", "Off"], ["a", "Quiet clock"], ["b", "Time and status"], ["c", "Night mode"]];
+    const scrRows = (cur, att) => {
+      const A = (k, v) => `${att}="${att === "data-s" ? "scr|" : "scrd|"}${k}|${v}"`, seg = (k, list, on) => `<div class="seg sm" style="flex-wrap:wrap">${list.map(([v, n]) => `<button class="${String(on) === String(v) ? "on" : ""}" ${A(k, v)}>${n}</button>`).join("")}</div>`;
+      return row("Keep the screen on", "the screen never goes off while this page is open", tg(cur.awake, A("awake", cur.awake ? "0" : "1"))) +
+        row("Screen when idle", "after a while with no touch, show a calm clock screen. Tap anywhere to wake it", seg("idle", SCI, cur.idle)) +
+        (cur.idle === "off" ? "" : row("Start after", "minutes without a touch", seg("mins", [1, 2, 5, 10, 30].map((m) => [m, m + " min"]), cur.mins)) +
+          (cur.idle === "c" ? "" : row("Night mode at night", "switch to the dark night screen between these hours", tg(cur.night, A("night", cur.night ? "0" : "1")))) +
+          (cur.idle === "c" || !cur.night ? "" : row("Night starts", "", seg("n1", [20, 21, 22, 23].map((h) => [h, h + ":00"]), cur.n1)) + row("Night ends", "", seg("n2", [5, 6, 7, 8].map((h) => [h, "0" + h + ":00"]), cur.n2))));
+    };
     let tab2 = tab;
     if (!adm) tab2 = tab === "bg" || tab === "rphoto" || ((tab === "users" || tab === "updates") && this._mgr()) ? tab : "scenes";
     tab = tab2;
@@ -2052,7 +2205,9 @@ class QuintDashboard extends HTMLElement {
       let mk = "", mt = ""; try { mk = localStorage.getItem("quint_ck") || ""; mt = localStorage.getItem("quint_ct") || ""; } catch (e) {}
       const ckSeg = `<div class="seg sm" style="flex-wrap:wrap">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${this._clockStyle() === k ? "on" : ""}" data-sc="ckd|${k}">${n}</button>`).join("")}${mk ? '<button data-sc="ckd|">Same as shared</button>' : ""}</div>`;
       const ctSeg = `<div class="seg sm" style="flex-wrap:wrap">${[["1", "Show"], ["0", "Hide"]].map(([k, n]) => `<button class="${this._clockTile() === (k === "1") ? "on" : ""}" data-sc="ctd|${k}">${n}</button>`).join("")}${mt ? '<button data-sc="ctd|">Same as shared</button>' : ""}</div>`;
-      body = sec("Clock", mk || mt ? "this device only" : "using the shared clock", row("Clock style", "digital numbers or an analog face", ckSeg) + row("Clock tile", "show the clock as a tile among the home tiles", ctSeg)) + sec("Tile size", mine && TSIZES[mine] ? "this device only" : "using the shared size", row("Size on this device", "extra large, large, small or very small tiles and cards", tsSeg(this._ts(), "data-sc", !!(mine && TSIZES[mine])))) +
+      const pers = this._scrPers();
+      body = sec("Screen", pers ? "this device only" : "using the shared setting", scrRows(this._scr(), "data-sc") + (pers ? row("Shared setting", "forget the choices on this device", '<button class="sbtn" data-sc="scrd|">Same as shared</button>') : "")) +
+        sec("Clock", mk || mt ? "this device only" : "using the shared clock", row("Clock style", "digital numbers or an analog face", ckSeg) + row("Clock tile", "show the clock as a tile among the home tiles", ctSeg)) + sec("Tile size", mine && TSIZES[mine] ? "this device only" : "using the shared size", row("Size on this device", "extra large, large, small or very small tiles and cards", tsSeg(this._ts(), "data-sc", !!(mine && TSIZES[mine])))) +
         (adm ? "" : sec("Arrangement", "hold a tile or card for 2 seconds, then drag it onto the card whose place you want",
         row("Your own order", "tiles and cards are arranged on this device only", '<button class="sbtn" data-sc="ordreset|">Back to the shared order</button>'))) +
         sec("Background", u ? "this device only" : "using the shared look", `<div style="padding:4px 4px 12px">${this._pbControls(u, b)}</div>`);
@@ -2065,7 +2220,7 @@ class QuintDashboard extends HTMLElement {
         row("Size for everyone", "extra large, large, small or very small", tsSeg(TSIZES[c.tsz] ? c.tsz : "l", "data-s"))) +
       sec("Appearance", "",
         row("Client name", "written top left on every page", `<input type="text" data-ttl value="${E(c.title || "")}" placeholder="${E(this._title || "Quint")}">`) +
-        row("Bottom text", "written next to the settings button, bottom right (empty = hide)", `<input type="text" data-cred value="${E(c.credit === undefined ? "By Quinteca" : c.credit)}" placeholder="By Quinteca">`) +
+        row("Bottom text", "written next to the settings button, bottom right (empty = hide)", `<input type="text" data-cred value="${E(c.credit === undefined ? "Intellect by Quinteca" : c.credit)}" placeholder="Intellect by Quinteca">`) +
         row("Greeting name", "shown on the home page", `<input type="text" data-uname value="${E(c.name || "")}" placeholder="${E((this._h.user && this._h.user.name) || "")}">`)) +
       sec("Background", "everything sits on top of this",
         row("Theme", "colour themes", Object.keys(BG).map((k) => `<button class="swt ${bg.mode !== "image" && bg.preset === k ? "sel" : ""}" style="background:${SWATCH[k]}" title="${k}" data-s="bgp|${k}"></button>`).join("")) +
@@ -2132,9 +2287,11 @@ class QuintDashboard extends HTMLElement {
         row("Clock", "the big clock on the left", tg(!c.noClock, 'data-s="flag|noClock"')) +
         row("Clock style", "digital numbers or an analog face, for the clock on the left and the clock tile", `<div class="seg sm">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${(c.cks === "analog" ? "analog" : "digital") === k ? "on" : ""}" data-s="cks|${k}">${n}</button>`).join("")}</div>`) +
         row("Clock tile", "a clock as its own tile among the home tiles. Drag it like any other tile", tg(!!c.clockTile, 'data-s="ctile|"')) +
+        row("Order of the left side", "clock, weather, greeting and scenes. Everyone can drag them: hold for 2 seconds", '<button class="sbtn" data-s="hbreset|">Reset the shared order</button>') +
         row("Weather line", "temperature, condition and sunset", tg(!c.noWeather, 'data-s="flag|noWeather"')) +
         row("Scenes", "the scene buttons under the greeting", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
         row("Rooms tab", "the page with the list of rooms", tg(!c.noRooms, 'data-s="flag|noRooms"'))) +
+      sec("Screen for everyone", "the shared setting. Each person can still choose their own in Background", scrRows({ ...this._scr0() }, "data-s")) +
       sec("Services", "show or hide a tile on the home page and its tab in the bottom bar",
         all.map((k) => row(`${SV[k].i} ${E(SV[k].n)}`, H.includes(k) ? "hidden" : "shown", tg(!H.includes(k), `data-s="svcvis|${E(k)}"`))).join(""));
     } else if (tab === "tiles") {
