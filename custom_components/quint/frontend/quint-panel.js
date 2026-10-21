@@ -58,6 +58,7 @@ const ICONS = {
 };
 const LOGO_I = ic('<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 8v8M8 10l4 2 4-2"/>');
 const SET_I = {
+  ntf: ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>'),
   general: ic('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'),
   pages: ic('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h7M17.5 14v7"/>'),
   rooms: ICONS.door, devices: ICONS.plug, home: ICONS.home,
@@ -68,9 +69,21 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.28.0";
+const VER = "1.29.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
+const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
+const NT = {
+  alarm: { n: "Alarm triggered", d: "when the alarm goes off", on: true },
+  safety: { n: "Smoke, gas or water leak", d: "smoke, carbon monoxide, gas and leak sensors", on: true },
+  open: { n: "Left open", d: "a door, gate or window that stays open for too long", on: true },
+  unlock: { n: "Door unlocked", d: "when a lock is unlocked", on: false },
+  motion: { n: "Motion", d: "when a motion sensor detects movement", on: false },
+  offline: { n: "Device offline", d: "a device stops answering for 2 minutes", on: false },
+  battery: { n: "Low battery", d: "a battery falls below 15%", on: true },
+  ha: { n: "Home Assistant messages", d: "messages from automations and Home Assistant", on: true },
+};
+const NT_SAFE = { smoke: "Smoke detected", gas: "Gas detected", carbon_monoxide: "Carbon monoxide detected", moisture: "Water leak", heat: "Heat alert", safety: "Safety alert", tamper: "" };
 const TSIZES = { xl: { n: "Extra large", z: 1.3, m: 1.3 }, l: { n: "Large", z: 1, m: 1 }, s: { n: "Small", z: 0.8, m: 0.9 }, xs: { n: "Very small", z: 0.62, m: 0.8 } };
 const isCs = (s) => typeof s === "string" && (s === "more" || s.startsWith("cs:"));
 const BG = {
@@ -384,6 +397,16 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 .amc i{width:7px;height:7px;border-radius:50%;background:var(--ok)}.amc.warn{border-color:rgba(240,179,90,.5);background:rgba(240,179,90,.12);color:#ffd9a0}.amc.warn i{background:var(--warn)}.amc.bad{border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.12);color:#ffc2c2}.amc.bad i{background:var(--bad)}
 .amo.c .clk2.big{color:rgba(238,241,246,.34);font-size:clamp(64px,10vw,130px)}.amo.c .ad3{margin-top:12px;font-size:12px;letter-spacing:5px;color:rgba(238,241,246,.2)}
 :host([data-dev="phone"]) .amo .amid{left:22px;right:22px}
+.nbn{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:260;display:flex;flex-direction:column;gap:10px;width:min(440px,calc(100vw - 24px))}
+.nb{background:rgba(14,19,32,.97);border:1px solid var(--bd);border-radius:16px;padding:13px 16px;display:grid;gap:3px;box-shadow:0 14px 40px rgba(0,0,0,.5);animation:nbin .35s ease;cursor:pointer}
+@keyframes nbin{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+.nb b{font-size:15px}.nb span{font-size:13px;color:#c3cbdb}.nb small{font-size:11px;color:var(--mu)}
+.nb.crit{border-color:rgba(255,107,107,.65);background:rgba(52,17,21,.97)}.nb.crit b{color:#ffb3b3}
+.nbell{position:relative}.nbd{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px;font-family:Inter,sans-serif}
+.nlist{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;margin-top:10px}
+.nli{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--bd);border-radius:14px;background:rgba(255,255,255,.03)}
+.nli>i{width:8px;height:8px;border-radius:50%;background:var(--ac);margin-top:6px;flex:none}.nli.crit>i{background:var(--bad)}
+.nlt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.nlt b{font-size:14px}.nlt span{font-size:13px;color:#c3cbdb}.nlt small{font-size:11px;color:var(--mu)}
 .hav{position:relative;overflow:hidden;pointer-events:none}.hav>*{display:block;width:100%;height:100%}.camv .hav{width:100%;height:100%;border-radius:12px}.wallh{position:absolute;inset:0}
 .camv .vb{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 20px}
 .camv img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;border-radius:12px;background:#000}
@@ -793,7 +816,7 @@ class QuintDashboard extends HTMLElement {
     this._lastAct = Date.now(); this._actf = () => this._act(); this._visf = () => { if (!document.hidden) this._wake(); };
     ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.addEventListener(ev, this._actf, { passive: true, capture: true }));
     document.addEventListener("visibilitychange", this._visf);
-    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); }, 1000);
+    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); }, 1000);
     this._iv = setInterval(() => { const r = this.shadowRoot; this._tickClock(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 1000);
   }
   disconnectedCallback() { clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
@@ -809,7 +832,8 @@ class QuintDashboard extends HTMLElement {
     if (!this._loading) { this._loading = true; this._loadCfg(); }
     if (this._lvc) Object.values(this._lvc).forEach((e) => (e.hass = h));
     if (this.shadowRoot) this.shadowRoot.querySelectorAll("[data-hl]").forEach((x) => { if (x._card) x._card.hass = h; });
-    if (this._loaded && h.connection !== this._conn) { this._conn = h.connection; this._tsub = {}; this._syncTpl(); }
+    if (this._loaded && h.connection !== this._conn) { this._conn = h.connection; this._tsub = {}; this._syncTpl(); this._ntfSub(); this._nQuiet = Date.now() + 20000; }
+    if (this._loaded) this._ntfScan(h);
     if (!this._c.rooms.length && h.areas && Object.keys(h.areas).length) this._importRooms(false);
     if (this._loaded && this._track && !this._relevant(h)) return;
     if (this._pending) return;
@@ -886,6 +910,7 @@ class QuintDashboard extends HTMLElement {
     if (TSIZES[o.tsz]) c.tsz = o.tsz;
     if (o.eng === "std" || o.eng === "auto") c.eng = o.eng;
     if (o.cks === "analog" || o.cks === "digital") c.cks = o.cks;
+    if (o.ntf && typeof o.ntf === "object") { const x = o.ntf, y = {}; if (typeof x.on === "boolean") y.on = x.on; if ([3, 5, 10, 30].includes(+x.mins)) y.mins = +x.mins; if (x.types && typeof x.types === "object") { y.types = {}; Object.keys(NT).forEach((k) => { if (typeof x.types[k] === "boolean") y.types[k] = x.types[k]; }); } c.ntf = y; }
     if (o.scr && typeof o.scr === "object") { const x = o.scr, y = {}; if (typeof x.awake === "boolean") y.awake = x.awake; if (typeof x.night === "boolean") y.night = x.night; if (["off", "a", "b", "c"].includes(x.idle)) y.idle = x.idle; ["mins", "n1", "n2"].forEach((k) => { if (Number.isFinite(+x[k])) y[k] = +x[k]; }); c.scr = y; }
     if (typeof o.clockTile === "boolean") c.clockTile = o.clockTile;
     if (o.wall && typeof o.wall === "object") c.wall = o.wall;
@@ -936,6 +961,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "tsz") { if (TSIZES[v]) c.tsz = v; }
     else if (a === "scr") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.scr = c.scr || {}); if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (["idle"].includes(k)) o.idle = x; else o[k] = +x; this._wkT = 0; this._ambHide(); }
     else if (a === "hbreset") { delete c.hbOrder; try { localStorage.removeItem("quint_hbo"); } catch (e) {} }
+    else if (a === "ntf") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.ntf = c.ntf || {}); if (k === "on") o.on = x === "1"; else if (k === "mins") o.mins = +x; else if (k.startsWith("t:") && NT[k.slice(2)]) (o.types = o.types || {})[k.slice(2)] = x === "1"; }
     else if (a === "cks") c.cks = v === "analog" ? "analog" : "digital";
     else if (a === "ctile") c.clockTile = !c.clockTile;
     else if (a === "eng") { c.eng = v === "std" ? "std" : "auto"; this._haOff = false; this._haBad = new Set(); this._haOkN = 0; try { localStorage.removeItem("quint_haoff"); } catch (e) {} this._last = null; }
@@ -1165,7 +1191,7 @@ class QuintDashboard extends HTMLElement {
   _click(e) {
     if (this._mv && this._mv.carry) return this._carryClick(e);
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
@@ -1175,6 +1201,7 @@ class QuintDashboard extends HTMLElement {
     if (d.ic) return this._icAct(d.ic);
     if (d.rimgb) return this._rimgDel(d.rimgb);
     if (d.pick) { const i = d.pick.indexOf("|"); (this._pick = this._pick || {})[d.pick.slice(0, i)] = d.pick.slice(i + 1); return this._draw(true); }
+    if (d.ntf) { if (d.ntf === "bg" && e.composedPath()[0] !== t) return; if (d.ntf === "bg") { this._nc = false; return this._draw(true); } return this._ntfAct(d.ntf); }
     if (d.pers) { if (d.pers === "bg" && e.composedPath()[0] !== t) return; this._pers = d.pers === "open"; return this._draw(true); }
     if (d.pb) {
       const i = d.pb.indexOf("|"), a = d.pb.slice(0, i), v = d.pb.slice(i + 1);
@@ -1569,6 +1596,119 @@ class QuintDashboard extends HTMLElement {
     if (f === "24") o.hourCycle = "h23"; else if (f === "12") o.hour12 = true;
     try { return dt.toLocaleTimeString((L && L.language) || [], o); } catch (e) { return dt.toLocaleTimeString([], o); }
   }
+  _ntf() {
+    const t = {}; Object.keys(NT).forEach((k) => (t[k] = NT[k].on));
+    let p = {}; try { p = JSON.parse(localStorage.getItem("quint_ntf") || "{}") || {}; } catch (e) {}
+    const sh = this._c.ntf || {}, o = { on: true, mins: 5, snd: false, bro: false, ...sh, ...p, types: { ...t, ...(sh.types || {}), ...(p.types || {}) } };
+    o.on = o.on !== false; o.snd = !!o.snd; o.bro = !!o.bro; o.mins = [3, 5, 10, 30].includes(+o.mins) ? +o.mins : 5;
+    return o;
+  }
+  _ntf0() { const sh = this._c.ntf || {}, t = {}; Object.keys(NT).forEach((k) => (t[k] = NT[k].on)); const o = { on: true, mins: 5, ...sh, types: { ...t, ...(sh.types || {}) } }; o.on = o.on !== false; o.mins = [3, 5, 10, 30].includes(+o.mins) ? +o.mins : 5; return o; }
+  _ntfPers() { try { const p = JSON.parse(localStorage.getItem("quint_ntf") || "null"); return p && Object.keys(p).length ? p : null; } catch (e) { return null; } }
+  _nList() { if (!this._nl) { try { const l = JSON.parse(localStorage.getItem("quint_nl") || "[]"); this._nl = Array.isArray(l) ? l : []; } catch (e) { this._nl = []; } } return this._nl; }
+  _nSave() { try { localStorage.setItem("quint_nl", JSON.stringify(this._nList().slice(0, 50))); } catch (e) {} }
+  _nVis(id) { const sv = this._svcOf(id); return !sv || (this._svOk(sv) && !(this._c.hide || []).includes(id) && this._rmOk(this._roomOf(id))); }
+  _nOpenEnt(id, n) {
+    const d = id.split(".")[0], dc = n.attributes.device_class, sec = this._svcOf(id) === "security";
+    if (d === "cover") return (sec || ["door", "garage", "gate", "window"].includes(dc)) && ["open", "opening"].includes(n.state);
+    if (d === "binary_sensor") return (["door", "garage_door", "window", "opening"].includes(dc) || (sec && !["motion", "occupancy", "presence", "tamper", "smoke", "gas", "moisture", "carbon_monoxide"].includes(dc))) && n.state === "on";
+    return false;
+  }
+  _ntfScan(h) {
+    const S = h.states, prev = this._nS || (this._nS = {}), o2 = this._nOpen || (this._nOpen = {}), of = this._nOff || (this._nOff = {}), now = Date.now();
+    if (!this._nInit) { this._nInit = true; this._nQuiet = now + 20000; }
+    for (const id in S) {
+      const n = S[id], o = prev[id]; if (n === o) continue; prev[id] = n;
+      if (this._nOpenEnt(id, n)) { if (!o2[id]) o2[id] = { t: now, done: false }; } else delete o2[id];
+      if (n.state === "unavailable") { if (!of[id]) of[id] = { t: now, done: false }; } else delete of[id];
+      if (o && o.state !== n.state && now >= this._nQuiet) this._ntfChange(id, o, n);
+    }
+  }
+  _ntfChange(id, o, n) {
+    if (!this._nVis(id)) return;
+    const d = id.split(".")[0], dc = n.attributes.device_class, nm = n.attributes.friendly_name || id, ns = n.state, os = o.state;
+    if (d === "alarm_control_panel" && ns === "triggered") return this._notify({ type: "alarm", ent: id, title: "Alarm triggered", msg: nm, crit: true });
+    if (d === "binary_sensor" && ns === "on" && os !== "on") {
+      if (NT_SAFE[dc]) return this._notify({ type: "safety", ent: id, title: NT_SAFE[dc], msg: nm, crit: true });
+      if (dc === "battery") return this._notify({ type: "battery", ent: id, title: "Low battery", msg: nm, day: true });
+      if (["motion", "occupancy"].includes(dc)) return this._notify({ type: "motion", ent: id, title: "Motion detected", msg: nm });
+    }
+    if (d === "lock" && ns === "unlocked" && os === "locked") return this._notify({ type: "unlock", ent: id, title: "Door unlocked", msg: nm });
+    if (d === "sensor" && dc === "battery") { const v = parseFloat(ns), ov = parseFloat(os); if (isFinite(v) && v < 15 && v >= 0 && !(isFinite(ov) && ov < 15)) this._notify({ type: "battery", ent: id, title: "Low battery", msg: nm + " · " + Math.round(v) + "%", day: true }); }
+  }
+  _ntfTick() {
+    if (!this._nInit && this._h && this._loaded) this._ntfScan(this._h);
+    if (!this._nInit) return;
+    const now = Date.now(), nt = this._ntf(), S = this._h.states;
+    Object.entries(this._nOpen || {}).forEach(([id, x]) => { if (!x.done && now - x.t >= nt.mins * 60000 && S[id]) { x.done = true; if (this._nVis(id)) this._notify({ type: "open", ent: id, title: "Left open", msg: `${S[id].attributes.friendly_name || id} has been open for ${nt.mins} minutes` }); } });
+    Object.entries(this._nOff || {}).forEach(([id, x]) => { if (!x.done && now - x.t >= 120000 && S[id] && S[id].state === "unavailable") { x.done = true; if (this._svcOf(id) && this._nVis(id) && now >= (this._nQuiet || 0)) this._notify({ type: "offline", ent: id, title: "Device offline", msg: `${S[id].attributes.friendly_name || id} is not answering` }); } });
+  }
+  _ntfSub() {
+    const c = this._h && this._h.connection; if (!c || !c.subscribeMessage) return;
+    if (this._nUnsub) this._nUnsub.then((u) => u()).catch(() => {});
+    const seen = (this._nPn = new Set());
+    this._nUnsub = Promise.resolve(c.subscribeMessage((m) => {
+      const l = (m && m.notifications) || {};
+      if (m && m.type === "current") { Object.keys(l).forEach((i) => seen.add(i)); return; }
+      if (m && m.type === "added") Object.entries(l).forEach(([i, x]) => { if (seen.has(i)) return; seen.add(i); this._notify({ type: "ha", ent: "pn:" + i, title: (x && x.title) || "Home Assistant", msg: String((x && x.message) || "").replace(/[*_`#>]/g, "").slice(0, 200) }); });
+    }, { type: "persistent_notification/subscribe" })).catch(() => () => {});
+  }
+  _notify(n) {
+    const nt = this._ntf(), now = Date.now();
+    if (!n.force && (!nt.on || !nt.types[n.type])) return;
+    const key = n.type + ":" + (n.ent || n.title);
+    this._nK = this._nK || {};
+    if (!n.force && this._nK[key] && now - this._nK[key] < (n.day ? 86400000 : 60000)) return;
+    this._nK[key] = now;
+    const it = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), type: n.type, title: n.title, msg: n.msg || "", t: now, crit: !!n.crit, read: false };
+    this._nList().unshift(it); this._nl = this._nList().slice(0, 50); this._nSave();
+    this._ntfBanner(it);
+    if (it.crit && this._amb) this._ambHide();
+    if (nt.snd) this._beep(it.crit);
+    if (nt.bro && document.hidden && window.Notification && Notification.permission === "granted") { try { new Notification(it.title, { body: it.msg, tag: key }); } catch (e) {} }
+    this._nBadge();
+  }
+  _beep(crit) {
+    try {
+      const A = window.AudioContext || window.webkitAudioContext; if (!A) return;
+      const ac = this._ac || (this._ac = new A()); const n = crit ? 3 : 1;
+      for (let i = 0; i < n; i++) { const o = ac.createOscillator(), g = ac.createGain(), t0 = ac.currentTime + i * 0.28; o.frequency.value = crit ? 960 : 700; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22); o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + 0.25); }
+    } catch (e) {}
+  }
+  _ntfBanner(it) {
+    const R = this.shadowRoot; let box = R.getElementById("nbn");
+    if (!box) { box = document.createElement("div"); box.id = "nbn"; box.className = "nbn"; R.appendChild(box); }
+    const b = document.createElement("div"); b.className = "nb" + (it.crit ? " crit" : ""); b.dataset.ntf = "dismiss|" + it.id;
+    b.innerHTML = `<b>${this._esc(it.title)}</b>${it.msg ? `<span>${this._esc(it.msg)}</span>` : ""}<small>${it.crit ? "Tap to dismiss" : "now"}</small>`;
+    box.prepend(b); while (box.children.length > 4) box.lastChild.remove();
+    if (!it.crit) setTimeout(() => b.remove(), 9000);
+  }
+  _nBadge() {
+    const n = this._nList().filter((x) => !x.read).length, b = this.shadowRoot.querySelector(".nbell");
+    if (!b) return;
+    let d = b.querySelector(".nbd");
+    if (!n) { if (d) d.remove(); return; }
+    if (!d) { d = document.createElement("span"); d.className = "nbd"; b.appendChild(d); }
+    d.textContent = n > 9 ? "9+" : String(n);
+  }
+  _ago(t) { const m = Math.floor((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.floor(m / 60) + " h ago" : new Date(t).toLocaleDateString(); }
+  _ntfAct(v) {
+    const i = v.indexOf("|"), a = i < 0 ? v : v.slice(0, i), id = i < 0 ? "" : v.slice(i + 1);
+    if (a === "open") { this._nc = true; this.shadowRoot.querySelectorAll(".nb").forEach((x) => x.remove()); this._nList().forEach((x) => (x.read = true)); this._nSave(); return this._draw(true); }
+    if (a === "close") { this._nc = false; return this._draw(true); }
+    if (a === "bg") return;
+    if (a === "dismiss") { const R = this.shadowRoot, b = Array.from(R.querySelectorAll(".nb")).find((x) => x.dataset.ntf === "dismiss|" + id); if (b) b.remove(); const x = this._nList().find((y) => y.id === id); if (x) { x.read = true; this._nSave(); } return this._nBadge(); }
+    if (a === "del") { this._nl = this._nList().filter((x) => x.id !== id); this._nSave(); return this._draw(true); }
+    if (a === "clear") { this._nl = []; this._nSave(); this.shadowRoot.querySelectorAll(".nb").forEach((x) => x.remove()); return this._draw(true); }
+    if (a === "test") { this._notify({ type: "test", force: true, title: "Test notification", msg: "This is how notifications look on this device" }); return; }
+    if (a === "settings") { this._nc = false; return this._nav("settings", { tab: "ntf" }); }
+  }
+  _ntfPanel() {
+    if (!this._nc) return "";
+    const E = (t) => this._esc(t), l = this._nList();
+    const rows = l.length ? l.map((x) => `<div class="nli ${x.crit ? "crit" : ""}" data-id="n:${E(x.id)}"><i></i><div class="nlt"><b>${E(x.title)}</b>${x.msg ? `<span>${E(x.msg)}</span>` : ""}<small>${E(this._ago(x.t))}</small></div><button class="ib2" data-ntf="del|${E(x.id)}" title="Remove">✕</button></div>`).join("") : '<div class="hintx" style="padding:18px 4px">No notifications yet.</div>';
+    return `<div class="ov" data-ntf="bg"><div class="dlg"><div class="shd"><span>Notifications</span><small>${l.length} recent</small></div><div class="nlist">${rows}</div><div class="btns" style="margin-top:16px"><button data-ntf="settings">Settings</button>${l.length ? '<button data-ntf="clear">Clear all</button>' : ""}<button class="pri" data-ntf="close">Done</button></div></div></div>`;
+  }
   _scr() {
     const d = { awake: true, idle: "off", mins: 5, night: true, n1: 22, n2: 6 };
     let p = {}; try { p = JSON.parse(localStorage.getItem("quint_scr") || "{}") || {}; } catch (e) {}
@@ -1614,7 +1754,7 @@ class QuintDashboard extends HTMLElement {
   _ambTick() {
     if (!this._h || !this._loaded) return;
     const sc = this._scr(), st = this._ambStyle(sc);
-    const busy = this._cam || this._dlg || this._mv || this._hold || (this._v && this._v.p === "settings") || document.hidden || this._icList().some((x) => this._ringing(x));
+    const busy = this._cam || this._dlg || this._nc || this._mv || this._hold || (this._v && this._v.p === "settings") || document.hidden || this._icList().some((x) => this._ringing(x));
     if (this._amb) {
       if (!st || busy || (this._lastAct || 0) > this._amb.t) return this._ambHide();
       return this._ambDraw(st);
@@ -1836,6 +1976,18 @@ class QuintDashboard extends HTMLElement {
   _scAct(a, v) {
     const find = (key) => { const [k, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)]; return this._myScenes().find((s) => s.sc === k && s.id === id); };
     if (a === "run") { const s = find(v); if (s) this._applyScene(s); return; }
+    if (a === "ntfd") {
+      try {
+        if (!v) localStorage.removeItem("quint_ntf");
+        else {
+          const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = this._ntfPers() || {};
+          if (["on", "snd", "bro"].includes(k)) o[k] = x === "1"; else if (k === "mins") o.mins = +x; else if (k.startsWith("t:") && NT[k.slice(2)]) (o.types = o.types || {})[k.slice(2)] = x === "1";
+          if (k === "bro" && x === "1" && window.Notification && Notification.permission === "default") Notification.requestPermission();
+          localStorage.setItem("quint_ntf", JSON.stringify(o));
+        }
+      } catch (e) {}
+      this._last = null; return this._draw(true);
+    }
     if (a === "scrd") {
       try { if (!v) localStorage.removeItem("quint_scr"); else { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = this._scrPers() || {}; if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (k === "idle") o.idle = x; else o[k] = +x; localStorage.setItem("quint_scr", JSON.stringify(o)); } } catch (e) {}
       this._wkT = 0; this._ambHide(); this._last = null; return this._draw(true);
@@ -2183,7 +2335,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["ntf", "Notifications", "choose which alerts you see"], ["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [["general", "General", "title, background, layout"], ["ntf", "Notifications", "alerts for everyone"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     const tsSeg = (cur, attr, none) => `<div class="seg sm" style="flex-wrap:wrap">${Object.entries(TSIZES).map(([k, t]) => `<button class="${cur === k ? "on" : ""}" ${attr}="${attr === "data-s" ? "tsz|" : "tsd|"}${k}">${t.n}</button>`).join("")}${none ? `<button ${attr}="tsd|">Same as shared</button>` : ""}</div>`;
     const SCI = [["off", "Off"], ["a", "Quiet clock"], ["b", "Time and status"], ["c", "Night mode"]];
@@ -2195,8 +2347,15 @@ class QuintDashboard extends HTMLElement {
           (cur.idle === "c" ? "" : row("Night mode at night", "switch to the dark night screen between these hours", tg(cur.night, A("night", cur.night ? "0" : "1")))) +
           (cur.idle === "c" || !cur.night ? "" : row("Night starts", "", seg("n1", [20, 21, 22, 23].map((h) => [h, h + ":00"]), cur.n1)) + row("Night ends", "", seg("n2", [5, 6, 7, 8].map((h) => [h, "0" + h + ":00"]), cur.n2))));
     };
+    const ntfRows = (cur, att, pers) => {
+      const A = (k, v) => `${att}="${att === "data-s" ? "ntf|" : "ntfd|"}${k}|${v}"`;
+      return row("Notifications", "switch all alerts on or off", tg(cur.on, A("on", cur.on ? "0" : "1"))) +
+        Object.keys(NT).map((k) => row(NT[k].n, NT[k].d, tg(cur.types[k], A("t:" + k, cur.types[k] ? "0" : "1")))).join("") +
+        row("Left open after", "how long before an open door or gate sends an alert", `<div class="seg sm">${[3, 5, 10, 30].map((m) => `<button class="${cur.mins === m ? "on" : ""}" ${A("mins", m)}>${m} min</button>`).join("")}</div>`) +
+        (pers ? row("Sound", "a short beep when an alert arrives", tg(cur.snd, A("snd", cur.snd ? "0" : "1"))) + row("Alerts when this page is in the background", "a system notification. Your browser will ask permission", tg(cur.bro, A("bro", cur.bro ? "0" : "1"))) : "");
+    };
     let tab2 = tab;
-    if (!adm) tab2 = tab === "bg" || tab === "rphoto" || ((tab === "users" || tab === "updates") && this._mgr()) ? tab : "scenes";
+    if (!adm) tab2 = tab === "bg" || tab === "rphoto" || tab === "ntf" || ((tab === "users" || tab === "updates") && this._mgr()) ? tab : "scenes";
     tab = tab2;
     let body = "";
     if (tab === "bg") {
@@ -2211,6 +2370,11 @@ class QuintDashboard extends HTMLElement {
         (adm ? "" : sec("Arrangement", "hold a tile or card for 2 seconds, then drag it onto the card whose place you want",
         row("Your own order", "tiles and cards are arranged on this device only", '<button class="sbtn" data-sc="ordreset|">Back to the shared order</button>'))) +
         sec("Background", u ? "this device only" : "using the shared look", `<div style="padding:4px 4px 12px">${this._pbControls(u, b)}</div>`);
+    } else if (tab === "ntf") {
+      const pers = this._ntfPers();
+      body = sec("Your notifications", pers ? "this device only" : "using the shared setting", ntfRows(this._ntf(), "data-sc", true) + (pers ? row("Shared setting", "forget the choices on this device", '<button class="sbtn" data-sc="ntfd|">Same as shared</button>') : "")) +
+        sec("Try it", "see how an alert looks on this screen", row("Send a test notification", "", '<button class="sbtn" data-ntf="test">Send test</button>')) +
+        (adm ? sec("Shared setting for everyone", "what everybody gets unless they choose their own", ntfRows(this._ntf0(), "data-s", false)) : "");
     } else if (tab === "general") {
       const bg = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(c.bg || {}) }, dv = localStorage.getItem("quint_dev") || "auto";
       body = sec("Settings file", "settings are stored on the server and shared by every user; a file makes them portable",
@@ -2453,7 +2617,7 @@ class QuintDashboard extends HTMLElement {
     const cr = this._credit(), adm = this._admin();
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="bgl"><i></i></div><div class="app"><main class="${changed ? "anim" : ""}">${body}</main><nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav></div>${this._dialog()}${this._scDialog()}${this._persDialog()}${this._camView()}`;
+    const html = `<div class="bgl"><i></i></div><div class="app"><main class="${changed ? "anim" : ""}">${body}</main><nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb nbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button><button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav></div>${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
     if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
