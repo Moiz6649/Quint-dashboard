@@ -28,6 +28,12 @@ const PAUSE_I = ic('<path d="M8 5v14M16 5v14" stroke-width="3"/>');
 const PHONE_I = SV.intercom.i;
 const VIDEO_I = SV.cameras.i;
 const KEY_I = ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-1.5"/>');
+const CHEV_I = ic('<path d="M15 5l-7 7 7 7"/>');
+const RAIN_I = ic('<path d="M18 14H7a4 4 0 1 1 .9-7.9A6 6 0 0 1 19 7a3.5 3.5 0 0 1-1 7z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>');
+const PART_I = ic('<circle cx="8" cy="8" r="3"/><path d="M8 2v1M2 8h1M3.8 3.8l.7.7M12.2 3.8l-.7.7"/><path d="M19 20H10a3.5 3.5 0 1 1 .8-6.9A5 5 0 0 1 20 15a2.5 2.5 0 0 1-1 5z"/>');
+const DROP_I = ic('<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>');
+const GRID_I = ic('<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>');
+const MORE_I = ic('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>');
 const PALETTE_I = ic('<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 1 0 0 20 2 2 0 0 0 2-2 2 2 0 0 1 2-2h2a4 4 0 0 0 4-4A10 10 0 0 0 12 2z"/>');
 const TILES_I = ic('<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="11" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/>');
 const SCENE_I = ic('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.7 1.8L21.5 18.5l-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/>');
@@ -69,7 +75,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.33.0";
+const VER = "1.34.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -531,6 +537,126 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-dev="tablet"]) .page{padding:28px 28px 24px}
 :host([data-dev="tablet"]) .clk{font-size:56px}
 :host([data-dev="phone"]) .scg{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* ===== phone: clean and friendly ===== */
+input[type=file]{max-width:100%;font-size:13px;color:var(--mu)}
+input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 14px;margin-right:10px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.mgrab{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);margin:0 auto 14px}
+.mgr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mi{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px 6px;border-radius:18px;border:1px solid var(--bd);background:rgba(255,255,255,.06);color:#fff;font-size:13px;min-height:96px;transition:transform .15s,background .2s}
+.mi:active{transform:scale(.95)}.mi.act{border-color:var(--c);background:rgba(255,255,255,.12)}
+.mi i{font-style:normal;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);font-size:22px}
+.mi span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mo .dlg{padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
+:host([data-dev="phone"]) .app::before{height:0}
+:host([data-dev="phone"]) .nbell.tbell{top:8px;right:12px;width:44px;height:44px}
+:host([data-dev="phone"]) .page{padding:8px 14px 28px}
+:host([data-dev="phone"]) .top{min-height:48px;margin-bottom:8px;padding-right:56px}
+:host([data-dev="phone"]) .hh{margin-top:0;min-height:48px;padding:0 56px 0 2px}
+:host([data-dev="phone"]) .hgr{margin:4px 2px 14px;font-size:28px}
+:host([data-dev="phone"]) .back{padding:11px 16px;min-height:44px;border-radius:14px;font-size:15px}
+:host([data-dev="phone"]) .ib{width:44px;height:44px}
+:host([data-dev="phone"]) nav{padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:0}
+:host([data-dev="phone"]) .tabs2{overflow:visible;gap:0;padding:0}
+:host([data-dev="phone"]) .tind{top:0;bottom:0;border-radius:16px}
+:host([data-dev="phone"]) nav button.t{min-width:0;min-height:56px;padding:8px 2px 6px;font-size:11px;border-radius:16px;gap:4px}
+:host([data-dev="phone"]) nav button.t .si{font-size:24px}:host([data-dev="phone"]) nav button.t ha-icon{--mdc-icon-size:24px}
+:host([data-dev="phone"]) .card .row:has(>.sw){flex-wrap:wrap;row-gap:10px}
+:host([data-dev="phone"]) .card .row:has(>.sw)>.bdg{order:1}
+:host([data-dev="phone"]) .card .row:has(>.sw)>.sw{order:2;margin-left:auto}
+:host([data-dev="phone"]) .card .row:has(>.sw)>.grow{order:3;flex:1 1 100%}
+:host([data-dev="phone"]) .nm{overflow-wrap:anywhere}
+:host([data-dev="phone"]) .sw{width:54px;height:32px;border-radius:16px}
+:host([data-dev="phone"]) .sw::after{width:26px;height:26px;top:3px;left:3px}
+:host([data-dev="phone"]) .sw.on::after{left:25px}
+:host([data-dev="phone"]) .btns button{min-height:46px;font-size:15px}
+:host([data-dev="phone"]) input[type=range]{height:32px}
+:host([data-dev="phone"]) input[type=range]::-webkit-slider-thumb{width:28px;height:28px;margin-top:-12px}
+:host([data-dev="phone"]) .sbar{margin:0 0 14px;gap:10px}
+:host([data-dev="phone"]) .sbar h1{font-size:34px}
+:host([data-dev="phone"]) .sbtns{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:8px}
+:host([data-dev="phone"]) .sbtn{padding:13px 10px;min-height:46px;text-align:center}
+:host([data-dev="phone"]) .snav{margin:0 -14px;padding:2px 14px 10px;gap:8px;scrollbar-width:none}
+:host([data-dev="phone"]) .snav::-webkit-scrollbar{display:none}
+:host([data-dev="phone"]) .sti{padding:11px 16px;border-radius:999px;gap:8px;min-height:46px}
+:host([data-dev="phone"]) .sti .si{font-size:18px}:host([data-dev="phone"]) .sti b{font-size:14px}
+:host([data-dev="phone"]) .ssec{padding:16px 14px}
+:host([data-dev="phone"]) .shd small{text-align:left}
+/* ===== phone: Basalte-style ===== */
+:host([data-dev="phone"]){--serif:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--tc:rgba(24,38,82,calc(var(--ta,.6) + .06));--tbd:rgba(255,255,255,.07)}
+.pbar{position:sticky;top:0;z-index:40;flex:none;display:flex;align-items:center;gap:2px;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 6px 0;background:rgba(17,26,58,.97);box-shadow:0 2px 14px rgba(0,0,0,.4)}
+.pb{position:relative;width:46px;height:46px;border:0;border-radius:50%;background:none;color:#fff;display:grid;place-items:center;font-size:25px;padding:0;flex:none}
+.pb:active{background:rgba(255,255,255,.14)}
+.pb .si{font-size:26px;stroke-width:1.5}
+.pt{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding-left:4px;overflow:hidden}
+.pt b{font-size:23px;font-weight:700;letter-spacing:-.4px;text-transform:lowercase;white-space:nowrap}
+.pt i{width:2px;height:24px;background:#f08c2c;flex:none}
+.pt span{font-size:22px;font-weight:300;color:#cdd5e8}
+.pt .pn{font-size:21px;font-weight:400;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr{display:flex;align-items:center;flex:none}
+.pb.nbell{background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pb .nbd{top:6px;right:5px}
+:host([data-dev="phone"]) .top,:host([data-dev="phone"]) .hh,:host([data-dev="phone"]) .hgr{display:none}
+:host([data-dev="phone"]) .page>h1,:host([data-dev="phone"]) .sbar h1{display:none}
+:host([data-dev="phone"]) .page{padding:14px 14px 28px}
+:host([data-dev="phone"]) main{padding-bottom:20px}
+.psec{display:flex;align-items:center;gap:14px;margin:26px 2px 12px;font-size:26px;font-weight:300;color:rgba(255,255,255,.82);text-shadow:0 1px 10px rgba(0,0,0,.5)}
+.psec::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.28)}
+.psep{height:1px;background:rgba(255,255,255,.2);margin:22px 2px}
+.ptg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.ptl{position:relative;aspect-ratio:1/1;border:0;border-radius:2px;background:var(--tc);color:#fff;text-align:left;padding:0;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;box-shadow:0 4px 14px -6px rgba(0,0,0,.55);transition:transform .15s,background .2s}
+.ptl:active{transform:scale(.96)}
+.ptl i{flex:1;display:grid;place-items:center;font-style:normal;font-size:clamp(40px,13vw,58px);color:#eef1f8;padding-top:16px}
+.ptl i .si{stroke-width:.9;font-size:1em}.ptl i ha-icon{--mdc-icon-size:clamp(40px,13vw,58px)}
+.ptl span{padding:0 10px 10px;font-size:15px;line-height:1.15;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptl small{position:absolute;right:8px;top:8px;font-size:11px;color:#ffd08a;background:rgba(0,0,0,.28);padding:2px 7px;border-radius:9px}
+.ptl.sct.on{box-shadow:inset 4px 0 0 #3ddc84,0 4px 14px -6px rgba(0,0,0,.55)}
+.ptl.pwr i{color:#fff}.ptl.pwr.on i{color:#ff8a1f}.ptl.pwr.on span{color:#ff8a1f}
+.ptg.sys .ptl{background:rgba(20,22,30,.55)}
+.phero{margin:12px 2px 4px;text-shadow:0 2px 14px rgba(0,0,0,.45)}
+.hgr2{font-size:17px;font-weight:300;color:rgba(255,255,255,.85);margin:4px 0 10px}
+.hwx{display:grid;grid-template-columns:1fr auto;grid-template-areas:"i t" "c h";align-items:center;row-gap:8px;margin:4px 0 4px}
+.hwi{grid-area:i;font-size:96px;line-height:1}.hwi .si{stroke-width:.9;font-size:1em}
+.hwt{grid-area:t;font-size:84px;font-weight:300;line-height:1;letter-spacing:-2px}
+.hwc{grid-area:c;font-size:19px;font-weight:500;text-transform:capitalize}
+.hwh{grid-area:h;justify-self:end;font-size:19px;display:flex;align-items:center;gap:6px}.hwh .si{font-size:22px}
+.hfc{display:grid;grid-template-columns:repeat(4,1fr);margin:18px 0 4px}
+.hfc>div{display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 0;font-size:14px;border-left:1px solid rgba(255,255,255,.5)}.hfc>div:first-child{border-left:0}
+.hfc i{font-style:normal;font-size:38px}.hfc i .si{stroke-width:1;font-size:1em}.hfc b{font-weight:400;font-size:22px;margin-top:6px}
+.hck{display:flex;align-items:center;gap:16px;margin:18px 0 0}.hck .dt{font-size:16px;color:rgba(255,255,255,.85);font-weight:300}
+.hck .clk2,.hck .clk{font-size:54px;font-weight:300}
+:host([data-dev="phone"]) .phh .hall{margin-top:0}
+.rchips{position:sticky;top:calc(58px + env(safe-area-inset-top));z-index:30;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:12px 14px;margin:0 -14px;background:rgba(32,50,104,.92)}
+.rchips::-webkit-scrollbar{display:none}
+.rchips button{flex:none;border:0;border-radius:999px;padding:7px 14px;background:none;color:#d4dbef;font-size:15px;min-height:36px}
+.rchips button.on{background:rgba(255,255,255,.88);color:#16203f}
+.area.rooms{padding:0 14px 24px}
+.area.rooms .psec{margin-top:20px}
+.rgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.rcard{position:relative;aspect-ratio:3/4;border-radius:2px;background:#25315a center/cover no-repeat;overflow:hidden;display:flex;align-items:flex-end;box-shadow:0 4px 14px -6px rgba(0,0,0,.6)}
+.rcard::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.7))}
+.rcard.noimg{background:linear-gradient(160deg,#2a3a76,#18214a)}
+.rcard .rci{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:70px;color:rgba(255,255,255,.22)}.rcard .rci .si{stroke-width:.9}
+.rcard>span{position:relative;padding:0 12px 12px;font-size:17px;font-weight:400;text-shadow:0 1px 8px #000a}
+.rbd{position:absolute;top:8px;right:8px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(40,44,56,.78);color:#8a93a8;display:grid;place-items:center;font-size:22px;padding:0;z-index:2}
+.rbd.on{background:rgba(255,255,255,.92);color:#f5a623}
+.rbd .si{stroke-width:1.6}
+.proom .rm2{padding:0 14px 28px}
+.proom .abody{display:flex;flex-direction:column;gap:12px}
+.dial{position:relative;display:grid;grid-template-columns:150px 1fr;align-items:center;gap:8px;padding:14px;border-radius:2px;background:var(--tc);box-shadow:0 4px 14px -6px rgba(0,0,0,.55);margin-bottom:10px}
+.dial.hot{background:linear-gradient(160deg,rgba(150,60,70,.78),rgba(90,25,35,.85))}.dial.cool{background:linear-gradient(160deg,rgba(40,100,160,.78),rgba(20,50,100,.85))}
+.dial .dr{width:150px;height:150px}.dial .dr circle{fill:none;stroke-width:5;stroke-linecap:round}.dial .d0{stroke:rgba(255,255,255,.25)}.dial .d1{stroke:#fff}
+.dial .dv{position:absolute;left:14px;top:14px;width:150px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.dial .dv b{font-size:44px;font-weight:300;line-height:1}.dial .dv small{font-size:18px;margin-top:6px;color:rgba(255,255,255,.85)}
+.dial .di{font-size:16px;text-transform:capitalize;display:flex;flex-direction:column;gap:6px;padding-left:10px}.dial .dn{color:rgba(255,255,255,.7);font-size:13px}
+.dial .dpm{position:absolute;right:12px;bottom:10px;display:flex;gap:8px}
+.dial .dpm button{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;font-size:24px;padding:0}
+:host([data-dev="phone"]) .bc{border-radius:2px}:host([data-dev="phone"]) .card{border-radius:2px}:host([data-dev="phone"]) .tile{border-radius:2px}
+:host([data-dev="phone"]) .btns button,:host([data-dev="phone"]) .rb button{border-radius:2px}
+:host([data-dev="phone"]) .rh{border-bottom:1px solid rgba(255,255,255,.22);padding-bottom:8px;margin:22px 0 12px}
+:host([data-dev="phone"]) .rn{font-weight:300;font-size:25px}
+:host([data-dev="phone"]) .sub{display:block}
+
+
 :host([data-dev="tablet"]) .scg{grid-template-columns:repeat(3,minmax(0,1fr))}
 :host([data-dev="tablet"]) nav{padding:10px 20px calc(10px + env(safe-area-inset-bottom))}
 :host([data-dev="tablet"]) nav button.t,:host([data-dev="desktop"]) nav button.t{flex:none;flex-direction:row;font-size:15px;font-weight:500;padding:12px 20px;gap:0}
@@ -1259,7 +1385,7 @@ class QuintDashboard extends HTMLElement {
   _nav(p, x = {}) {
     if (this._v.p === "settings" && p !== "settings" && this._dirty) { if (!confirm("Discard unsaved settings changes?")) return; this._revert(); }
     if (p === "settings" && this._v.p !== "settings") { this._snap = JSON.stringify(this._c); this._dirty = false; }
-    this._v = { p, ...x }; this._draw(true);
+    this._more = false; this._v = { p, ...x }; this._draw(true);
   }
   _tileGo(s) { return s === "cameras" || s === "security" || s === "intercom" || s === "automations" || s === "camwall" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
 
@@ -1267,7 +1393,7 @@ class QuintDashboard extends HTMLElement {
   _click(e) {
     if (this._mv && this._mv.carry) return this._carryClick(e);
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
@@ -1278,7 +1404,8 @@ class QuintDashboard extends HTMLElement {
     if (d.rimgb) return this._rimgDel(d.rimgb);
     if (d.pick) { const i = d.pick.indexOf("|"); (this._pick = this._pick || {})[d.pick.slice(0, i)] = d.pick.slice(i + 1); return this._draw(true); }
     if (d.ntf) { if (d.ntf === "bg" && e.composedPath()[0] !== t) return; if (d.ntf === "bg") { this._nc = false; return this._draw(true); } return this._ntfAct(d.ntf); }
-    if (d.pers) { if (d.pers === "bg" && e.composedPath()[0] !== t) return; this._pers = d.pers === "open"; return this._draw(true); }
+    if (d.more) { if (d.more === "bg" && e.composedPath()[0] !== t) return; this._more = d.more === "open"; return this._draw(true); }
+    if (d.pers) { if (d.pers === "bg" && e.composedPath()[0] !== t) return; this._pers = d.pers === "open"; if (this._pers) this._more = false; return this._draw(true); }
     if (d.pb) {
       const i = d.pb.indexOf("|"), a = d.pb.slice(0, i), v = d.pb.slice(i + 1);
       if (a === "preset") this._bgLocal({ preset: v, mode: "preset" });
@@ -2362,7 +2489,8 @@ class QuintDashboard extends HTMLElement {
       if (key[0] === "s") return this._bento(t);
       const x = homeIdx[key]; return x ? [{ h: this._ccHtml("home", x.it, x.i, true), w: 2.6, wide: false }] : [];
     };
-    const parts = this._hlist().flatMap(partsOf), n = this._cols(), cr = this._credit(), adm = this._admin();
+    const phone = this.getAttribute("data-dev") === "phone";
+    const parts = this._hlist().filter((k) => !phone || k[0] !== "b").flatMap(partsOf), n = this._cols(), cr = this._credit(), adm = this._admin();
     this._colsN = n;
     let bento = "", grp = [], seg = 0;
     const flush = () => {
@@ -2373,11 +2501,96 @@ class QuintDashboard extends HTMLElement {
     };
     parts.forEach((p) => { if (p.wide) { flush(); bento += `<div class="bwide">${p.h}</div>`; } else grp.push(p); });
     flush();
-    if (!parts.length) bento = '<div class="bc">Nothing to show yet.</div>';
+    if (!parts.length) bento = phone ? "" : '<div class="bc">Nothing to show yet.</div>';
     const add = adm ? `<div class="grid addg"><div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div></div>` : "";
+    if (phone) return this._homePhone({ g: g + (who ? ", " + E(who) : ""), date, sc, bento: bento + add, hasFav: parts.length > 0 || adm, cr });
     return `<div class="home"><div class="hh">${this._brand()}</div><div class="hgr gr">${g}${who ? ", " + E(who) : ""}</div><div class="hall" data-hz="a">${bento}${add}</div>${cr ? `<div class="crm">${cr}</div>` : ""}</div>`;
   }
+  _wxIcon(st) { return st === "sunny" ? SUN_I : st === "clear-night" ? MOON_I : st === "partlycloudy" ? PART_I : ["rainy", "pouring", "lightning-rainy", "snowy-rainy", "lightning", "hail"].includes(st) ? RAIN_I : CLOUD_I; }
+  _fcast(id) {
+    const f = this._fcx;
+    if (f && f.id === id && Date.now() - f.t < 1800e3) return f.list;
+    if (!f || f.id !== id || (!f.busy && Date.now() - f.t >= 1800e3)) {
+      this._fcx = { id, t: f ? f.t : 0, list: f && f.id === id ? f.list : [], busy: true };
+      try {
+        Promise.resolve(this._h.callWS({ type: "call_service", domain: "weather", service: "get_forecasts", service_data: { type: "daily" }, target: { entity_id: id }, return_response: true }))
+          .then((r) => { const l = r && r.response && r.response[id] && r.response[id].forecast; this._fcx = { id, t: Date.now(), list: Array.isArray(l) ? l.slice(0, 4) : [], busy: false }; if (this._fcx.list.length) { this._last = null; this._draw(true); } })
+          .catch(() => { this._fcx = { id, t: Date.now(), list: [], busy: false }; });
+      } catch (e) { this._fcx = { id, t: Date.now(), list: [], busy: false }; }
+    }
+    return this._fcx.list || [];
+  }
+  _homePhone(o) {
+    const c = this._c, E = (t) => this._esc(t), H = this._h.states, adm = this._admin();
+    const wid = c.noWeather ? "" : Object.keys(H).find((i) => i.startsWith("weather.")), w = wid && H[wid].attributes.temperature != null ? H[wid] : null;
+    let hero = "";
+    if (w) {
+      const a = w.attributes, cond = WX[w.state] || String(w.state).replace(/[-_]/g, " "), fc = a.forecast && a.forecast.length ? a.forecast.slice(0, 4) : this._fcast(wid);
+      const lang = (this._h.locale && this._h.locale.language) || undefined, now = new Date();
+      const fcH = fc.length ? `<div class="hfc">${fc.map((d, i) => { const dt = new Date(d.datetime), dd = Math.round((new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5), nm = dd <= 0 ? "Today" : dd === 1 ? "Tomorrow" : dt.toLocaleDateString(lang, { weekday: "long" }); return `<div><i>${this._wxIcon(d.condition)}</i><span>${E(nm)}</span><b>${d.temperature != null ? Math.round(d.temperature) + "°" : ""}</b></div>`; }).join("")}</div>` : "";
+      hero += `<div class="hwx"><div class="hwi">${this._wxIcon(w.state)}</div><div class="hwt">${Math.round(a.temperature)}°</div><div class="hwc"><div>${E(cond)}</div></div><div class="hwh">${a.humidity != null ? DROP_I + " " + Math.round(a.humidity) + "%" : ""}</div></div>${fcH}`;
+    }
+    const clk = c.noClock ? "" : `<div class="hck">${this._clockBlock("tl")}<div class="dt">${E(o.date)}</div></div>`;
+    const stl = (s) => { const at = s.ha ? `data-act="scene.turn_on" data-e="${s.ha}"` : `data-sc="run|${E(s.key)}"`; return `<button class="ptl sct ${s.on ? "on" : ""}" data-id="sc:${E(s.key)}" ${at}><i>${GRID_I}</i><span>${E(s.nm)}</span></button>`; };
+    const scn = c.noScenes ? "" : `<div class="psec"><span>Scenes</span></div>${o.sc.length ? `<div class="ptg">${o.sc.map(stl).join("")}</div>` : `<div class="hintx">${adm ? "Add scenes in Settings → Scenes." : "No scenes yet."}</div>`}`;
+    const tl = (k, go, ico, nm, sub) => `<button class="ptl" data-id="pm:${E(k)}" ${go}><i>${ico}</i><span>${E(nm)}</span>${sub ? `<small>${E(sub)}</small>` : ""}</button>`;
+    const mt = [];
+    if (!(c.noRooms || !this._rooms().length)) mt.push(tl("room", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", `${this._rooms().length} rooms`));
+    this._svcs().forEach((k) => { const n = k === "lights" ? this._ents("lights").filter((i) => H[i].state === "on").length : 0; mt.push(tl(k, this._tileGo(k), SV[k].i, SV[k].n, k === "lights" && n ? n + " on" : "")); });
+    const sys = [tl("settings", `data-go='{"p":"settings"}'`, GEAR_I, "Settings", ""), tl("bg", `data-pers="open"`, PALETTE_I, "Background", "")];
+    return `<div class="home phh"><div class="phero" data-id="ph:hero"><div class="hgr2">${o.g}</div>${hero}${clk}</div>${scn}<div class="psec"><span>Menu</span></div><div class="ptg">${mt.join("")}</div><div class="psep"></div><div class="ptg sys">${sys.join("")}</div>${o.hasFav ? `<div class="psec"><span>Favourites</span></div><div class="hall" data-hz="a">${o.bento}</div>` : ""}${o.cr ? `<div class="crm">${o.cr}</div>` : ""}</div>`;
+  }
+  _roomsGrid() {
+    const rs = this._rooms(), H = this._h.states, E = (t) => this._esc(t), L = this._svcs(), fl = this._c.floors || [];
+    this._roomBg = "";
+    if (!rs.length) return `<div class="area"><div class="bc">No rooms yet. Add rooms in Settings.</div></div>`;
+    const lt = (r) => (L.includes("lights") ? this._ents("lights", r.id) : []), on = (r) => lt(r).filter((i) => H[i].state === "on");
+    const fls = fl.filter((f) => rs.some((r) => r.floor === f.id)), loose = rs.filter((r) => !fls.some((f) => f.id === r.floor));
+    const hasAct = L.includes("lights") && rs.some((r) => on(r).length);
+    const f = (this._pick || {}).rf || "all", cur = f === "act" && !hasAct ? "all" : f;
+    const chips = [["all", "All"], ...(L.includes("lights") ? [["act", "Active"]] : []), ...(fls.length ? [...fls.map((x) => [x.id, x.name]), ...(loose.length ? [["_", "Other"]] : [])] : [])];
+    const card = (r) => {
+      const img = this._rimgOf(r), ls = lt(r), n = on(r).length, all = ls.join(",");
+      return `<div class="rcard ${img ? "" : "noimg"}" data-id="rc:${E(r.id)}" data-go='${JSON.stringify({ p: "room", room: r.id })}' ${img ? `style="background-image:url('${E(img)}')"` : ""}>${img ? "" : `<i class="rci">${ICONS.door}</i>`}${ls.length ? `<button class="rbd ${n ? "on" : ""}" data-act="${n ? "light.turn_off" : "light.turn_on"}" data-e="${all}" title="${n ? "Turn lights off" : "Turn lights on"}">${ICONS.bulb}</button>` : ""}<span>${E(r.name)}</span></div>`;
+    };
+    const sec = (t, list) => (list.length ? `<div class="psec" data-id="rs:${E(t)}"><span>${E(t)}</span></div><div class="rgrid">${list.map(card).join("")}</div>` : "");
+    let body = "";
+    if (cur === "act") body = sec("Active", rs.filter((r) => on(r).length));
+    else if (cur === "all" || !chips.some((c) => c[0] === cur)) body = fls.length ? fls.map((x) => sec(x.name, rs.filter((r) => r.floor === x.id))).join("") + sec("Other", loose) : sec("Rooms", rs);
+    else if (cur === "_") body = sec("Other", loose);
+    else body = sec((fls.find((x) => x.id === cur) || {}).name || "Rooms", rs.filter((r) => r.floor === cur));
+    return `<div class="area rooms"><div class="rchips">${chips.map(([k, n]) => `<button class="${k === cur ? "on" : ""}" data-pick="rf|${E(k)}">${E(n)}</button>`).join("")}</div>${body}</div>`;
+  }
+  _roomPhone(x) {
+    const { room, rid, sec, lights, cl, sh, avg, chips, adm, E, L, H, has } = x, svc = this._v.svc, st = (i) => H[i].state;
+    if (svc) {
+      const part = sec.filter((h) => h.includes(`data-sk="${E(svc)}"`));
+      return `<div class="area proom"><div class="rm2"><div class="abody">${part.join("") || `<div class="bc">Nothing here.</div>`}</div></div></div>`;
+    }
+    const tl = (k, go, ico, nm, sub, cls) => `<button class="ptl ${cls || ""}" data-id="rt:${E(k)}" ${go}><i>${ico}</i><span>${E(nm)}</span>${sub ? `<small>${E(sub)}</small>` : ""}</button>`;
+    const all = lights.join(","), n = lights.filter((i) => st(i) === "on").length;
+    const scs = [...(this._c.noScenes ? [] : this._myScenes().filter((y) => y.room === rid && this._sceneOk(y))).map((y) => `<button class="ptl sct ${this._sceneOn(y) ? "on" : ""}" data-id="sc:${y.sc}:${y.id}" data-sc="run|${y.sc}:${y.id}"><i>${GRID_I}</i><span>${E(y.name)}</span></button>`),
+      ...Object.keys(H).filter((i) => i.startsWith("scene.") && !this._c.hide.includes(i) && this._roomOf(i) === rid).map((i) => `<button class="ptl sct" data-id="sc:${i}" data-act="scene.turn_on" data-e="${i}"><i>${GRID_I}</i><span>${E(this._nm(i))}</span></button>`)];
+    const pw = lights.length ? [tl("allon", `data-act="light.turn_on" data-e="${all}"`, ICONS.power, "All on", n ? n + " on" : "", "pwr on"), tl("alloff", `data-act="light.turn_off" data-e="${all}"`, ICONS.power, "All off", "", "pwr")] : [];
+    const scn = pw.length || scs.length ? `<div class="psec"><span>Scenes</span></div><div class="ptg">${pw.join("")}${scs.join("")}</div>` : "";
+    const dial = (id) => {
+      const a = H[id].attributes, off = ["off", "unavailable", "unknown"].includes(st(id)), tg = a.temperature, cu = a.current_temperature, step = a.target_temp_step || 0.5, act = a.hvac_action;
+      const mn = a.min_temp != null ? +a.min_temp : 16, mx = a.max_temp != null ? +a.max_temp : 30, v = tg != null ? tg : cu, pr = v == null ? 0 : Math.max(0, Math.min(1, (v - mn) / (mx - mn)));
+      const C = 2 * Math.PI * 52, arc = C * 0.75, tint = off ? "off" : act === "heating" ? "hot" : act === "cooling" ? "cool" : "";
+      const t = (d) => `{"temperature":${Math.round((+tg + d) * 10) / 10}}`;
+      const info = [act && act !== "idle" ? act : off ? "off" : st(id), a.fan_mode ? "fan " + a.fan_mode : "", a.current_humidity != null ? a.current_humidity + "% humidity" : ""].filter(Boolean);
+      return `<div class="dial ${tint}" data-id="cl:${E(id)}" ${this._tileGo("climate")}><svg class="dr" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="d0" stroke-dasharray="${arc} ${C}" transform="rotate(135 60 60)"/><circle cx="60" cy="60" r="52" class="d1" stroke-dasharray="${(arc * pr).toFixed(1)} ${C}" transform="rotate(135 60 60)"/></svg><div class="dv"><b>${v != null ? this._fmt(v) + "°" : "–"}</b>${cu != null ? `<small>${this._fmt(cu)}°</small>` : ""}</div><div class="di">${info.map((y) => `<div>${E(y)}</div>`).join("")}${cl.length > 1 ? `<div class="dn">${E(this._nm(id))}</div>` : ""}</div>${tg != null && !off ? `<div class="dpm"><button data-act="climate.set_temperature" data-e="${id}" data-x='${t(-step)}'>−</button><button data-act="climate.set_temperature" data-e="${id}" data-x='${t(step)}'>+</button></div>` : ""}</div>`;
+    };
+    const comfort = cl.length ? `<div class="psec"><span>Comfort</span></div>${cl.map(dial).join("")}` : "";
+    const go = (s) => `data-go='${JSON.stringify({ p: "room", room: rid, svc: s })}'`;
+    const sub = { lights: lights.length ? `${n} of ${lights.length} on` : "", shades: avg != null ? avg + "% open" : "", media: (() => { const m = this._ents("media", rid).filter((i) => ["playing", "paused", "on"].includes(st(i))); return m.length ? "playing" : ""; })() };
+    const tiles = L.filter((s) => s !== "climate" && has(room, s) && !(isCs(s) && !this._csItems(rid, s).some((y) => !y.it.tile))).map((s) => tl(s, go(s), SV[s].i, SV[s].n, sub[s] || ""));
+    const pins = this._roomTiles(rid);
+    return `<div class="area proom"><div class="rm2">${scn}${comfort}${tiles.length ? `<div class="psec"><span>Control</span></div><div class="ptg">${tiles.join("")}</div>` : ""}${pins.length ? `<div class="psec"><span>Pinned</span></div><div class="abody">${pins.join("")}</div>` : ""}${!scn && !comfort && !tiles.length && !pins.length ? `<div class="bc">Nothing in this room yet.</div>` : ""}${adm ? `<div class="tile add" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>` : ""}</div></div>`;
+  }
   _areaPage() {
+    const phone = this.getAttribute("data-dev") === "phone";
+    if (phone && !this._v.room) return this._roomsGrid();
     const rs = this._rooms(), L = this._svcs(), adm = this._admin(), H = this._h.states, st = (i) => H[i].state, E = (t) => this._esc(t);
     const has = (r, s) => (isCs(s) ? this._csItems(r.id, s).length : this._ents(s, r.id).length);
     const room = rs.find((r) => r.id === this._v.room) || rs.find((r) => L.some((s) => has(r, s))) || rs[0];
@@ -2427,6 +2640,7 @@ class QuintDashboard extends HTMLElement {
     { const tl = this._roomTiles(rid), ci = sec.findIndex((h) => !/data-sk="(lights|shades|climate)"/.test(h)); sec.splice(ci < 0 ? sec.length : ci, 0, ...tl); }
     if (!sec.length) sec.push(`<div class="bc span2" data-id="a:none"><div class="lbl">Nothing in this room yet.</div></div>`);
     if (adm) sec.push(`<div class="tile add span2" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
+    if (phone) return this._roomPhone({ room, rid, sec, lights, cl, sh, avg, chips, adm, E, L, H, has });
     return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}<div class="abody">${sec.join("")}</div></div></div>`;
   }
   /* ---------- camera wall: one screen with 1 to 32 cameras ---------- */
@@ -2784,13 +2998,27 @@ class QuintDashboard extends HTMLElement {
       this._applyBg();
     }
     const tab = (cls, go, ico, t, col) => `<button class="t ${cls}" data-c="${col}" style="--c:${col}" ${go}>${ico}<span>${t}</span></button>`;
-    const tabs = `<span class="tind" data-id="tind" data-ks="1"></span>` + tab(p === "home" ? "act" : "", `data-go='{"p":"home"}'`, HOME_I, "Home", "#e8c98f") +
-      (c.noRooms || !this._rooms().length ? "" : tab(p === "room" ? "act" : "", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", "#7dd3fc")) +
-      this._svcs().map((s) => tab((p === "rooms" && V.svc === s) || p === s ? "act" : "", this._tileGo(s), SV[s].i, SV[s].n, SV[s].c)).join("");
+    const pages = [["home", p === "home", `data-go='{"p":"home"}'`, HOME_I, "Home", "#e8c98f"]];
+    if (!(c.noRooms || !this._rooms().length)) pages.push(["room", p === "room", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", "#7dd3fc"]);
+    this._svcs().forEach((s) => pages.push([s, (p === "rooms" && V.svc === s) || p === s, this._tileGo(s), SV[s].i, SV[s].n, SV[s].c]));
+    const phone = this.getAttribute("data-dev") === "phone";
+    let tabs = "", more = "", pbar = "";
+    if (phone) {
+      const it = (cls, go, ico, t, col) => `<button class="mi ${cls}" style="--c:${col}" ${go}><i>${ico}</i><span>${t}</span></button>`;
+      if (this._more) more = `<div class="ov mo" data-more="bg"><div class="dlg"><div class="mgrab"></div><div class="mgr">${pages.map((x) => it(x[1] ? "act" : "", x[2], x[3], x[4], x[5])).join("")}${it(p === "settings" ? "act" : "", `data-go='{"p":"settings"}'`, GEAR_I, "Settings", "#cbd5e1")}${it("", `data-pers="open"`, PALETTE_I, "Background", "#f9a8d4")}</div><div class="btns" style="margin-top:14px"><button data-more="close">Close</button></div></div></div>`;
+      const room = p === "room" && V.room ? this._rooms().find((r) => r.id === V.room) : null;
+      const pt = p === "home" ? "" : p === "room" ? (room ? room.name : "Rooms") : p === "rooms" ? (isCs(V.svc) ? (V.svc === "more" ? "More" : V.svc.slice(3)) : (SV[V.svc] || {}).n || "") : p === "settings" ? "Settings" : (SV[p] || {}).n || "";
+      const back = p === "home" ? "" : p === "room" && V.room && V.svc ? { p: "room", room: V.room } : p === "room" && V.room ? { p: "room" } : { p: "home" };
+      const hamb = !this._locked() && (this._narrow || localStorage.getItem("quint_full") === "1");
+      const nU = this._nList().filter((x) => !x.read).length;
+      pbar = `<header class="pbar">${back ? `<button class="pb" data-go='${JSON.stringify(back)}' title="Back">${CHEV_I}</button>` : hamb ? `<button class="pb" data-tog="menu:0" title="Menu">☰</button>` : ""}<div class="pt">${p === "home" ? `<b>${this._esc(this._c.title || this._title || "Quint")}</b><i></i><span>home</span>` : `<span class="pn">${this._esc(pt)}</span>`}</div><div class="pr">${p !== "home" ? `<button class="pb" data-go='{"p":"home"}' title="Home">${HOME_I}</button>` : ""}<button class="pb nbell" data-ntf="open" title="Notifications">${BELL_I}${nU ? `<span class="nbd">${nU > 9 ? "9+" : nU}</span>` : ""}</button><button class="pb" data-more="open" title="Menu">${MORE_I}</button></div></header>`;
+    } else {
+      tabs = `<span class="tind" data-id="tind" data-ks="1"></span>` + pages.map((x) => tab(x[1] ? "act" : "", x[2], x[3], x[4], x[5])).join("");
+    }
     const cr = this._credit(), adm = this._admin();
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="bgl"><i></i></div><div class="app"><button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button><main class="${changed ? "anim" : ""}">${body}</main><nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav></div>${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
+    const html = `<div class="bgl"><i></i></div><div class="app">${phone ? pbar : `<button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button>`}<main class="${changed ? "anim" : ""}">${body}</main>${phone ? "" : `<nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav>`}</div>${more}${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
     if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
