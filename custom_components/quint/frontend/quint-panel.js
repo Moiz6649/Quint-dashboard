@@ -69,7 +69,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.32.0";
+const VER = "1.33.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -105,7 +105,7 @@ const SWATCH = {
 const FRESH = () => ({ rooms: [], floors: [], map: {}, hide: [], name: "", custom: {}, order: {} });
 
 const CSS = `
-:host{display:block;--vh:100vh;height:var(--vh);overflow-y:auto;--ac:#e8c98f;--ok:#5fd39a;--warn:#f0b35a;--bad:#ff6b6b;--mu:#9aa6bd;--tx:#eef1f6;--bd:rgba(255,255,255,.10);--cd:rgba(12,16,26,.55);--serif:"Cormorant Garamond","Quint Serif",Georgia,"Times New Roman",serif;color:var(--tx);font-family:"Inter","Quint Sans",-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
+:host{display:block;--vh:100vh;height:var(--vh);overflow-y:auto;--ac:#e8c98f;--ok:#5fd39a;--warn:#f0b35a;--bad:#ff6b6b;--mu:#9aa6bd;--tx:#eef1f6;--bd:rgba(255,255,255,.10);--cd:rgba(12,16,26,.55);--ta:.55;--tc:rgba(12,16,26,var(--ta));--tbd:rgba(255,255,255,calc(var(--ta) * .18));--serif:"Cormorant Garamond","Quint Serif",Georgia,"Times New Roman",serif;color:var(--tx);font-family:"Inter","Quint Sans",-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
 @supports (height:100dvh){:host{--vh:100dvh}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .si{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.12em}
@@ -129,7 +129,8 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .back{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:10px;color:#fff;padding:9px 16px;font-size:14px}
 /* ===== home ===== */
 .home{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding:0 18px 22px;flex:1;align-content:start}
-.hh{margin-top:-42px;min-height:40px;display:flex;align-items:center;padding:0 60px 0 4px;position:relative;z-index:2}.hall{min-width:0;display:flex;flex-direction:column;min-height:120px}.hbt .gr{margin-top:0;font-size:28px}.hbt .wx{margin-top:0}.hbt .dt{margin-top:8px}.hbt .scn .cap{margin-bottom:10px}.bcol>.cw{zoom:var(--z,1)}.bwide+.bento,.bento+.bwide,.bento+.addg,.bwide+.addg{margin-top:16px}.addg{margin-top:16px}
+/* readable text when the tiles are see-through */:host([data-tl="1"]) .bc,:host([data-tl="1"]) .card,:host([data-tl="1"]) .tile{text-shadow:0 1px 10px rgba(0,0,0,.6)}
+.hgr{margin:-14px 4px 10px;text-shadow:0 2px 18px rgba(0,0,0,.55)}.hh{margin-top:-42px;min-height:40px;display:flex;align-items:center;padding:0 60px 0 4px;position:relative;z-index:2}.hall{min-width:0;display:flex;flex-direction:column;min-height:120px}.hbt .wx{margin-top:6px;font-size:14px}.hbt .dt{margin-top:0}.hbt .scn .cap{margin-bottom:10px}.bcol>.cw{zoom:var(--z,1)}.bwide+.bento,.bento+.bwide,.bento+.addg,.bwide+.addg{margin-top:16px}.addg{margin-top:16px}
 .clk{font-family:var(--serif);font-size:56px;font-weight:400;line-height:1.12;margin-top:20px;letter-spacing:-.5px;white-space:nowrap;max-width:100%}
 .clk2{font-family:var(--serif);font-size:44px;font-weight:400;line-height:1;letter-spacing:-1px;white-space:nowrap}
 .clk2 small{font-family:"Inter",sans-serif;font-size:.24em;font-weight:600;letter-spacing:2px;margin-left:.45em;color:#c3cbdb;vertical-align:.85em}
@@ -163,7 +164,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .wallg .wt img.wallx{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;margin:0}
 .scb{width:100%}
 .cvw .xp{position:absolute;right:12px;bottom:8px;z-index:1;font-size:18px;text-shadow:0 1px 4px #000a;opacity:.9}
-.bc{background:var(--cd);border:1px solid var(--bd);border-radius:20px;padding:20px 22px 20px;position:relative;min-width:0;display:flex;flex-direction:column}
+.bc{background:var(--tc);border:1px solid var(--tbd);border-radius:20px;padding:20px 22px 20px;position:relative;min-width:0;display:flex;flex-direction:column}
 .bc.wide{grid-column:1/-1}
 .bh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600;color:#aeb8cc;cursor:pointer}
 .bh .bs{letter-spacing:0;text-transform:none;font-weight:500;font-size:13px;color:#c3cbdb;display:flex;align-items:center;gap:6px}.bh .si{font-size:17px}
@@ -242,7 +243,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 /* tile size (Settings): everything inside a tile or card is scaled by --z */
 .bc,.grid>.kw,.grid>.cw,.grid>.tile,.grid>.card,.abody>.kw,.abody>.cw,.abody>.tile,.abody>.card{zoom:var(--z,1)}
 .bc .kw,.bc .cw,.bc .tile,.bc .card{zoom:1}
-.tile,.card{position:relative;background:var(--cd);border:1px solid var(--bd);border-radius:18px;padding:18px}
+.tile,.card{position:relative;background:var(--tc);border:1px solid var(--tbd);border-radius:18px;padding:18px}
 .tile{cursor:pointer;min-height:120px;display:flex;flex-direction:column;justify-content:space-between}
 .tile:active{transform:scale(.98)}
 .bdg{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;flex:none;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c);transition:.2s}
@@ -448,7 +449,7 @@ nav button.t.act .si{color:var(--c,#12151c);animation:pop .55s cubic-bezier(.3,1
 :host([data-dev="phone"]) .amo:not(.pv) .hmid{top:70px;left:22px}:host([data-dev="phone"]) .amo:not(.pv).home .anf{left:16px}
 /* choosing a screen saver in Settings */
 .ssub{padding:10px 4px 2px}.ssub .sn{font-size:15px;font-weight:600}.ssub .ss{font-size:12px;color:var(--mu);margin-top:3px}
-.hbt .ckr{display:flex;align-items:center;gap:18px}.hbt .ckr .aclk.tl{width:104px;flex:none}.hbt .ckr .clk2{font-size:44px;flex:none}.hbt .ckd{min-width:0}.hbt .ckd .dt{margin-top:0;font-size:15px}
+.hbt .ckr{display:flex;align-items:center;gap:18px}.hbt .ckr .aclk.tl{width:104px;flex:none}.hbt .ckr .clk2{font-size:44px;flex:none}.hbt .ckd{min-width:0}.hbt .ckd .dt{margin-top:0;font-size:15px}.hbt .ckd .wx{margin-top:6px}
 .svgrid{align-items:start;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin:6px 0 16px}
 .svc{border:2px solid var(--bd);border-radius:16px;padding:8px 8px 10px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:8px;min-width:0}
 .svc.on{border-color:var(--ac);background:rgba(255,255,255,.07)}
@@ -925,7 +926,7 @@ class QuintDashboard extends HTMLElement {
   _revert() {
     try { const pm = { perms: this._c.perms, manager: this._c.manager, upInstall: this._c.upInstall, upRestart: this._c.upRestart }; this._c = { ...FRESH(), ...JSON.parse(this._snap), ...pm }; } catch (e) {}
     localStorage.setItem(KEY, JSON.stringify(this._c));
-    this._dirty = false; this._applyBg(); this._syncTpl();
+    this._dirty = false; this._applyBg(); this._applyTs(); this._syncTpl();
   }
   _toast(t) { this._hint(t); clearTimeout(this._tt); this._tt = setTimeout(() => this._hint(""), 1800); }
   _bgu() { try { return JSON.parse(localStorage.getItem("quint_bgu") || "null"); } catch (e) { return null; } }
@@ -981,6 +982,7 @@ class QuintDashboard extends HTMLElement {
     if (Array.isArray(o.scenes)) o.scenes.forEach((x) => { if (x && x.id && !(c.scenes || []).some((y) => y.id === x.id)) (c.scenes = c.scenes || []).push(x); });
     ["noClock", "noScenes", "noWeather", "noRooms"].forEach((k) => { if (typeof o[k] === "boolean") c[k] = o[k]; });
     if (TSIZES[o.tsz]) c.tsz = o.tsz;
+    if (o.tileAlpha !== undefined && Number.isFinite(+o.tileAlpha)) c.tileAlpha = Math.max(0, Math.min(100, Math.round(+o.tileAlpha)));
     if (o.eng === "std" || o.eng === "auto") c.eng = o.eng;
     if (o.cks === "analog" || o.cks === "digital") c.cks = o.cks;
     if (o.ntf && typeof o.ntf === "object") { const x = o.ntf, y = {}; if (typeof x.on === "boolean") y.on = x.on; if ([3, 5, 10, 30].includes(+x.mins)) y.mins = +x.mins; if (x.types && typeof x.types === "object") { y.types = {}; Object.keys(NT).forEach((k) => { if (typeof x.types[k] === "boolean") y.types[k] = x.types[k]; }); } c.ntf = y; }
@@ -1060,6 +1062,7 @@ class QuintDashboard extends HTMLElement {
   }
   _input(e) {
     const t = e.target, d = t.dataset;
+    if (d.ta !== undefined && this._admin()) { this._c.tileAlpha = +t.value; this._applyTa(); return; }
     if (d.bg && this._admin()) { this._c.bg = { ...(this._c.bg || {}), [d.bg]: +t.value }; this._applyBg(); }
     if (d.sdq !== undefined && this._sd) { this._sd.q = t.value.toLowerCase(); this._draw(true); }
     if (d.pbr) { this._bgLocal({ [d.pbr]: +t.value }); }
@@ -1331,6 +1334,7 @@ class QuintDashboard extends HTMLElement {
       if (fl) fl.text().then((tx) => { try { this._importCfg(JSON.parse(tx)); this._toast("Imported — press Save"); } catch (er) { this._toast("Not a valid settings file"); } });
       t.value = ""; return;
     }
+    if (adm && d.ta !== undefined) { this._c.tileAlpha = +t.value; this._applyTa(); this._save(); this._draw(true); return; }
     if (adm && d.bg) { this._save(); return; }
     if (adm && d.wn !== undefined) { const w = (this._c.wall = this._c.wall || {}); w.n = Math.max(1, Math.min(32, +t.value || 4)); this._save(); this._draw(true); return; }
     if (adm && d.cred !== undefined) { this._c.credit = t.value.trim().slice(0, 30); this._save(); this._draw(true); return; }
@@ -1386,7 +1390,7 @@ class QuintDashboard extends HTMLElement {
     if (this._admin()) { this._c.order[ctx] = list; this._save(); return; }
     try { const o = this._lo(); o[ctx] = list; localStorage.setItem("quint_ord", JSON.stringify(o)); } catch (e) { this._toast("Not enough space to save the arrangement"); }
   }
-  _hbKeys() { const c = this._c; return ["clock", ...(!c.noWeather && this._wx() ? ["wx"] : []), "greet", ...(c.noScenes ? [] : ["scenes"])]; }
+  _hbKeys() { return ["clock", ...(this._c.noScenes ? [] : ["scenes"])]; }   // the greeting is plain text at the top; the weather lives inside the clock tile
   _hbOrder() {
     let o = null;
     if (!this._admin()) { try { const l = JSON.parse(localStorage.getItem("quint_hbo") || "null"); if (Array.isArray(l)) o = l; } catch (e) {} }
@@ -2325,6 +2329,13 @@ class QuintDashboard extends HTMLElement {
     const set = (n, v) => { if (st.getPropertyValue(n) !== String(v)) st.setProperty(n, String(v)); };
     set("--z", z); set("--tm", TSIZES[k].m); set("--pc", [1, 2, 2, 3, 4][i]); set("--pc2", [1, 1, 2, 2, 2][i]); set("--abn", phone ? [1, 1, 2, 2, 2][i] : [1, 2, 2, 3, 4][i]);
     if (this.getAttribute("data-ts") !== k) this.setAttribute("data-ts", k);
+    this._applyTa();
+  }
+  _ta() { const v = this._c && this._c.tileAlpha; return Number.isFinite(+v) && v !== null && v !== "" ? Math.max(0, Math.min(100, Math.round(+v))) : 60; }
+  _applyTa() {
+    const v = this._ta(), a = ((v / 100) * 0.92).toFixed(3), st = this.style;
+    if (st.getPropertyValue("--ta") !== a) st.setProperty("--ta", a);
+    const low = v < 35 ? "1" : "0"; if (this.getAttribute("data-tl") !== low) this.setAttribute("data-tl", low);
   }
   _cols() {
     const w = this._w || 1024, wide = this.getAttribute("data-wide") === "1", area = wide ? w - 88 : w - 56;
@@ -2341,9 +2352,7 @@ class QuintDashboard extends HTMLElement {
     };
     const scn = c.noScenes ? "" : `<div class="scn"><div class="cap"><span>Scenes</span></div>${sc.length ? `<div class="scg">${sc.map(scBtn).join("")}</div>` : `<div class="hintx">${this._admin() ? "Add scenes in Settings → Scenes." : "No scenes yet."}</div>`}</div>`;
     const tileB = {
-      clock: { h: `<div class="ckr">${c.noClock ? "" : this._clockBlock("tl")}<div class="ckd"><div class="dt">${E(date)}</div></div></div>`, w: 1.7 },
-      wx: { h: wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : "", w: 1.2 },
-      greet: { h: `<div class="gr">${g}${who ? ", " + E(who) : ""}</div>`, w: 1.5 },
+      clock: { h: `<div class="ckr">${c.noClock ? "" : this._clockBlock("tl")}<div class="ckd"><div class="dt">${E(date)}</div>${wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : ""}</div></div>`, w: 1.9 },
       scenes: { h: scn, w: 1.6 + Math.ceil(sc.length / 2) * 0.9 },
     };
     const homeIdx = {}; (c.custom.home || []).forEach((it, i) => { homeIdx["c:" + (it.uid || "i" + i)] = { it, i }; });
@@ -2366,7 +2375,7 @@ class QuintDashboard extends HTMLElement {
     flush();
     if (!parts.length) bento = '<div class="bc">Nothing to show yet.</div>';
     const add = adm ? `<div class="grid addg"><div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div></div>` : "";
-    return `<div class="home"><div class="hh">${this._brand()}</div><div class="hall" data-hz="a">${bento}${add}</div>${cr ? `<div class="crm">${cr}</div>` : ""}</div>`;
+    return `<div class="home"><div class="hh">${this._brand()}</div><div class="hgr gr">${g}${who ? ", " + E(who) : ""}</div><div class="hall" data-hz="a">${bento}${add}</div>${cr ? `<div class="crm">${cr}</div>` : ""}</div>`;
   }
   _areaPage() {
     const rs = this._rooms(), L = this._svcs(), adm = this._admin(), H = this._h.states, st = (i) => H[i].state, E = (t) => this._esc(t);
@@ -2546,7 +2555,7 @@ class QuintDashboard extends HTMLElement {
         row("Export", "download all settings as JSON", `<button class="sbtn" data-s="export|">Download</button>`) +
         row("Import", "an export; merged with what is already there", `<input type="file" accept=".json,application/json" data-import="1">`)) +
       sec("Tile size", "the size of every tile and card for all users; a person can pick another size on their own device",
-        row("Size for everyone", "extra large, large, medium, small or extra small", tsSeg(TSIZES[c.tsz] ? c.tsz : "l", "data-s"))) +
+        row("Size for everyone", "extra large, large, medium, small or extra small", tsSeg(TSIZES[c.tsz] ? c.tsz : "l", "data-s")) + row("Tile background", `how much you see of the tile behind its text: from invisible to solid. Now <b>${this._ta()}%</b>`, `<input type="range" min="0" max="100" step="5" value="${this._ta()}" data-ta="1"><span class="lbl" style="min-width:70px">Invisible → Solid</span>`)) +
       sec("Appearance", "",
         row("Client name", "written top left on every page", `<input type="text" data-ttl value="${E(c.title || "")}" placeholder="${E(this._title || "Quint")}">`) +
         row("Bottom text", "written next to the settings button, bottom right (empty = hide)", `<input type="text" data-cred value="${E(c.credit === undefined ? "Intellect by Quinteca" : c.credit)}" placeholder="Intellect by Quinteca">`) +
@@ -2617,7 +2626,7 @@ class QuintDashboard extends HTMLElement {
         row("Clock style", "digital numbers or an analog face, for the home clock and the clock saver", `<div class="seg sm">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${(c.cks === "analog" ? "analog" : "digital") === k ? "on" : ""}" data-s="cks|${k}">${n}</button>`).join("")}</div>`) +
         row("Home page layout", "everyone can drag every item (clock, weather, greeting, scenes, tiles, cards) to any place: hold for 2 seconds. What you arrange here is the layout everyone starts with", '<button class="sbtn" data-s="hbreset|">Reset the shared layout</button>') +
         row("Weather line", "temperature, condition and sunset", tg(!c.noWeather, 'data-s="flag|noWeather"')) +
-        row("Scenes", "the scene buttons under the greeting", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
+        row("Scenes", "the scene buttons", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
         row("Rooms tab", "the page with the list of rooms", tg(!c.noRooms, 'data-s="flag|noRooms"'))) +
       sec("Screen for everyone", "the shared setting. Each person can still choose their own in Background", scrRows({ ...this._scr0() }, "data-s")) +
       sec("Services", "show or hide a tile on the home page and its tab in the bottom bar",
