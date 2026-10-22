@@ -75,7 +75,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.34.0";
+const VER = "1.35.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -996,7 +996,7 @@ class QuintDashboard extends HTMLElement {
   }
   _time() { return this._clock(); }
   connectedCallback() {
-    this._applyBg(); this._layout();
+    this._applyBg(); this._layout(); this._hInit();
     if (typeof ResizeObserver !== "undefined") { this._ro = new ResizeObserver(() => this._layout()); this._ro.observe(this); }
     this._kd = (e) => { if (e.key === "Escape" && this._cam) { this._cam = null; this._camFb = false; this._draw(true); } };
     window.addEventListener("keydown", this._kd);
@@ -1016,7 +1016,7 @@ class QuintDashboard extends HTMLElement {
     this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); }, 1000);
     this._iv = setInterval(() => { const r = this.shadowRoot; this._tickClock(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 1000);
   }
-  disconnectedCallback() { clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
+  disconnectedCallback() { this._hOff(); clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
   set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
   set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
   set route(r) {}
@@ -1382,10 +1382,43 @@ class QuintDashboard extends HTMLElement {
   _rmOk(r) { const p = this._perm(); return !p || !r || !(p.roomOff || []).includes(r); }
   _entOk(id) { return this._svOk(this._svcOf(id)) && this._rmOk(this._roomOf(id)); }
   _sceneOk(x) { return !this._perm() || (this._rmOk(x.room) && (x.items || []).every((i) => this._entOk(i.e))); }
-  _nav(p, x = {}) {
-    if (this._v.p === "settings" && p !== "settings" && this._dirty) { if (!confirm("Discard unsaved settings changes?")) return; this._revert(); }
+  _nav(p, x = {}, pop) {
+    if (this._v.p === "settings" && p !== "settings" && this._dirty) { if (!confirm("Discard unsaved settings changes?")) return false; this._revert(); }
     if (p === "settings" && this._v.p !== "settings") { this._snap = JSON.stringify(this._c); this._dirty = false; }
-    this._more = false; this._v = { p, ...x }; this._draw(true);
+    const nv = { p, ...x };
+    if (!pop && this._hOn && JSON.stringify(nv) !== JSON.stringify(this._v)) {
+      this._hd = (this._hd || 0) + 1; this._hv = (this._hv || []).slice(0, this._hd); this._hv[this._hd] = nv;
+      try { history.pushState({ qn: this._hd }, ""); } catch (e) {}
+    }
+    this._more = false; this._v = nv; this._draw(true);
+    return true;
+  }
+  /* the phone's back button: one step back at a time, press twice on Home to leave */
+  _hInit() {
+    if (this._hOn) return;
+    this._hOn = true; this._hv = [{ ...this._v }]; this._hd = 0;
+    try { history.pushState({ qn: 0 }, ""); } catch (e) {}
+    this._pop = (e) => this._onPop(e);
+    window.addEventListener("popstate", this._pop);
+  }
+  _hOff() { this._hOn = false; clearTimeout(this._exT); if (this._pop) window.removeEventListener("popstate", this._pop); this._pop = null; }
+  _ov() { return !!(this._cam || this._more || this._pers || this._nc || this._dlg || this._sd); }
+  _ovClose() {
+    if (this._cam) { this._cam = null; this._camFb = false; } else if (this._more) this._more = false; else if (this._pers) this._pers = false; else if (this._nc) this._nc = false; else if (this._sd) this._sd = null; else if (this._dlg) this._dlg = null;
+    this._draw(true);
+  }
+  _leave() { this._hOff(); try { history.back(); } catch (e) {} }
+  _onPop(e) {
+    const st = e.state, n = st && typeof st.qn === "number" ? st.qn : null, keep = () => { try { history.pushState({ qn: this._hd }, ""); } catch (er) {} };
+    if (this._ov()) { this._ovClose(); if (n === null) this._hd = 0; keep(); return; }
+    if (n === null) {
+      if (this.getAttribute("data-dev") === "desktop" || this._exitArm) { this._exitArm = false; return this._leave(); }
+      this._exitArm = true; this._toast("Press back again to exit");
+      clearTimeout(this._exT); this._exT = setTimeout(() => { this._exitArm = false; }, 2000);
+      this._hd = 0; keep(); return;
+    }
+    const v = this._hv[n] || { p: "home" }, { p, ...x } = v;
+    if (this._nav(p, x, true)) this._hd = n; else keep();
   }
   _tileGo(s) { return s === "cameras" || s === "security" || s === "intercom" || s === "automations" || s === "camwall" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
 
@@ -1421,6 +1454,7 @@ class QuintDashboard extends HTMLElement {
     }
     if (d.tpl) return this._tap(d.tpl);
     if (d.s) { const i = d.s.indexOf("|"); return this._sact(d.s.slice(0, i), d.s.slice(i + 1)); }
+    if (d.hb && this._hd > 0 && this._hOn) { try { history.back(); } catch (er) {} return; }
     if (d.go) { const { p, ...x } = JSON.parse(d.go); return this._nav(p, x); }
     if (d.cc) {
       const [k, r, i] = d.cc.split(":");
@@ -3011,7 +3045,7 @@ class QuintDashboard extends HTMLElement {
       const back = p === "home" ? "" : p === "room" && V.room && V.svc ? { p: "room", room: V.room } : p === "room" && V.room ? { p: "room" } : { p: "home" };
       const hamb = !this._locked() && (this._narrow || localStorage.getItem("quint_full") === "1");
       const nU = this._nList().filter((x) => !x.read).length;
-      pbar = `<header class="pbar">${back ? `<button class="pb" data-go='${JSON.stringify(back)}' title="Back">${CHEV_I}</button>` : hamb ? `<button class="pb" data-tog="menu:0" title="Menu">☰</button>` : ""}<div class="pt">${p === "home" ? `<b>${this._esc(this._c.title || this._title || "Quint")}</b><i></i><span>home</span>` : `<span class="pn">${this._esc(pt)}</span>`}</div><div class="pr">${p !== "home" ? `<button class="pb" data-go='{"p":"home"}' title="Home">${HOME_I}</button>` : ""}<button class="pb nbell" data-ntf="open" title="Notifications">${BELL_I}${nU ? `<span class="nbd">${nU > 9 ? "9+" : nU}</span>` : ""}</button><button class="pb" data-more="open" title="Menu">${MORE_I}</button></div></header>`;
+      pbar = `<header class="pbar">${back ? `<button class="pb" data-hb="1" data-go='${JSON.stringify(back)}' title="Back">${CHEV_I}</button>` : hamb ? `<button class="pb" data-tog="menu:0" title="Menu">☰</button>` : ""}<div class="pt">${p === "home" ? `<b>${this._esc(this._c.title || this._title || "Quint")}</b><i></i><span>home</span>` : `<span class="pn">${this._esc(pt)}</span>`}</div><div class="pr">${p !== "home" ? `<button class="pb" data-go='{"p":"home"}' title="Home">${HOME_I}</button>` : ""}<button class="pb nbell" data-ntf="open" title="Notifications">${BELL_I}${nU ? `<span class="nbd">${nU > 9 ? "9+" : nU}</span>` : ""}</button><button class="pb" data-more="open" title="Menu">${MORE_I}</button></div></header>`;
     } else {
       tabs = `<span class="tind" data-id="tind" data-ks="1"></span>` + pages.map((x) => tab(x[1] ? "act" : "", x[2], x[3], x[4], x[5])).join("");
     }
