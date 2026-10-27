@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, PANEL_PATH, STATIC_URL, VERSION
+from .neon import async_setup_neon, async_unload_neon
 from .updater import QuintUpdater, read_disk_version
 from .util import clean_perms, is_newer, valid_image, valid_new_user
 
@@ -285,6 +286,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data["static"] = True
     data["updater"].start()
     title = entry.data.get("title", "Quint")
+    neon = await async_setup_neon(hass, entry)
     js = Path(__file__).parent / "frontend" / "quint-panel.js"
     stamp = int((await hass.async_add_executor_job(js.stat)).st_mtime)
     guard = f"{STATIC_URL}/quint-guard.js?v={VERSION}.{stamp}"
@@ -298,13 +300,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         sidebar_title=title,
         sidebar_icon="mdi:home-automation",
         require_admin=False,
-        config={"title": title},
+        config={"title": title, "neon": neon},
     )
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend.async_remove_panel(hass, PANEL_PATH)
+    await async_unload_neon(hass, entry)
     updater = hass.data.get(DOMAIN, {}).get("updater")
     if updater:
         updater.stop()

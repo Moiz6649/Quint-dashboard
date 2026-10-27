@@ -13,6 +13,22 @@ const SV = {
   automations: { n: "Automations", c: "#fbbf24", i: ic('<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>') },
   more:    { n: "More",     c: "#ff6fae", i: ic('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>') },
 };
+SV.house = { n: "3D house", c: "#22d3ee", i: ic('<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/>') };
+const H3D_DEF = {
+  show: false, home: "full", page: true, switch: false, tap: "quint", height: 360,
+  theme: "auto", accent: "", quality: "auto", walls: "auto", roof: true, roof_fade: true, explode: true, floor_stack: "dim", floor_thumbs: true, room_names: true,
+  markers: "important", marker_size: "normal", marker_names: false, heatmap: "none", clock: "off", controls_side: "left",
+  controls: true, central: true, walk: true, scenes: true, camera_wall: null, fullscreen_button: true, keep_view: false, angle_lock: false, controls_hidden: false, controls_hide_after: 0, stats: false,
+  alerts: true, alert_jump: false, energy: true, flows: "auto", holograms: "auto", weather: true, household_card: true, motion_trail: false, pets: true, ghost: true,
+  time_travel: null, time_travel_range: "24h", voice: true, director: null, screen: "",
+  idle_return: 0, idle_orbit: false, night: "off", floor: "", room: "",
+};
+const H3D_OPT = {
+  home: ["off", "full", "block"], tap: ["quint", "panel", "both"], height: [280, 360, 440, 520, 640], theme: ["auto", "neon", "blueprint", "day"], quality: ["auto", "low", "high"], walls: ["auto", "cut"],
+  floor_stack: ["dim", "stacked", "single"], markers: ["none", "important", "all", "room"], marker_size: ["small", "normal", "large"], heatmap: ["none", "temperature", "humidity", "co2"],
+  clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
+  time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
+};
 const SV_DEF = Object.fromEntries(Object.entries(SV).map(([k, v]) => [k, v.n]));
 const HOME_I = ic('<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>');
 const GEAR_I = ic('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>');
@@ -65,6 +81,7 @@ const ICONS = {
 const LOGO_I = ic('<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 8v8M8 10l4 2 4-2"/>');
 const SET_I = {
   ntf: ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>'),
+  h3d: SV.house.i,
   adv: ic('<path d="M12 3l2.1 5.2L19.5 9l-4 3.7 1.1 5.5L12 15.6 7.4 18.2l1.1-5.5-4-3.7 5.4-.8z"/>'),
   health: ic('<path d="M3 12h4l2-6 4 12 2-6h6"/>'),
   general: ic('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'),
@@ -77,7 +94,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.36.0";
+const VER = "1.38.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -583,6 +600,19 @@ input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 
 :host([data-dev="phone"]) .sti .si{font-size:18px}:host([data-dev="phone"]) .sti b{font-size:14px}
 :host([data-dev="phone"]) .ssec{padding:16px 14px}
 :host([data-dev="phone"]) .shd small{text-align:left}
+.h3b{padding:0!important;overflow:hidden}.h3b .h3h{margin:0;padding:14px 16px 10px}
+.h3d{display:block;position:relative;min-height:200px;width:100%}.h3d>neonplan3d-card{display:block;width:100%}
+.h3ld{display:grid;place-items:center;min-height:220px;color:var(--mu);font-size:14px}
+.h3d>.h3chip{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:5;border:0;border-radius:999px;padding:9px 18px;background:var(--ac);color:#12151c;font-weight:600;font-size:14px;box-shadow:0 8px 22px -8px #000;width:auto}.h3chip[hidden]{display:none}
+.home.h3full,:host([data-dev]) .home.h3full{display:flex;flex-direction:column;gap:8px;padding:0 24px 10px}.h3full .hh{margin:0}.h3top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.h3full .h3top .gr{margin:0!important;font-size:26px!important;flex:1 1 auto}.h3meta{display:flex;align-items:center;gap:14px;color:var(--mu);font-size:15px}.h3meta .tm{font-family:var(--serif);font-size:26px;color:var(--tx)}.h3meta .wx{display:flex;align-items:center;gap:6px}
+.h3d.full,.h3d.pfull,.h3d.page{border-radius:18px;overflow:hidden;border:1px solid var(--tbd)}
+.h3swr{display:flex;justify-content:flex-end;margin:0 0 6px}.h3sw{flex:none}
+.phero.ph3{padding-bottom:6px}.phouse.full{margin:0 -2px 4px}
+.app.ed nav,.app.ed .pbar,.app.ed .tbell{display:none}.app.ed::before{display:none}
+.h3e{display:flex;flex-direction:column;height:var(--vh);width:100%}.h3eb{display:flex;align-items:center;gap:14px;padding:8px 14px;background:rgba(7,10,17,.9);border-bottom:1px solid var(--bd)}.h3eb span{color:var(--mu);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.h3ep{flex:1;min-height:0;overflow:hidden;background:#070b14}.h3ep>neonplan3d-panel{display:block;height:100%}
+.phouse{margin:0 0 4px;border-radius:2px;overflow:hidden;background:var(--tc)}
+.housepg{padding:0!important}.housepg .h3d{min-height:60vh}
+.h3n{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:18px;background:var(--tc);border:1px dashed rgba(255,255,255,.25);border-radius:10px}.h3n b{font-size:16px}.h3n span{color:var(--mu);font-size:14px;line-height:1.4}.h3n a{text-decoration:none;color:#000}
 /* ===== phone: Basalte-style ===== */
 :host([data-dev="phone"]){--serif:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--tc:rgba(24,38,82,calc(var(--ta,.6) + .06));--tbd:rgba(255,255,255,.07)}
 .pbar{position:sticky;top:0;z-index:40;flex:none;display:flex;align-items:center;gap:2px;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 6px 0;background:rgba(17,26,58,.97);box-shadow:0 2px 14px rgba(0,0,0,.4)}
@@ -709,7 +739,7 @@ class QuintDashboard extends HTMLElement {
   _pdown(e) {
     if (e.button > 0 || e.target.type === "range" || this._mv) return;
     const path = e.composedPath(), kk = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl), hin = kk ? null : path.find((n) => n.dataset && n.dataset.hi), k = kk || hin;
-    if (!k || this._dlg || this._cam) return;
+    if (!k || this._dlg || this._cam || path.some((n) => n.dataset && n.dataset.lv && n.dataset.lv.startsWith("house"))) return;
     if (this._c.noArrange && !this._admin() && !this._mgr()) return;
     this._lp = { x: e.clientX, y: e.clientY };
     this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, pt: e.pointerType, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", hi: hin ? hin.dataset.hi : "" };
@@ -873,7 +903,7 @@ class QuintDashboard extends HTMLElement {
       else {
         cand = cur;
         while (cand && (used.has(cand) || this._kof(cand))) cand = cand.nextSibling;
-        if (cand && cand.nodeType === n.nodeType && cand.nodeName === n.nodeName) o = cand;
+        if (cand && cand.nodeType === n.nodeType && cand.nodeName === n.nodeName && (cand.nodeType !== 1 || !!cand.hasAttribute("data-lv") === !!n.hasAttribute("data-lv"))) o = cand;
       }
       if (o) {
         if (o === cur) cur = cur.nextSibling; else from.insertBefore(o, cur);
@@ -983,6 +1013,7 @@ class QuintDashboard extends HTMLElement {
     if (this.getAttribute("data-wide") !== wide) this.setAttribute("data-wide", wide);
     if (this.getAttribute("data-nav") !== "bar") this.setAttribute("data-nav", "bar");
     this._applyTs();
+    clearTimeout(this._h3t); this._h3t = setTimeout(() => { if (this._loaded && this._h3dNeedsFit()) this._mountLv(); }, 250);
     if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; this._slide(); if (this._loaded && this._v.p === "home" && this._cols() !== this._colsN) this._draw(true); if (this._loaded && this._v.p === "camwall") this._draw(true); }
   }
   _slide() {
@@ -1020,7 +1051,7 @@ class QuintDashboard extends HTMLElement {
     this._iv = setInterval(() => { const r = this.shadowRoot; this._tickClock(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 1000);
   }
   disconnectedCallback() { this._hOff(); clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
-  set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; }
+  set panel(p) { this._title = (p && p.config && p.config.title) || "Quint"; this._neon = (p && p.config && p.config.neon) || this._neon || null; }
   set narrow(n) { if (n === this._narrow) return; this._narrow = n; this._draw(true); }
   set route(r) {}
   setConfig(config) { this._title = (config && config.title) || "Quint"; }
@@ -1031,6 +1062,8 @@ class QuintDashboard extends HTMLElement {
     this._h = h;
     if (!this._loading) { this._loading = true; this._loadCfg(); }
     if (this._lvc) Object.values(this._lvc).forEach((e) => (e.hass = h));
+    if (this._h3el) Object.values(this._h3el).forEach((e) => (e.hass = h));
+    if (this._h3panel) this._h3panel.hass = h;
     if (this.shadowRoot) this.shadowRoot.querySelectorAll("[data-hl]").forEach((x) => { if (x._card) x._card.hass = h; });
     if (this._loaded && h.connection !== this._conn) { this._conn = h.connection; this._tsub = {}; this._syncTpl(); this._ntfSub(); this._nQuiet = Date.now() + 20000; }
     if (this._loaded) this._ntfScan(h);
@@ -1173,6 +1206,17 @@ class QuintDashboard extends HTMLElement {
     else if (a === "clk") c.noClock = !c.noClock;
     else if (a === "flag" && ["noClock", "noScenes", "noWeather", "noRooms", "dflt", "lock", "noArrange", "noLook", "hideUnavail"].includes(v)) c[v] = !c[v];
     else if (a === "adv") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), q = (c.quiet = c.quiet || {}); if (k === "home") c.homeAfter = [0, 1, 2, 5, 10, 30].includes(+x) ? +x : 0; else if (k === "qon") q.on = x === "1"; else if (k === "qfrom") q.from = +x; else if (k === "qto") q.to = +x; else if (k === "qcrit") q.crit = x === "1"; }
+    else if (a === "h3d") {
+      const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.h3d = c.h3d || {}), d = H3D_DEF[k];
+      if (k === "reset") { const keep = {}; ["show", "home", "page", "switch", "tap"].forEach((y) => { if (o[y] !== undefined) keep[y] = o[y]; }); c.h3d = keep; }
+      else if (k === "accent") o[k] = /^#[0-9a-f]{6}$/i.test(x) ? x : "";
+      else if (k === "night") { const y = x.trim(); if (y === "off" || y === "sun" || /^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$/.test(y)) o[k] = y; else if (y === "") o[k] = "off"; }
+      else if (k === "screen") o[k] = x.replace(/['"<>\\&]/g, "").trim().slice(0, 60);
+      else if (k === "floor" || k === "room") o[k] = /^[A-Za-z0-9_.-]{0,64}$/.test(x) ? x : "";
+      else if (d === null || typeof d === "boolean") o[k] = x === "1";
+      else if (H3D_OPT[k]) { const t = typeof d === "number" ? +x : x; if (H3D_OPT[k].includes(t)) o[k] = t; }
+      this._last = null;
+    }
     else if (a === "hhide") { if (!c.hide.includes(v)) c.hide.push(v); }
     else if (a === "srsel") { this._sr = v; return this._draw(true); }
     else if (a === "srt" || a === "srempty" || a === "srall") {
@@ -1352,8 +1396,8 @@ class QuintDashboard extends HTMLElement {
   }
   _nm(id) { return this._h.states[id].attributes.friendly_name || id; }
   _svcsAll() {
-    const o = this._svcOrder(), keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "clock" ? this._clockTile() : x === "camwall" ? this._wallCams().length > 0 : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
-    const r = (k) => { const i = o.indexOf(k); return i < 0 ? 1000 + keys.indexOf(k) : i; };
+    const o = this._svcOrder(), keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "clock" ? this._clockTile() : x === "camwall" ? this._wallCams().length > 0 : x === "house" ? this._h3dPage() : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
+    const r = (k) => { const i = o.indexOf(k); return i < 0 ? (k === "house" ? -1 : 1000 + keys.indexOf(k)) : i; };
     return keys.filter((k) => this._svOk(k)).sort((p, q) => r(p) - r(q));
   }
   _svcsList() { return this._svcsAll().filter((x) => x !== "clock"); }
@@ -1427,13 +1471,13 @@ class QuintDashboard extends HTMLElement {
     const v = this._hv[n] || { p: "home" }, { p, ...x } = v;
     if (this._nav(p, x, true)) this._hd = n; else keep();
   }
-  _tileGo(s) { return s === "cameras" || s === "security" || s === "intercom" || s === "automations" || s === "camwall" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
+  _tileGo(s) { return s === "house" ? `data-go='{"p":"house"}'` : s === "cameras" || s === "security" || s === "intercom" || s === "automations" || s === "camwall" ? `data-go='${JSON.stringify({ p: s })}'` : `data-go='${JSON.stringify({ p: "rooms", svc: s })}'`; }
 
   /* ---------- events ---------- */
   _click(e) {
     if (this._mv && this._mv.carry) return this._carryClick(e);
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.h3d || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
@@ -1444,6 +1488,12 @@ class QuintDashboard extends HTMLElement {
     if (d.rimgb) return this._rimgDel(d.rimgb);
     if (d.pick) { const i = d.pick.indexOf("|"); (this._pick = this._pick || {})[d.pick.slice(0, i)] = d.pick.slice(i + 1); return this._draw(true); }
     if (d.ntf) { if (d.ntf === "bg" && e.composedPath()[0] !== t) return; if (d.ntf === "bg") { this._nc = false; return this._draw(true); } return this._ntfAct(d.ntf); }
+    if (d.h3d) {
+      if (d.h3d === "editor") { if (this._admin()) this._h3dOpenEditor(); }
+      else if (d.h3d === "retry") { this._neonP = null; this._neonErr = ""; this._last = null; this._draw(true); }
+      else if (d.h3d === "open") { const r = t.dataset.room, el = Object.values(this._h3el || {}).find((x) => x._chip === t); if (el) { el._roomId = null; try { el.requestUpdate(); } catch (er) {} } t.hidden = true; if (r) this._nav("room", { room: r }); }
+      return;
+    }
     if (d.more) { if (d.more === "bg" && e.composedPath()[0] !== t) return; this._more = d.more === "open"; return this._draw(true); }
     if (d.pers) { if (d.pers === "bg" && e.composedPath()[0] !== t) return; this._pers = d.pers === "open"; if (this._pers) this._more = false; return this._draw(true); }
     if (d.pb) {
@@ -1503,6 +1553,9 @@ class QuintDashboard extends HTMLElement {
       t.value = ""; return;
     }
     if (adm && d.ta !== undefined) { this._c.tileAlpha = +t.value; this._applyTa(); this._save(); this._draw(true); return; }
+    if (adm && d.h3txt) { this._sact("h3d", d.h3txt + "|" + t.value); return; }
+    if (adm && d.h3sel) { this._sact("h3d", d.h3sel + "|" + t.value); return; }
+    if (adm && d.h3acc !== undefined) { if (/^#[0-9a-f]{6}$/i.test(t.value)) (this._c.h3d = this._c.h3d || {}).accent = t.value; this._save(); this._draw(true); return; }
     if (adm && d.bg) { this._save(); return; }
     if (adm && d.wn !== undefined) { const w = (this._c.wall = this._c.wall || {}); w.n = Math.max(1, Math.min(32, +t.value || 4)); this._save(); this._draw(true); return; }
     if (adm && d.cred !== undefined) { this._c.credit = t.value.trim().slice(0, 30); this._save(); this._draw(true); return; }
@@ -1558,19 +1611,19 @@ class QuintDashboard extends HTMLElement {
     if (this._admin()) { this._c.order[ctx] = list; this._save(); return; }
     try { const o = this._lo(); o[ctx] = list; localStorage.setItem("quint_ord", JSON.stringify(o)); } catch (e) { this._toast("Not enough space to save the arrangement"); }
   }
-  _hbKeys() { return ["clock", ...(this._c.noScenes ? [] : ["scenes"])]; }   // the greeting is plain text at the top; the weather lives inside the clock tile
+  _hbKeys() { return [...(this._h3dHome() ? ["house"] : []), "clock", ...(this._c.noScenes ? [] : ["scenes"])]; }   // the greeting is plain text at the top; the weather lives inside the clock tile
   _hbOrder() {
     let o = null;
     if (!this._admin()) { try { const l = JSON.parse(localStorage.getItem("quint_hbo") || "null"); if (Array.isArray(l)) o = l; } catch (e) {} }
     if (!o) o = Array.isArray(this._c.hbOrder) ? this._c.hbOrder : [];
-    const keys = this._hbKeys(), r = (k) => { const i = o.indexOf(k); return i < 0 ? 1000 + keys.indexOf(k) : i; };
+    const keys = this._hbKeys(), r = (k) => { const i = o.indexOf(k); return i < 0 ? (k === "house" ? -1 : 1000 + keys.indexOf(k)) : i; };
     return keys.slice().sort((a, b) => r(a) - r(b));
   }
   /* ---------- home layout: every item sits in the left or the right area and can be dragged anywhere ---------- */
   _hItems() {
     const adm = this._admin(), c = this._c;
     const cards = this._sort("home:cards", (c.custom.home || []).map((it, i) => ({ it, i })).filter((x) => adm || !x.it.off), (x) => "c:" + (x.it.uid || "i" + x.i));
-    return { b: this._hbOrder().map((k) => "b:" + k), s: this._svcsHome().map((k) => "s:" + k), c: cards.map((x) => "c:" + (x.it.uid || "i" + x.i)) };
+    return { b: this._hbOrder().map((k) => "b:" + k), s: this._svcsHome().filter((k) => k !== "house").map((k) => "s:" + k), c: cards.map((x) => "c:" + (x.it.uid || "i" + x.i)) };
   }
   _hlayStored() {
     const ok = (o) => (Array.isArray(o) ? o : o && Array.isArray(o.l) && Array.isArray(o.r) ? [...o.l, ...o.r] : null);   // older two-area layouts are joined into one list
@@ -1833,10 +1886,12 @@ class QuintDashboard extends HTMLElement {
     const ph = this.shadowRoot.querySelectorAll("[data-lv]"); if (!ph.length) return;
     this._lvc = this._lvc || {};
     for (const p of ph) {
-      const [r, i] = p.dataset.lv.split(":"), it = (this._c.custom[r] || [])[+i]; if (!it) continue;
+      const [r, i] = p.dataset.lv.split(":");
+      if (r === "house") { if (i === "edit") await this._mountH3Edit(p); else await this._mountH3(p, i); continue; }
+      const it = (this._c.custom[r] || [])[+i]; if (!it) continue;
       const k = JSON.stringify(it.config); let el = this._lvc[k];
       if (!el) { try { const hp = await window.loadCardHelpers(); el = await hp.createCardElement(it.config); } catch (e) { el = document.createElement("div"); el.textContent = "Card error: " + e.message; } this._lvc[k] = el; }
-      el.hass = this._h; if (el.parentNode !== p) p.appendChild(el);
+      el.hass = this._h; if (el.parentNode !== p) { while (p.firstChild) p.removeChild(p.firstChild); p.appendChild(el); }
     }
   }
 
@@ -2299,6 +2354,8 @@ class QuintDashboard extends HTMLElement {
   _scAct(a, v) {
     const find = (key) => { const [k, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)]; return this._myScenes().find((s) => s.sc === k && s.id === id); };
     if (a === "run") { const s = find(v); if (s) this._applyScene(s); return; }
+    if (a === "h3v") { try { localStorage.setItem("quint_h3dv", v === "3d" ? "3d" : "tiles"); } catch (e) {} this._last = null; return this._draw(true); }
+    if (a === "h3") { try { if (v === "1") localStorage.removeItem("quint_h3d"); else localStorage.setItem("quint_h3d", "0"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "ntfd") {
       try {
         if (!v) localStorage.removeItem("quint_ntf");
@@ -2429,7 +2486,7 @@ class QuintDashboard extends HTMLElement {
   _bento(k) { const r = this._bentoOne(k); return (Array.isArray(r) ? r : [r]).map((p) => ({ ...p, h: p.h.replace(/^<div /, `<div data-sk="${this._esc(k)}" data-hi="s:${this._esc(k)}" `) })); }
   _bentoOne(k) {
     const c = this._c, H = this._h.states, st = (i) => H[i].state, S = SV[k], go = this._tileGo(k), E = (t) => this._esc(t), tiles = c.tiles || {};
-    if (k === "camwall") return [];
+    if (k === "camwall" || k === "house") return [];
     if (k === "clock") return { h: `<div class="bc ctk" data-id="b:clock"><div class="bh" style="cursor:default"><span>${S.n}</span></div>${this._clockBlock("tl")}<div class="dt">${E(new Date().toLocaleDateString((this._h.locale && this._h.locale.language) || undefined, { weekday: "long", day: "numeric", month: "long" }))}</div></div>`, w: 3 };
     if (k === "automations") return { h: this._autoCard(false), w: 3.2 };
     if (k === "intercom") return this._icList().map((ic) => ({ h: this._icCard(ic, false), w: 4.4 }));
@@ -2518,6 +2575,7 @@ class QuintDashboard extends HTMLElement {
     const c = this._c, hr = new Date().getHours(), g = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening";
     const who = c.name || (this._h.user && this._h.user.name) || "", L = this._svcsHome(), wx = c.noWeather ? null : this._wx(), sc = c.noScenes ? [] : this._scenes(), E = (t) => this._esc(t);
     const date = new Date().toLocaleDateString((this._h.locale && this._h.locale.language) || undefined, { weekday: "long", day: "numeric", month: "long" });
+    if (this._h3dFull()) return this._homeFull(g, who, date);
     const scBtn = (s) => {
       if (s.ha) return `<div class="scw" data-id="sc:${E(s.key)}"><button class="scb ${s.on ? "on" : ""}" data-act="scene.turn_on" data-e="${s.ha}"><i></i><span>${E(s.nm)}</span></button></div>`;
       return `<div class="scw" data-id="sc:${E(s.key)}"><button class="scb ${s.on ? "on" : ""}" data-sc="run|${E(s.key)}"><i></i><span>${E(s.nm)}</span></button></div>`;
@@ -2526,11 +2584,12 @@ class QuintDashboard extends HTMLElement {
     const tileB = {
       clock: { h: `<div class="ckr">${c.noClock ? "" : this._clockBlock("tl")}<div class="ckd"><div class="dt">${E(date)}</div>${wx ? `<div class="wx">${wx.ic}<span>${wx.t}</span></div>` : ""}</div></div>`, w: 1.9 },
       scenes: { h: scn, w: 1.6 + Math.ceil(sc.length / 2) * 0.9 },
+      house: { h: `<div class="bh h3h"><span>3D house</span><button class="bs" data-go='{"p":"house"}' title="Open full page">⤢</button></div>${this._h3dBox("home")}`, w: 1.2 + (+this._h3d().height || 360) / 150 },
     };
     const homeIdx = {}; (c.custom.home || []).forEach((it, i) => { homeIdx["c:" + (it.uid || "i" + i)] = { it, i }; });
     const partsOf = (key) => {
       const t = key.slice(2);
-      if (key[0] === "b") return [{ h: `<div class="bc hbt" data-hi="${key}" data-id="bt:${t}">${tileB[t].h}</div>`, w: tileB[t].w, wide: false }];
+      if (key[0] === "b") return [{ h: `<div class="bc hbt ${t === "house" ? "h3b" : ""}" data-hi="${key}" data-id="bt:${t}">${tileB[t].h}</div>`, w: tileB[t].w, wide: false }];
       if (key[0] === "s") return this._bento(t);
       const x = homeIdx[key]; return x ? [{ h: this._ccHtml("home", x.it, x.i, true), w: 2.6, wide: false }] : [];
     };
@@ -2548,8 +2607,15 @@ class QuintDashboard extends HTMLElement {
     flush();
     if (!parts.length) bento = phone ? "" : '<div class="bc">Nothing to show yet.</div>';
     const add = adm ? `<div class="grid addg"><div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div></div>` : "";
-    if (phone) return this._homePhone({ g: g + (who ? ", " + E(who) : ""), date, sc, bento: bento + add, hasFav: parts.length > 0 || adm, cr });
-    return `<div class="home"><div class="hh">${this._brand()}</div><div class="hgr gr">${g}${who ? ", " + E(who) : ""}</div><div class="hall" data-hz="a">${bento}${add}</div>${cr ? `<div class="crm">${cr}</div>` : ""}</div>`;
+    if (phone) return this._homePhone({ house: this._h3dHome() ? this._h3dBox("phone") : "", g: g + (who ? ", " + E(who) : ""), date, sc, bento: bento + add, hasFav: parts.length > 0 || adm, cr });
+    return `<div class="home"><div class="hh">${this._brand()}</div><div class="hgr gr">${g}${who ? ", " + E(who) : ""}</div>${this._h3dSwitch() ? `<div class="h3swr">${this._h3dSwitch()}</div>` : ""}<div class="hall" data-hz="a">${bento}${add}</div>${cr ? `<div class="crm">${cr}</div>` : ""}</div>`;
+  }
+  /* the Home page as the 3D house: a slim line (greeting, time, weather, switch) above the house, which fills the rest */
+  _homeFull(g, who, date) {
+    const c = this._c, E = (t) => this._esc(t), phone = this.getAttribute("data-dev") === "phone", greet = g + (who ? ", " + E(who) : "");
+    if (phone) return this._homePhone({ houseFull: this._h3dBox("pfull"), sw: this._h3dSwitch(), g: greet, date, sc: c.noScenes ? [] : this._scenes(), bento: "", hasFav: false, cr: this._credit() });
+    const wx = c.noWeather ? null : this._wx();
+    return `<div class="home h3full"><div class="hh">${this._brand()}</div><div class="h3top"><div class="hgr gr">${greet}</div><div class="h3meta">${c.noClock ? "" : '<span class="tm">@@T@@</span>'}<span>${E(date)}</span>${wx ? `<span class="wx">${wx.ic}<span>${wx.t}</span></span>` : ""}</div>${this._h3dSwitch()}</div>${this._h3dBox("full")}</div>`;
   }
   _wxIcon(st) { return st === "sunny" ? SUN_I : st === "clear-night" ? MOON_I : st === "partlycloudy" ? PART_I : ["rainy", "pouring", "lightning-rainy", "snowy-rainy", "lightning", "hail"].includes(st) ? RAIN_I : CLOUD_I; }
   _fcast(id) {
@@ -2583,7 +2649,8 @@ class QuintDashboard extends HTMLElement {
     if (!(c.noRooms || !this._rooms().length)) mt.push(tl("room", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", `${this._rooms().length} rooms`));
     this._svcs().forEach((k) => { const n = k === "lights" ? this._ents("lights").filter((i) => H[i].state === "on").length : 0; mt.push(tl(k, this._tileGo(k), SV[k].i, SV[k].n, k === "lights" && n ? n + " on" : "")); });
     const sys = [tl("settings", `data-go='{"p":"settings"}'`, GEAR_I, "Settings", ""), tl("bg", `data-pers="open"`, PALETTE_I, "Background", "")];
-    return `<div class="home phh"><div class="phero" data-id="ph:hero"><div class="hgr2">${o.g}</div>${hero}${clk}</div>${scn}<div class="psec"><span>Menu</span></div><div class="ptg">${mt.join("")}</div><div class="psep"></div><div class="ptg sys">${sys.join("")}</div>${o.hasFav ? `<div class="psec"><span>Favourites</span></div><div class="hall" data-hz="a">${o.bento}</div>` : ""}${o.cr ? `<div class="crm">${o.cr}</div>` : ""}</div>`;
+    if (o.houseFull) hero = "";
+    return `<div class="home phh"><div class="phero ${o.houseFull ? "ph3" : ""}" data-id="ph:hero"><div class="hgr2">${o.g}</div>${hero}${clk}</div>${o.houseFull ? `${o.sw ? `<div class="h3swr">${o.sw}</div>` : ""}<div class="phouse full">${o.houseFull}</div>` : ""}${o.house ? `<div class="psec"><span>3D house</span></div><div class="phouse">${o.house}</div>` : ""}${scn}<div class="psec"><span>Menu</span></div><div class="ptg">${mt.join("")}</div><div class="psep"></div><div class="ptg sys">${sys.join("")}</div>${o.hasFav ? `<div class="psec"><span>Favourites</span></div><div class="hall" data-hz="a">${o.bento}</div>` : ""}${o.cr ? `<div class="crm">${o.cr}</div>` : ""}</div>`;
   }
   _roomsGrid() {
     const rs = this._rooms(), H = this._h.states, E = (t) => this._esc(t), L = this._svcs(), fl = this._c.floors || [];
@@ -2761,6 +2828,187 @@ class QuintDashboard extends HTMLElement {
   _list(s) {
     return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(calc(${s === "cameras" ? 320 : 200}px * var(--tm,1)),1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
   }
+  /* ---------- 3D house: NeonPlan 3D (carried inside Quint) as the Home page, a page of its own and the plan editor ---------- */
+  _h3d() {
+    const o = { ...H3D_DEF, ...((this._c && this._c.h3d) || {}) };
+    o.home = o.home === true ? "block" : o.home === false ? "off" : ["off", "block", "full"].includes(o.home) ? o.home : "full";
+    return o;
+  }
+  _h3dInst() {
+    const n = this._neon || {}, h = this._h;
+    if (n.mode === "embedded") return !!n.url;
+    if (n.mode === "external") return true;
+    if (n.mode === "error") return false;
+    return !!((h && h.config && (h.config.components || []).includes("neonplan3d")) || (typeof customElements !== "undefined" && customElements.get("neonplan3d-card")));
+  }
+  _neonHave() { return typeof customElements !== "undefined" && !!customElements.get("neonplan3d-card"); }
+  /* loads the 3D bundle once (it brings the 3D card, the plan editor and the panel); resolves true when the card exists */
+  _neonLoad() {
+    if (this._neonP) return this._neonP;
+    const n = this._neon || {};
+    if (this._neonHave()) return (this._neonP = Promise.resolve(true));
+    if (n.mode === "embedded" && n.url) {
+      this._neonP = import(/* @vite-ignore */ n.url).then(() => this._neonHave()).catch((e) => { this._neonErr = (e && e.message) || String(e); return false; });
+    } else if (n.mode === "error") {
+      this._neonErr = n.error || "";
+      this._neonP = Promise.resolve(false);
+    } else {
+      this._neonP = Promise.race([customElements.whenDefined("neonplan3d-card").then(() => true), new Promise((r) => setTimeout(() => r(this._neonHave()), 15000))]);
+    }
+    return this._neonP;
+  }
+  _h3dDev() { try { return localStorage.getItem("quint_h3d") !== "0"; } catch (e) { return true; } }
+  _h3dShow() { const o = this._h3d(); return !!o.show && this._h3dDev() && (this._h3dInst() || this._admin()); }
+  /* what the Home page shows: "off" (tiles), "block" (the house above the tiles) or "full" (the house is the Home page) */
+  _h3dMode() {
+    if (!this._h3dShow()) return "off";
+    const o = this._h3d();
+    if (o.switch) { try { const v = localStorage.getItem("quint_h3dv"); if (v === "3d") return "full"; if (v === "tiles") return "off"; } catch (e) {} }
+    return o.home;
+  }
+  _h3dHome() { return this._h3dMode() === "block"; }
+  _h3dFull() { return this._h3dMode() === "full"; }
+  _h3dPage() { return this._h3dShow() && !!this._h3d().page && !this._h3dFull(); }
+  /* the Pro add-ons the NeonPlan 3D installation has unlocked (anyone may ask; it decides the "auto" switches) */
+  _h3dPro() {
+    if (this._h3pro) return this._h3pro;
+    if (!this._h3proBusy && this._h && this._h.callWS && this._h3dInst()) {
+      this._h3proBusy = true;
+      Promise.resolve(this._h.callWS({ type: "neonplan3d/packs/list" })).then((r) => {
+        const s = new Set(); ((r && r.packs) || []).forEach((p) => (p.features || []).forEach((f) => s.add(f)));
+        this._h3pro = s; this._last = null; this._draw(true);
+      }).catch(() => { this._h3pro = new Set(); });
+    }
+    return new Set();
+  }
+  /* the plan (floors and rooms) as the 3D editor saved it: used to open the Quint room of a tapped 3D room */
+  _h3dPlan(force) {
+    const t = Date.now();
+    if (this._h3pl && !force && t - this._h3pl.t < 120000) return this._h3pl.b;
+    if (!this._h3plBusy && this._h && this._h.callWS && this._h3dInst()) {
+      this._h3plBusy = true;
+      Promise.resolve(this._h.callWS({ type: "neonplan3d/building/get" })).then((r) => { this._h3pl = { t: Date.now(), b: (r && r.building) || null }; })
+        .catch(() => { this._h3pl = { t: Date.now(), b: null }; }).finally(() => { this._h3plBusy = false; if (this._v.p === "settings") { this._last = null; this._draw(true); } });
+    }
+    return this._h3pl ? this._h3pl.b : null;
+  }
+  _h3dZones() {
+    const b = this._h3dPlan(), out = [];
+    ((b && b.floors) || []).forEach((f) => { (f.rooms || []).forEach((r) => out.push({ id: r.id, name: r.name || "", area: r.area_id || "", floor: f.id, fname: f.name || "" })); (f.outdoor || f.areas || []).forEach((a) => { if (a && a.area_id) out.push({ id: a.id, name: a.name || "", area: a.area_id, floor: f.id, fname: f.name || "" }); }); });
+    return out;
+  }
+  /* the Quint room that belongs to a room of the 3D plan (same Home Assistant area, else the same name) */
+  _h3dQRoom(zid) {
+    const z = this._h3dZones().find((x) => x.id === zid), rs = this._rooms();
+    if (!z) return null;
+    const a = z.area && rs.find((r) => r.id === z.area), nm = (z.name || ((this._h.areas || {})[z.area] || {}).name || "").trim().toLowerCase();
+    return a || (nm && rs.find((r) => String(r.name || "").trim().toLowerCase() === nm)) || null;
+  }
+  _h3dCfg(ctx, p) {
+    const o = this._h3d(), pro = this._h3dPro(), PR = { time_travel: "time_travel", camera_wall: "camera_cockpit", director: "camera_cockpit" };
+    const b = (k) => (PR[k] && (o[k] === null || o[k] === undefined) ? pro.has(PR[k]) : !!o[k]);
+    const cfg = {
+      type: "custom:neonplan3d-card", theme: o.theme, quality: o.quality, walls: o.walls, roof: b("roof"), roof_fade: b("roof_fade"), room_names: b("room_names"), markers: o.markers, marker_size: o.marker_size,
+      marker_names: b("marker_names"), heatmap: o.heatmap, floor_stack: o.floor_stack, explode: b("explode"), floor_thumbs: b("floor_thumbs"), controls_side: o.controls_side, controls: b("controls"),
+      controls_hidden: b("controls_hidden"), central: b("central"), walk: b("walk"), camera_wall: b("camera_wall"), fullscreen_button: b("fullscreen_button"), scenes: b("scenes"), keep_view: b("keep_view"),
+      angle_lock: b("angle_lock"), stats: b("stats"), alerts: b("alerts"), alert_jump: b("alert_jump"), energy: b("energy"), household_card: b("household_card"), motion_trail: b("motion_trail"),
+      pets: b("pets"), ghost: b("ghost"), weather: b("weather"), time_travel: b("time_travel"), voice: b("voice"), director: b("director"), room_panel: true,
+    };
+    if (o.clock && o.clock !== "off") cfg.clock = o.clock;
+    if (o.flows === "on" || o.flows === "off") cfg.flows = o.flows === "on";
+    if (o.holograms === "on" || o.holograms === "off") cfg.holograms = o.holograms === "on";
+    if (cfg.time_travel && o.time_travel_range === "7d") cfg.time_travel_range = "7d";
+    if (/^#[0-9a-f]{6}$/i.test(o.accent || "")) cfg.accent = o.accent;
+    if (+o.idle_return > 0) { cfg.idle_return = +o.idle_return; if (o.idle_orbit) cfg.idle_orbit = true; }
+    if (o.night && o.night !== "off" && (o.night === "sun" || /^\d{2}:\d{2}-\d{2}:\d{2}$/.test(o.night))) cfg.night = o.night;
+    if (+o.controls_hide_after > 0) cfg.controls_hide_after = +o.controls_hide_after;
+    if (o.screen && String(o.screen).trim()) cfg.screen = String(o.screen).trim().slice(0, 60);
+    if (o.floor) cfg.floor = o.floor;
+    if (o.room) cfg.room = o.room;
+    if (ctx === "pfull" || ctx === "phone") cfg.controls_hidden = true;   // a phone is small: the house first, the buttons come back with the eye
+    cfg.height = this._h3dH(p, ctx);
+    return cfg;
+  }
+  /* the height of the 3D card in pixels: a fixed size in a block, the free screen below the top and above the menu bar otherwise */
+  _h3dH(p, ctx) {
+    const o = this._h3d(), hh = +o.height || 360, vh = this.clientHeight || (typeof innerHeight === "number" && innerHeight) || 800;
+    if (ctx === "home") return hh;
+    if (ctx === "phone") return Math.min(hh, 380);
+    if (ctx === "pfull") return Math.max(340, Math.min(Math.round(vh * 0.62), 640));
+    let top = 0; try { top = p.getBoundingClientRect().top - this.getBoundingClientRect().top + this.scrollTop; } catch (e) {}
+    const nav = this.shadowRoot && this.shadowRoot.querySelector("nav"), nh = nav ? nav.offsetHeight : 0;
+    let pb = 0; try { pb = parseFloat(getComputedStyle(p.parentElement).paddingBottom) || 0; } catch (e) {}
+    return Math.max(360, Math.round(vh - top - nh - pb - 4));
+  }
+  _h3dNeedsFit() {
+    const r = this.shadowRoot; if (!r || !this._h3el) return false;
+    for (const p of r.querySelectorAll('[data-lv^="house:"]')) {
+      const ctx = p.dataset.lv.split(":")[1], el = this._h3el[ctx]; if (!el || !el._qk || ctx === "edit" || ctx === "home" || ctx === "phone") continue;
+      try { if (Math.abs(this._h3dH(p, ctx) - JSON.parse(el._qk).height) > 24) return true; } catch (e) {}
+    }
+    return false;
+  }
+  _h3dBox(ctx) {
+    if (!this._h3dInst()) return `<div class="h3n"><b>The 3D house is not available</b><span>${this._esc((this._neon && this._neon.error) || "Restart Home Assistant after installing or updating Quint, then reload this page.")}</span></div>`;
+    return `<div class="h3d ${ctx}" data-lv="house:${ctx}"><div class="h3ld">Loading the 3D house…</div></div>`;
+  }
+  _housePage() { return `<div class="page housepg">${this._h3dBox("page")}</div>`; }
+  /* a switch between the 3D house and the tiles on Home (an admin choice: "Let people switch") */
+  _h3dSwitch() {
+    if (!this._h3d().switch || !this._h3dShow()) return "";
+    const full = this._h3dFull();
+    return `<div class="seg sm h3sw"><button class="${full ? "on" : ""}" data-sc="h3v|3d">3D house</button><button class="${full ? "" : "on"}" data-sc="h3v|tiles">Tiles</button></div>`;
+  }
+  /* one 3D card per place (Home, page, phone); it stays alive while its page is away, so coming back is instant */
+  async _mountH3(p, ctx) {
+    await this._neonLoad();
+    if (!p.isConnected) return;
+    if (!this._neonHave()) {
+      if (!p.querySelector(".h3n")) p.innerHTML = `<div class="h3n"><b>The 3D house could not be loaded</b><span>${this._esc(this._neonErr || "Restart Home Assistant after installing or updating Quint, then reload this page.")}</span><button class="sbtn" data-h3d="retry">Try again</button></div>`;
+      return;
+    }
+    this._h3el = this._h3el || {};
+    this._h3dPlan();   // the rooms of the plan, so a tapped 3D room finds its Quint room
+    const cfg = this._h3dCfg(ctx, p), key = JSON.stringify(cfg);
+    let el = this._h3el[ctx];
+    if (!el) { el = document.createElement("neonplan3d-card"); el._qk = ""; this._h3el[ctx] = el; this._h3Wire(el); }
+    if (el._qk !== key) { try { el.setConfig(cfg); el._qk = key; } catch (e) { p.innerHTML = `<div class="h3n"><b>3D house</b><span>${this._esc(e.message)}</span></div>`; return; } }
+    el.hass = this._h;
+    if (el.parentNode !== p) {
+      while (p.firstChild) p.removeChild(p.firstChild);
+      p.appendChild(el);
+      const chip = document.createElement("button"); chip.className = "h3chip"; chip.hidden = true; chip.setAttribute("data-h3d", "open"); p.appendChild(chip); el._chip = chip;
+    }
+  }
+  _h3Wire(el) {
+    el.addEventListener("room-tap", (e) => {
+      const id = e.detail && e.detail.roomId;
+      Promise.resolve(el.updateComplete).then(() => this._h3Room(el, id));
+    });
+    ["back", "floor-tap", "close"].forEach((ev) => el.addEventListener(ev, () => Promise.resolve(el.updateComplete).then(() => this._h3Room(el, el._roomId || null))));
+  }
+  /* a room of the 3D house was opened (or closed): open its Quint room page, or offer a button for it */
+  _h3Room(el, id) {
+    const chip = el._chip, open = !!id && el._roomId === id, q = open ? this._h3dQRoom(id) : null, tap = this._h3d().tap;
+    if (open && q && tap === "quint") { el._roomId = null; try { el.requestUpdate(); } catch (e) {} if (chip) chip.hidden = true; this._nav("room", { room: q.id }); return; }
+    if (!chip) return;
+    if (open && q && tap === "both") { chip.hidden = false; chip.dataset.room = q.id; chip.textContent = "Open " + q.name + " ›"; }
+    else { chip.hidden = true; delete chip.dataset.room; }
+  }
+  _h3dOpenEditor() { this._nav("h3edit"); }
+  /* the plan editor and all NeonPlan settings: the NeonPlan 3D panel inside Quint (admins) */
+  _h3editPage() {
+    return `<div class="h3e"><div class="h3eb"><button class="back" data-go='{"p":"settings","tab":"h3d"}'>‹ 3D house settings</button><span>Draw the house, place devices, packs, voice and everything else of NeonPlan 3D</span></div><div class="h3ep" data-lv="house:edit"><div class="h3ld">Loading the 3D editor…</div></div></div>`;
+  }
+  async _mountH3Edit(p) {
+    await this._neonLoad();
+    if (!p.isConnected) return;
+    if (!this._neonHave() || !customElements.get("neonplan3d-panel")) { p.innerHTML = `<div class="h3n"><b>The 3D editor could not be loaded</b><span>${this._esc(this._neonErr || "Restart Home Assistant after installing or updating Quint, then reload this page.")}</span><button class="sbtn" data-h3d="retry">Try again</button></div>`; return; }
+    let el = this._h3panel;
+    if (!el) { el = document.createElement("neonplan3d-panel"); this._h3panel = el; el.style.height = "100%"; el.narrow = this._narrow || false; el.panel = { config: {} }; }
+    el.hass = this._h;
+    if (el.parentNode !== p) { while (p.firstChild) p.removeChild(p.firstChild); p.appendChild(el); }
+  }
   _healthSub() { const h = this._health(); return h.off.length || h.bat.length ? [h.off.length ? h.off.length + " offline" : "", h.bat.length ? h.bat.length + " low battery" : ""].filter(Boolean).join(" · ") : "everything is fine"; }
   _health() {
     const S = this._h.states, c = this._c, off = [], bat = [], now = Date.now();
@@ -2782,7 +3030,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["ntf", "Notifications", "choose which alerts you see"], ...(this._look() ? [["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [])] : [["general", "General", "title, background, layout"], ["ntf", "Notifications", "alerts for everyone"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["adv", "Advanced", "auto-return, quiet hours, user limits"], ["health", "Health", this._healthSub()], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["ntf", "Notifications", "choose which alerts you see"], ...(this._look() ? [["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [])] : [["general", "General", "title, background, layout"], ["ntf", "Notifications", "alerts for everyone"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "room and visibility per device"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["h3d", "3D house", this._h3d().show ? "shown on Home" : "hidden"], ["adv", "Advanced", "auto-return, quiet hours, user limits"], ["health", "Health", this._healthSub()], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     const tsSeg = (cur, attr, none) => `<div class="seg sm tsz">${Object.entries(TSIZES).map(([k, t]) => `<button class="${cur === k ? "on" : ""}" ${attr}="${attr === "data-s" ? "tsz|" : "tsd|"}${k}">${t.n}</button>`).join("")}${none ? `<button ${attr}="tsd|">Same as shared</button>` : ""}</div>`;
     const SCI = [["aurora", "Aurora", "Soft moving colours with a big clock. Shows home status and notifications"], ["night", "Starry night", "Dark sky with a moon and a dim clock. Easy on the eyes at night"], ["analog", "Classic analog", "A large analog clock with the date, home status and notifications"], ["frame", "Photo frame", "Your own saver photo slowly moving, with the time on top"], ["home", "Home overview", "The essentials at a glance: time, security, lights, temperature, music and notifications"]];
@@ -2814,6 +3062,7 @@ class QuintDashboard extends HTMLElement {
       const ckSeg = `<div class="seg sm" style="flex-wrap:wrap">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${this._clockStyle() === k ? "on" : ""}" data-sc="ckd|${k}">${n}</button>`).join("")}${mk ? '<button data-sc="ckd|">Same as shared</button>' : ""}</div>`;
       const pers = this._scrPers();
       body = sec("Screen", pers ? "this device only" : "using the shared setting", scrRows(this._scr(), "data-sc") + (pers ? row("Shared setting", "forget the choices on this device", '<button class="sbtn" data-sc="scrd|">Same as shared</button>') : "")) +
+        (this._h3d().show ? sec("3D house", "this device only", row("Show the 3D house", "hide it on this phone or panel if you do not want it here", tg(this._h3dDev(), `data-sc="h3|${this._h3dDev() ? 0 : 1}"`))) : "") +
         sec("Clock", mk ? "this device only" : "using the shared clock", row("Clock style", "digital numbers or an analog face", ckSeg)) + sec("Tile size", mine && TSIZES[mine] ? "this device only" : "using the shared size", row("Size on this device", "extra large, large, medium, small or extra small tiles and cards", tsSeg(this._ts(), "data-sc", !!(mine && TSIZES[mine])))) +
         (adm ? "" : sec("Arrangement", "hold any item on the home page for 2 seconds, then drag it anywhere. On a phone: hold, then tap where it should go",
         row("Your own layout", "the home page is arranged on this device only", '<button class="sbtn" data-sc="ordreset|">Back to the shared order</button>'))) +
@@ -2842,6 +3091,80 @@ class QuintDashboard extends HTMLElement {
       sec("This device", "saved on this device only",
         row("Screen layout", `Detected: ${this._auto || "–"} · ${this._w || 0}px wide`, `<select data-devsel="1">${[["auto", "Auto"], ["phone", "Phone"], ["tablet", "Tablet"], ["desktop", "Desktop / wall panel"]].map(([v, l]) => `<option value="${v}" ${dv === v ? "selected" : ""}>${l}</option>`).join("")}</select>`) +
         row("Fullscreen", "hide the Home Assistant sidebar", tg(localStorage.getItem("quint_full") === "1", 'data-tog="full:0"')));
+    } else if (tab === "h3d") {
+      const o = this._h3d(), n = this._neon || {}, inst = this._h3dInst(), pro = this._h3dPro(), zones = this._h3dZones(), PR = { time_travel: "time_travel", camera_wall: "camera_cockpit", director: "camera_cockpit" };
+      const on = (k) => (PR[k] && (o[k] === null || o[k] === undefined) ? pro.has(PR[k]) : !!o[k]);
+      const B = (k) => tg(on(k), `data-s="h3d|${k}|${on(k) ? 0 : 1}"`);
+      const sg = (k, labels) => `<div class="seg sm" style="flex-wrap:wrap">${H3D_OPT[k].map((v, i) => `<button class="${String(o[k]) === String(v) ? "on" : ""}" data-s="h3d|${k}|${v}">${labels[i]}</button>`).join("")}</div>`;
+      const status = n.mode === "embedded" ? "NeonPlan 3D " + E(n.version || "") + " is built in" : n.mode === "external" ? "using the separately installed NeonPlan 3D" : n.mode === "error" ? "could not start" : "not detected";
+      const rooms = this._rooms(), lost = zones.filter((z) => !this._h3dQRoom(z.id)), floors = (this._h3dPlan() || {}).floors || [];
+      const sel = (k, list, cur) => `<select data-h3sel="${k}"><option value="">${k === "floor" ? "All floors" : "Start with the whole house"}</option>${list.map((x) => `<option value="${E(x.id)}" ${x.id === cur ? "selected" : ""}>${E(x.name || x.id)}</option>`).join("")}</select>`;
+      const pc = (k, label) => (PR[k] && !pro.has(PR[k]) ? `${label} <small style="color:var(--warn)">Pro add-on</small>` : label);
+      body = sec("3D house", status,
+          (n.mode === "error" ? `<div class="lbl" style="padding:8px 4px;color:var(--bad)">${E(n.error || "The 3D part could not start. Check the Home Assistant log, then restart.")}</div>` : "") +
+          row("Show the 3D house", "switch it off to hide the 3D house for everyone; every 3D setting below stays as it is", B("show")) +
+          row("The Home page shows", "swap between the classic tiles and the 3D house at any time", sg("home", ["Tiles", "3D house", "3D house + tiles"])) +
+          row("Let people switch", "adds a “3D house / Tiles” switch on Home; each person's choice is kept on their own device", B("switch")) +
+          row("When a room is tapped", "Quint room page: its devices as usual. 3D room panel: NeonPlan's own list of lights, blinds and cameras. Panel + button: the panel, with a button to the Quint room", sg("tap", ["Quint room page", "3D room panel", "Panel + button"])) +
+          row("Own page in the menu", "a full-screen 3D house page with its own menu tile (when Home is not already the 3D house)", B("page")) +
+          (o.home === "block" ? row("Height on Home", "how tall the 3D house is above the tiles", sg("height", ["Small", "Medium", "Large", "Extra large", "Huge"])) : "")) +
+        sec("Plan and devices", "draw the house once; its rooms and devices are the same Home Assistant ones Quint already uses",
+          row("3D editor and NeonPlan settings", "draw floors, rooms, walls, doors, windows, furniture and roof, place and link lamps, blinds, cameras and every other device, packs, voice, locating, backup and the rest of NeonPlan 3D", `<button class="sbtn pri2" data-h3d="editor" ${inst ? "" : "disabled"}>Open the 3D editor</button>`) +
+          row("Rooms linked to Quint", zones.length ? (lost.length ? "Not linked yet: " + E(lost.map((z) => z.name || z.id).join(", ")) + ". Give these rooms a Home Assistant area (or the same name as a Quint room) in the 3D editor." : "every room of the 3D plan opens its Quint room") : "draw your rooms in the 3D editor first", `<b>${zones.length - lost.length} of ${zones.length}</b>`) +
+          row("Quint rooms", "the rooms Quint shows on the Rooms page", `<b>${rooms.length}</b>`)) +
+        sec("Look", "how the house is drawn",
+          row("Theme", "Auto is day while the sun is up and neon after sunset", sg("theme", ["Auto", "Neon", "Blueprint", "Day"])) +
+          row("Accent colour", "for the neon look and its chips", `<input type="color" value="${/^#[0-9a-f]{6}$/i.test(o.accent) ? o.accent : "#00e5ff"}" data-h3acc="1" style="width:56px;height:40px;padding:2px">${o.accent ? '<button class="sbtn" data-s="h3d|accent|">Standard</button>' : ""}`) +
+          row("Picture quality", "Auto picks a light level on weak tablets", sg("quality", ["Auto", "Low", "High"])) +
+          row("Roof", "show the roof on the house", B("roof")) +
+          row("Roof fades when you zoom in", "off keeps the roof on the house", B("roof_fade")) +
+          row("Walls", "tall walls, or cut low so you can look into the rooms", sg("walls", ["Tall", "Cut"])) +
+          row("Floors", "apart (exploded) or stacked in the house view", B("explode")) +
+          row("Floor below an open floor", "dimmed, fully shown, or hidden", sg("floor_stack", ["Dimmed", "Stacked", "Hidden"])) +
+          row("Floor pictures", "small pictures to switch between floors", B("floor_thumbs")) +
+          row("Room names", "write the room names in 3D", B("room_names")) +
+          row("Device symbols", "which devices get a symbol in the house", sg("markers", ["None", "Important", "All", "Open room"])) +
+          row("Symbol size", "", sg("marker_size", ["Small", "Normal", "Large"])) +
+          row("Device names", "write the name under each symbol", B("marker_names")) +
+          row("Heatmap", "colour the rooms by a value", sg("heatmap", ["None", "Temperature", "Humidity", "CO₂"])) +
+          row("Clock in the view", "date and time in a corner", sg("clock", ["Off", "↖", "↗", "↙", "↘"])) +
+          row("Buttons side", "floor pictures, star, search and eye", sg("controls_side", ["Left", "Right"]))) +
+        sec("Buttons and tools", "what people can use on the 3D house",
+          row("Switches", "walls, floors and heatmap switches at the bottom", B("controls")) +
+          row("Star menu", "all lights and blinds, favourites and scenes", B("central")) +
+          row("Walk through the house", "a walk button, at eye level", B("walk")) +
+          row("Scene chips", "scene and script buttons of the selected room", B("scenes")) +
+          row(pc("camera_wall", "Camera wall button"), "every camera's live picture", B("camera_wall")) +
+          row("Full screen button", "", B("fullscreen_button")) +
+          row("Keep the view when changing floors", "", B("keep_view")) +
+          row("3D lock", "the angle stays fixed, a drag moves the view (a wall tablet with children around)", B("angle_lock")) +
+          row("Start clean", "hide the buttons until the eye button is tapped", B("controls_hidden")) +
+          row("Hide buttons after", "buttons fade away after this long without a touch", sg("controls_hide_after", ["Never", "5 s", "15 s", "30 s"])) +
+          row("Frame rate display", "for testing on weak tablets", B("stats"))) +
+        sec("Live information", "what the house shows by itself",
+          row("Warnings", "smoke, gas, water, alarm and open windows in the rain pulse in their room", B("alerts")) +
+          row("Jump to a warning", "open the room of a new warning", B("alert_jump")) +
+          row("Energy values", "solar, battery and grid at the top", B("energy")) +
+          row("Power flow lines", "Auto lets the card keep its own switch", sg("flows", ["Auto", "On", "Off"])) +
+          row("Device holograms", "day curves and values above devices (Energy add-on)", sg("holograms", ["Auto", "On", "Off"])) +
+          row("Weather outside", "rain, snow, clouds, sun and moon around the house (Weather add-on)", B("weather")) +
+          row("Household card", "bins, post and appliances (Household add-on)", B("household_card")) +
+          row("Motion trail", "where motion was reported in the last half hour", B("motion_trail")) +
+          row("Pets", "the animals you set up in the 3D editor", B("pets")) +
+          row("Halloween ghost", "only with that fun pack", B("ghost"))) +
+        sec("Time travel, voice and director", "NeonPlan extras",
+          row(pc("time_travel", "Time travel"), "replay the last day or week in the house", B("time_travel")) +
+          (on("time_travel") ? row("Time travel range", "", sg("time_travel_range", ["24 hours", "7 days"])) : "") +
+          row("Voice control", "a microphone button: “Show the living room”", B("voice")) +
+          row(pc("director", "Live director"), "shows by itself what happens, such as the doorbell", B("director")) +
+          row("Screen name", "for Assist and the neonplan3d.ask service: a sentence that names this screen is only for it", `<input type="text" data-h3txt="screen" value="${E(o.screen || "")}" placeholder="e.g. hall" style="width:150px">`)) +
+        sec("Wall tablet", "kiosk behaviour",
+          row("Back to the start view", "after this long without a touch", sg("idle_return", ["Never", "30 s", "1 min", "2 min", "5 min"])) +
+          (+o.idle_return > 0 ? row("Slow turn", "after returning, turn the house slowly until the next touch", B("idle_orbit")) : "") +
+          row("Dim at night", "Off, when the sun is down, or between two times", sg("night", ["Off", "Sun down"]) + `<input type="text" data-h3txt="night" value="${/^\d/.test(o.night) ? E(o.night) : ""}" placeholder="22:00-06:00" style="width:120px">`) +
+          row("Show only this floor", "a display for one floor", sel("floor", floors, o.floor)) +
+          row("Start in this room", "a display for one room (the room's own 3D view)", sel("room", zones, o.room))) +
+        sec("Reset", "", row("Standard 3D settings", "puts every look and tool setting back to the standard (the Home choice stays)", `<button class="sbtn" data-s="h3d|reset|1">Restore</button>`));
     } else if (tab === "adv") {
       const q = c.quiet || {}, ha = +(c.homeAfter || 0), seg = (list, on, att) => `<div class="seg sm" style="flex-wrap:wrap">${list.map(([v, n]) => `<button class="${String(on) === String(v) ? "on" : ""}" data-s="adv|${att}|${v}">${n}</button>`).join("")}</div>`;
       body = sec("Screen behaviour", "for every user and device", row("Go back to Home", "when nobody touches the screen for a while, return to the Home page. Handy for wall panels and shared phones", seg([[0, "Never"], [1, "1 min"], [2, "2 min"], [5, "5 min"], [10, "10 min"], [30, "30 min"]], ha, "home"))) +
@@ -3051,7 +3374,8 @@ class QuintDashboard extends HTMLElement {
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "intercom" && !this._icOn()) this._v = { p: "home" };
-    if (this._perm()) { const v = this._v; if ((["cameras", "security", "intercom", "automations", "camwall"].includes(v.p) && !this._svOk(v.p)) || (v.p === "rooms" && v.svc && !this._svOk(v.svc)) || (v.p === "room" && !this._svOk("rooms"))) this._v = { p: "home" }; }
+    if (this._v.p === "h3edit" && !this._admin()) this._v = { p: "home" };
+    if (this._perm()) { const v = this._v; if ((["cameras", "security", "intercom", "automations", "camwall", "house"].includes(v.p) && !this._svOk(v.p)) || (v.p === "rooms" && v.svc && !this._svOk(v.svc)) || (v.p === "room" && !this._svOk("rooms"))) this._v = { p: "home" }; }
     const c = this._c;
     this._track = new Set(Object.keys(this._h.states).filter((i) => this._svcOf(i) || i.startsWith("scene.") || i.startsWith("weather.") || i === "sun.sun"));
     Object.values(c.custom).flat().forEach((x) => x.entity && this._track.add(x.entity));
@@ -3066,8 +3390,8 @@ class QuintDashboard extends HTMLElement {
     const p = this._v.p, V = this._v;
     if (this._cam && !(this._h.states[this._cam] && this._h.states[this._cam].attributes.entity_picture)) this._cam = null;
     this._roomBg = "";
-    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : p === "intercom" ? this._icPage() : p === "automations" ? this._autoPage() : p === "camwall" ? this._wallPage() : this._settings();
-    if (p !== "home" && p !== "room") body = `<div class="page${p === "camwall" ? " wallpage" : ""}">${body}</div>`;
+    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : p === "intercom" ? this._icPage() : p === "automations" ? this._autoPage() : p === "camwall" ? this._wallPage() : p === "house" ? this._housePage() : p === "h3edit" ? this._h3editPage() : this._settings();
+    if (p !== "home" && p !== "room" && p !== "house" && p !== "h3edit") body = `<div class="page${p === "camwall" ? " wallpage" : ""}">${body}</div>`;
     if ((this._roomBg || "") !== (this._rbgOn || "")) {
       this._rbgOn = this._roomBg || "";
       this._applyBg();
@@ -3093,8 +3417,8 @@ class QuintDashboard extends HTMLElement {
     const cr = this._credit(), adm = this._admin();
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="bgl"><i></i></div><div class="app">${phone ? pbar : `<button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button>`}<main class="${changed ? "anim" : ""}">${body}</main>${phone ? "" : `<nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav>`}</div>${more}${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
-    if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); return; }
+    const html = `<div class="bgl"><i></i></div><div class="app${p === "h3edit" ? " ed" : ""}">${phone ? pbar : `<button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button>`}<main class="${changed ? "anim" : ""}">${body}</main>${phone ? "" : `<nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav>`}</div>${more}${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
+    if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); Object.values(this._h3el || {}).forEach((e) => (e.hass = this._h)); if (this._h3panel) this._h3panel.hass = this._h; if (this._h3dNeedsFit()) this._mountLv(); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
     tpl.innerHTML = html.replaceAll("@@T@@", this._time()).replaceAll("@@C@@", this._clockHtml());
