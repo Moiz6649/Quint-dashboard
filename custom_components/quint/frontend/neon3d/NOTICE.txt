@@ -1,0 +1,3 @@
+Quinteca 3D is based on NeonPlan 3D by Mastershort (https://github.com/Mastershort/neonplan3d),
+used under the MIT licence (see LICENSE). The display name was changed to Quinteca; the original
+copyright notice stays in LICENSE.

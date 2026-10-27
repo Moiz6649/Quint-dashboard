@@ -268,12 +268,12 @@ async def async_locate(
 async def ring(hass: HomeAssistant, notify: str, lang: str) -> None:
     """A loud notification through the Home Assistant app (critical on iPhone, alarm channel on Android)."""
     service = notify.removeprefix("notify.")
-    message = "NeonPlan sucht dich 🔔" if lang == "de" else "NeonPlan is looking for you 🔔"
+    message = "Quinteca sucht dich 🔔" if lang == "de" else "Quinteca is looking for you 🔔"
     await hass.services.async_call(
         "notify",
         service,
         {
-            "title": "NeonPlan",
+            "title": "Quinteca",
             "message": message,
             "data": {
                 "push": {"sound": {"name": "default", "critical": 1, "volume": 1.0}},
