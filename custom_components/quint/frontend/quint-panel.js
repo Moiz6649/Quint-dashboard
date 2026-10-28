@@ -23,7 +23,7 @@ const H3D_DEF = {
   time_travel: null, time_travel_range: "24h", voice: true, director: null, screen: "",
   idle_return: 0, idle_orbit: false, night: "off", floor: "", room: "",
   sky: "live", clouds: true, stars: true, shadow: "soft", haze: true, vignette: false, sun_glow: true,
-  layout: "immersive", bar: "open", bar_hide: 0, view: "live",
+  layout: "immersive", bar: "open", bar_hide: 0, view: "live", cam: "default", fx: "live",
 };
 const H3D_OPT = {
   home: ["off", "full", "block"], tap: ["quint", "panel", "both"], height: [280, 360, 440, 520, 640], theme: ["auto", "neon", "blueprint", "day"], quality: ["auto", "low", "high"], walls: ["auto", "cut"],
@@ -31,7 +31,7 @@ const H3D_OPT = {
   clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
   time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
   sky: ["off", "live", "day", "dusk", "night"], shadow: ["off", "soft", "strong"],
-  layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], view: ["live", "picture"],
+  layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], view: ["live", "picture", "auto"], cam: ["default", "top", "corner", "dollhouse", "front", "side"], fx: ["live", "off"],
 };
 // the realism presets: what they switch (the rest of the look stays as the admin set it)
 const H3D_REAL = {
@@ -104,7 +104,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.40.0";
+const VER = "1.41.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -650,6 +650,14 @@ input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 
 .pic-room.lit{fill:rgba(255,196,110,.15)}
 .pic-room:hover{fill:rgba(255,255,255,.08)}
 .pic-room.sel{fill:rgba(61,219,208,.13);stroke:#3ddbd0}
+.pic-nm{position:absolute;transform:translate(-50%,0);pointer-events:none;padding:1px 8px;border-radius:999px;background:rgba(10,14,22,.5);color:#fff;font-size:11px;font-weight:600;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px;z-index:2}
+.h3d>canvas.fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;border-radius:inherit}
+.hal{display:flex;flex-direction:column;gap:10px;padding:4px 0 10px}.haf{border:1px solid var(--tbd);border-radius:14px;overflow:hidden}
+.har{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid rgba(255,255,255,.06)}.har:first-child{border-top:0}.har.off .han,.har.off small{opacity:.45}
+.har.hah{background:rgba(255,255,255,.05)}.han{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:14px}.har small{opacity:.6;font-size:11px;white-space:nowrap}.har.hah b{flex:1}
+.hab{flex:0 0 auto;width:26px;height:26px;border-radius:8px;border:2px solid rgba(255,255,255,.3);background:transparent;color:#000;font-weight:900;font-size:15px;line-height:1;cursor:pointer;padding:0}.hab.on{background:var(--ac);border-color:var(--ac)}
+.has{flex:0 0 auto}.has button{padding:4px 9px;min-width:0}
+.hap{display:flex;flex-direction:column;gap:8px;align-items:center;padding:6px 0 12px}.hap img{width:100%;max-width:520px;max-height:360px;object-fit:contain;border-radius:14px;border:1px solid var(--tbd);background:#0a0e16}
 .pic-tmp{position:absolute;transform:translate(-50%,-50%);pointer-events:none;padding:2px 9px;border-radius:999px;background:rgba(10,14,22,.62);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font-size:clamp(10px,1.5cqw,15px);font-weight:600;letter-spacing:.3px;white-space:nowrap}.pic-tmp[hidden]{display:none}
 .pic-pin{--s:clamp(26px,3.3cqw,44px);position:absolute;transform:translate(-50%,-50%);width:var(--s);height:var(--s);padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(10,14,22,.66);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e8ecf4;display:grid;place-items:center;box-shadow:0 6px 16px -6px #000;transition:background .25s,box-shadow .25s,transform .15s}
 .pic-pin i{display:grid;place-items:center;width:58%;height:58%;font-style:normal}.pic-pin i svg{width:100%;height:100%}
@@ -1119,7 +1127,7 @@ class QuintDashboard extends HTMLElement {
     this._lastAct = Date.now(); this._actf = () => this._act(); this._visf = () => { if (!document.hidden) this._wake(); };
     ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.addEventListener(ev, this._actf, { passive: true, capture: true }));
     document.addEventListener("visibilitychange", this._visf);
-    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); this._h3dBarTick(); }, 1000);
+    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); this._h3dBarTick(); this._fxSync(); }, 1000);
     this._iv = setInterval(() => { const r = this.shadowRoot; this._tickClock(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 1000);
   }
   disconnectedCallback() { this._hOff(); clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
@@ -1287,6 +1295,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "clk") c.noClock = !c.noClock;
     else if (a === "flag" && ["noClock", "noScenes", "noWeather", "noRooms", "dflt", "lock", "noArrange", "noLook", "hideUnavail"].includes(v)) c[v] = !c[v];
     else if (a === "adv") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), q = (c.quiet = c.quiet || {}); if (k === "home") c.homeAfter = [0, 1, 2, 5, 10, 30].includes(+x) ? +x : 0; else if (k === "qon") q.on = x === "1"; else if (k === "qfrom") q.from = +x; else if (k === "qto") q.to = +x; else if (k === "qcrit") q.crit = x === "1"; }
+    else if (a === "ah") { if (this._autoAct(v) === false) return; }
     else if (a === "h3d") {
       const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.h3d = c.h3d || {}), d = H3D_DEF[k];
       if (k === "preset") { if (H3D_REAL[x]) Object.assign(o, H3D_REAL[x]); }
@@ -1982,6 +1991,7 @@ class QuintDashboard extends HTMLElement {
       if (!el) { try { const hp = await window.loadCardHelpers(); el = await hp.createCardElement(it.config); } catch (e) { el = document.createElement("div"); el.textContent = "Card error: " + e.message; } this._lvc[k] = el; }
       el.hass = this._h; if (el.parentNode !== p) { while (p.firstChild) p.removeChild(p.firstChild); p.appendChild(el); }
     }
+    this._fxSync();
   }
 
   /* ---------- pages ---------- */
@@ -3078,6 +3088,7 @@ class QuintDashboard extends HTMLElement {
       pets: b("pets"), ghost: b("ghost"), weather: b("weather"), time_travel: b("time_travel"), voice: b("voice"), director: b("director"), room_panel: true,
     };
     if (o.clock && o.clock !== "off") cfg.clock = o.clock;
+    { const sv = this._h3Cam(); if (sv) cfg.start_view = sv; }
     if (o.flows === "on" || o.flows === "off") cfg.flows = o.flows === "on";
     if (o.holograms === "on" || o.holograms === "off") cfg.holograms = o.holograms === "on";
     if (cfg.time_travel && o.time_travel_range === "7d") cfg.time_travel_range = "7d";
@@ -3231,20 +3242,247 @@ class QuintDashboard extends HTMLElement {
     Object.values(this._h3el || {}).forEach((el) => { if (el && el.isConnected && !this._h3dReal(el, force)) { clearTimeout(el._qrt); el._qrt = setTimeout(() => this._h3dReal(el, force), 900); } });
   }
   _h3dRealTick() { const t = Date.now(); if (t - (this._h3rt || 0) > 60000) { this._h3rt = t; this._h3dRealAll(false); } }
+  /* ---------- auto house: the floors and rooms of the dashboard become a plan with walls, doors, windows and furniture ---------- */
+  _autoLoad() {
+    if (this._amP) return this._amP;
+    let u = "./quint-auto.js";
+    try { const b = new URL(import.meta.url), n = new URL("quint-auto.js", b); n.search = b.search; u = n.href; } catch (e) {}
+    this._amP = import(/* @vite-ignore */ u).then((m) => { this._am = m; this._apk = ""; this._last = null; this._draw(true); return m; }).catch((e) => { this._amErr = (e && e.message) || String(e); this._am = null; return null; });
+    return this._amP;
+  }
+  _au() { const a = (this._c && this._c.auto3d) || {}; return { marks: a.marks || {}, fmarks: a.fmarks || {}, size: a.size || {}, furn: a.furn !== false, win: a.win !== false }; }
+  _autoFloors() {
+    const hf = this._h.floors || {}, fl = (this._c.floors || []).map((f) => ({ id: f.id, name: f.name, level: hf[f.id] && hf[f.id].level != null ? hf[f.id].level : null }));
+    return fl;
+  }
+  _autoRoomList() { return (this._c.rooms || []).filter((r) => r.on !== false); }
+  _autoMark(r) {
+    const a = this._au(), kind = this._am ? this._am.kindOf(r.name, r.id) : "other";
+    if (r.floor && a.fmarks[r.floor] === 0) return false;
+    const m = a.marks[r.id];
+    return m === undefined ? kind !== "outdoor" : m === 1;
+  }
+  _autoInput() {
+    const a = this._au();
+    return {
+      floors: this._autoFloors(),
+      rooms: this._autoRoomList().map((r) => ({ id: r.id, name: r.name, floor: r.floor, size: a.size[r.id] || "m", mark: r.floor && a.fmarks[r.floor] === 0 ? false : a.marks[r.id] === 1 ? true : a.marks[r.id] === 0 ? false : undefined })),
+      opts: { windows: a.win, furniture: a.furn },
+    };
+  }
+  _autoEnts() {
+    const out = {};
+    this._autoRoomList().forEach((r) => {
+      const tv = this._ents("media", r.id).filter((i) => i.startsWith("media_player.") && /tv|fernseh|television|bravia|roku|shield|cast|vizio|samsung|lg\b/i.test(i + " " + this._nm(i)));
+      out[r.id] = { lights: this._ents("lights", r.id).map((i) => ({ id: i, name: this._nm(i) })), cams: this._ents("cameras", r.id), covers: this._ents("shades", r.id), tv, clim: this._ents("climate", r.id) };
+    });
+    return out;
+  }
+  /* the generated plan, kept for 3 s unless the settings changed */
+  _autoPlan() {
+    const m = this._am; if (!m) { this._autoLoad(); return null; }
+    const sig = JSON.stringify([this._c.auto3d, this._c.floors, (this._c.rooms || []).map((r) => [r.id, r.name, r.floor, r.on])]), now = Date.now();
+    if (this._aps === sig && now - (this._apt || 0) < 3000) return this._ap;
+    const inp = this._autoInput(), ents = this._autoEnts(), key = JSON.stringify([inp, ents]);
+    this._aps = sig; this._apt = now;
+    if (key !== this._apk) {
+      this._apk = key; this._asv = {}; this._apic = null;
+      let h = 7; for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+      this._aph = h.toString(36);
+      try { this._ap = m.addDevices(m.planHouse(inp), ents); this._ape = ""; } catch (e) { this._ap = null; this._ape = (e && e.message) || String(e); }
+    }
+    return this._ap;
+  }
+  /* the floors of the plan as pictures with rooms and device pins (the picture view shows them like a rendered picture) */
+  _autoPic() {
+    const plan = this._autoPlan(); if (!plan) return [];
+    if (this._apic) return this._apic;
+    const m = this._am;
+    return (this._apic = plan.floors.map((f) => { const g = m.picGeometry(plan, f.id); return { id: "a:" + f.id + ":" + this._aph, qf: f.id, lv: f.level, name: f.name, w: g.w, h: g.h, img: true, night: true, auto: true, rooms: g.rooms, devs: g.devs }; }));
+  }
+  _autoSvg(id) {
+    const plan = this._autoPlan(), m = this._am; if (!plan || !m) return "";
+    const c = (this._asv = this._asv || {}); if (id in c) return c[id];
+    const p = id.split(":"), r = m.toSvg(plan, p[1], { night: p[3] === "n" });
+    return (c[id] = r ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(r.svg) : "");
+  }
+  /* the house is drawn once in Quinteca 3D: rooms, walls, doors, windows, furniture and lamps; a restore point is kept first */
+  async _autoBuild() {
+    if (!this._admin() || this._autoBusy) return;
+    const m = this._am || (await this._autoLoad()); if (!m) return this._toast("The auto house could not be loaded");
+    const plan = this._autoPlan();
+    if (!plan || !plan.floors.length) return this._toast("Nothing is ticked: tick at least one floor and one room");
+    if (!this._h.callWS || !this._h3dInst()) return this._toast("Quinteca 3D is not available");
+    this._autoBusy = true; this._toast("Building the house…");
+    try {
+      const cur = await this._h.callWS({ type: "neonplan3d/building/get" }), old = (cur && cur.building) || {};
+      if ((old.floors || []).some((f) => (f.rooms || []).length) && !confirm("This replaces the plan of the 3D house: floors, rooms, doors, windows and furniture. A restore point is kept, so you can go back in the 3D editor under History. Continue?")) { this._autoBusy = false; return; }
+      try { await this._h.callWS({ type: "neonplan3d/history/snapshot" }); } catch (e) {}
+      const o = this._h3d(), b = { version: 1, floors: m.toBuilding(plan, { furniture: this._au().furn }), settings: { wall_exterior: 0.24, wall_interior: 0.12, grid: 0.05, ...(old.settings || {}) }, presence: old.presence || [] };
+      if (old.energy) b.energy = old.energy;
+      const sv = m.cameraView(plan, o.cam); if (sv) b.settings.start_view = sv;
+      await this._h.callWS({ type: "neonplan3d/building/save", building: b });
+      this._bdim = null; this._bdimP = null; this._h3pl = 0; this._h3dPlan(true);
+      (this._c.h3d = this._c.h3d || {}).show = true; this._save(true);
+      this._toast("3D house built: " + plan.floors.length + (plan.floors.length > 1 ? " floors, " : " floor, ") + plan.floors.reduce((s, f) => s + f.rooms.length, 0) + " rooms");
+    } catch (e) { this._toast("Could not build the house: " + this._err(e, "error")); }
+    this._autoBusy = false; this._last = null; this._draw(true);
+  }
+  /* the camera of the 3D house for the chosen angle (from the size of the drawn house) */
+  _h3Cam() {
+    const o = this._h3d(); if (!o.cam || o.cam === "default") return null;
+    if (!this._am) { this._autoLoad(); return null; }
+    if (!this._bdim) { this._bdimLoad(); return null; }
+    return this._am.cameraView({ dims: this._bdim }, o.cam);
+  }
+  _bdimLoad() {
+    if (this._bdimP || !this._h || !this._h.callWS || !this._h3dInst()) return;
+    this._bdimP = Promise.resolve(this._h.callWS({ type: "neonplan3d/building/get" })).then((r) => {
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+      ((r && r.building && r.building.floors) || []).forEach((f) => (f.rooms || []).forEach((q) => (q.points || []).forEach((p) => { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); })));
+      if (x1 > x0 && z1 > z0) this._bdim = { cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, w: x1 - x0, d: z1 - z0 };
+    }).catch(() => {}).finally(() => { if (this._bdim) { this._last = null; this._draw(true); } });
+  }
+  /* settings: what to use, the angle of the camera, the weather */
+  _autoSec(o, sec, row, sg) {
+    const E = (t) => this._esc(t), a = this._au(), m = this._am, plan = this._autoPlan(), fl = this._autoFloors(), rooms = this._autoRoomList();
+    if (!m) this._autoLoad();
+    const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
+    const tgl = (on, act) => `<button class="hab ${on ? "on" : ""}" data-s="${act}">${on ? "✓" : ""}</button>`;
+    const groups = (fl.length ? fl : [{ id: "", name: "House" }]).map((f) => ({ f, rs: rooms.filter((r) => (r.floor || (fl[0] ? fl[0].id : "")) === f.id || (!f.id && !r.floor)) })).filter((g) => g.rs.length);
+    const list = groups.map((g) => {
+      const fon = !g.f.id || a.fmarks[g.f.id] !== 0;
+      return `<div class="haf">${g.f.id ? `<div class="har hah">${tgl(fon, "ah|f|" + E(g.f.id))}<b>${E(g.f.name)}</b><small>${g.rs.length} room${g.rs.length > 1 ? "s" : ""}</small></div>` : ""}${g.rs.map((r) => {
+        const kind = m ? m.kindOf(r.name, r.id) : "other", on = fon && this._autoMark(r), z = a.size[r.id] || "m";
+        return `<div class="har ${on ? "" : "off"}">${tgl(on, "ah|r|" + E(r.id))}<span class="han">${E(r.name)}</span><small>${E(m ? m.KIND_LABEL[kind] || "" : "")}</small><div class="seg sm has">${["s", "m", "l"].map((k) => `<button class="${z === k ? "on" : ""}" data-s="ah|z|${E(r.id)}|${k}">${k.toUpperCase()}</button>`).join("")}</div></div>`;
+      }).join("")}</div>`;
+    }).join("");
+    const pf = plan && plan.floors.length ? plan.floors.find((f) => f.id === this._apf) || plan.floors[0] : null;
+    const pre = pf ? `<div class="hap">${plan.floors.length > 1 ? `<div class="seg sm">${plan.floors.map((f) => `<button class="${f.id === pf.id ? "on" : ""}" data-s="ah|pf|${E(f.id)}">${E(f.name)}</button>`).join("")}</div>` : ""}<img alt="" src="${this._autoSvg("a:" + pf.id + ":" + this._aph)}"></div>` : `<div class="lbl" style="padding:8px 4px">${plan === null && !this._ape ? "Loading…" : E(this._ape || "Nothing is ticked yet.")}</div>`;
+    const st = this._autoSt || "";
+    const cams = ["default", "top", "corner", "dollhouse", "front", "side"], cl = ["Standard", "From above", "Corner", "Dollhouse", "Front", "Side"];
+    const fxs = [["live", "Follow the weather"], ["off", "Off"]];
+    const prev = [["", "Live"], ["rainy", "Rain"], ["lightning-rainy", "Storm"], ["snowy", "Snow"], ["fog", "Fog"], ["clear", "Clear"]];
+    return sec("Auto house", "Quint draws the house for you from your floors and rooms: walls, doors, windows, furniture and your lamps",
+      row("Floors and rooms to use", "tick what belongs to the house. S, M and L change how big a room is drawn. Garden, terrace and balcony stay out unless you tick them", `<span></span>`) + `<div class="hal">${list || '<div class="lbl">No rooms yet. Add floors and rooms in Quint first.</div>'}</div>` +
+      row("Furniture", "beds, sofas, kitchens, bathrooms and more, chosen by the kind of room", tg(a.furn, 'data-s="ah|o|furn"')) +
+      row("Windows", "in the outer walls, sized by the room", tg(a.win, 'data-s="ah|o|win"')) +
+      row("Preview", "the colourful picture of the house, as it will look", `<span></span>`) + pre +
+      row("Show the house as", "Auto picture: this plan as a colourful picture, no 3D engine needed. My pictures: pictures you rendered yourself. Live 3D: the Quinteca 3D house", sg("view", ["Live 3D", "My pictures", "Auto picture"])) +
+      row("Build the 3D house", "writes this plan into Quinteca 3D so you can turn, zoom and edit it. A restore point of your old plan is kept", `<button class="sbtn pri2" data-s="ah|build" ${this._h3dInst() ? "" : "disabled"}>${this._autoBusy ? "Building…" : "Build the 3D house"}</button>`) + (st ? `<div class="lbl" style="padding:6px 4px">${E(st)}</div>` : "") +
+      row("Camera of the 3D house", "the angle the 3D house opens with. “Standard” keeps Quinteca's own view", `<div class="seg sm" style="flex-wrap:wrap">${cams.map((k, i) => `<button class="${o.cam === k ? "on" : ""}" data-s="h3d|cam|${k}">${cl[i]}</button>`).join("")}</div>`)) +
+      sec("Weather effects", "rain, snow, storms, fog and drifting clouds over the house, from your weather entity",
+        row("Weather over the house", "shown on the 3D house and on the pictures", `<div class="seg sm">${fxs.map(([k, n]) => `<button class="${o.fx === k ? "on" : ""}" data-s="h3d|fx|${k}">${n}</button>`).join("")}</div>`) +
+        row("Try it", "looks only on this screen, until you leave", `<div class="seg sm" style="flex-wrap:wrap">${prev.map(([k, n]) => `<button class="${(this._fxForce || "") === k ? "on" : ""}" data-s="ah|fx|${k}">${n}</button>`).join("")}</div>`));
+  }
+  _autoAct(v) {
+    const c = this._c, A = (c.auto3d = c.auto3d || {}), i = v.indexOf("|"), k = i < 0 ? v : v.slice(0, i), rest = i < 0 ? "" : v.slice(i + 1);
+    A.marks = A.marks || {}; A.fmarks = A.fmarks || {}; A.size = A.size || {};
+    if (k === "build") { this._autoBuild(); return false; }
+    if (k === "fx") { this._fxForce = rest || ""; this._fxSync(); this._last = null; this._draw(true); return false; }
+    if (k === "pf") { this._apf = rest; this._last = null; this._draw(true); return false; }
+    else if (k === "f") A.fmarks[rest] = A.fmarks[rest] === 0 ? 1 : 0;
+    else if (k === "r") { const r = this._autoRoomList().find((x) => x.id === rest); if (r) { const cur = this._autoMark(r); if (r.floor && A.fmarks[r.floor] === 0) { A.fmarks[r.floor] = 1; A.marks[rest] = 1; } else A.marks[rest] = cur ? 0 : 1; } }
+    else if (k === "z") { const j = rest.lastIndexOf("|"), id = rest.slice(0, j), z = rest.slice(j + 1); if (["s", "m", "l"].includes(z)) { if (z === "m") delete A.size[id]; else A.size[id] = z; } }
+    else if (k === "o") { if (rest === "furn" || rest === "win") A[rest] = A[rest] === false; }
+    this._aps = ""; this._last = null;
+  }
+  /* ---------- weather over the house: rain, snow, storm, fog and drifting clouds on a canvas above the 3D house or the picture ---------- */
+  _fxCond() {
+    if (this._fxForce) return this._fxForce;
+    if (this._h3d().fx === "off") return "";
+    const S = this._h.states, id = Object.keys(S).find((i) => i.startsWith("weather."));
+    return id ? S[id].state : "";
+  }
+  _fxParams(c) {
+    const P = { rain: 0, snow: 0, storm: 0, fog: 0, cloud: 0, wind: 0 };
+    ({ rainy: () => { P.rain = 0.6; P.cloud = 0.7; }, pouring: () => { P.rain = 1; P.cloud = 0.9; }, "lightning-rainy": () => { P.rain = 0.9; P.storm = 1; P.cloud = 1; }, lightning: () => { P.storm = 1; P.rain = 0.25; P.cloud = 1; },
+      snowy: () => { P.snow = 0.7; P.cloud = 0.6; }, "snowy-rainy": () => { P.snow = 0.5; P.rain = 0.3; P.cloud = 0.7; }, hail: () => { P.rain = 0.8; P.cloud = 0.9; }, fog: () => { P.fog = 1; },
+      cloudy: () => { P.cloud = 0.6; }, partlycloudy: () => { P.cloud = 0.3; }, windy: () => { P.wind = 1; P.cloud = 0.3; }, "windy-variant": () => { P.wind = 1; P.cloud = 0.4; } }[c] || (() => {}))();
+    return P;
+  }
+  _fxSync() {
+    const R = this.shadowRoot; if (!R || !this._h) return;
+    const P = this._fxParams(this._fxCond()), on = P.rain + P.snow + P.storm + P.fog + P.cloud > 0;
+    R.querySelectorAll('[data-lv^="house:"]').forEach((h) => {
+      if (h.dataset.lv === "house:edit") return;
+      const cv = h.querySelector("canvas.fx");
+      if (on && !cv) { const n = document.createElement("canvas"); n.className = "fx"; h.appendChild(n); }
+      else if (!on && cv) cv.remove();
+    });
+    this._fxP = P; this._fxOn = on && !!R.querySelector("canvas.fx");
+    if (this._fxOn && !this._fxRaf) this._fxRaf = requestAnimationFrame((t) => this._fxFrame(t));
+  }
+  _fxFrame(t) {
+    this._fxRaf = 0;
+    if (!this._fxOn || !this.isConnected) return;
+    const cvs = [...this.shadowRoot.querySelectorAll("canvas.fx")]; if (!cvs.length) { this._fxOn = false; return; }
+    if (!document.hidden && t - (this._fxL || 0) > 30) { const dt = Math.min(0.05, (t - (this._fxL || t)) / 1000); this._fxL = t; cvs.forEach((cv) => { try { this._fxDraw(cv, this._fxP, dt, t); } catch (e) {} }); }
+    let still = false; try { still = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) {}
+    if (!still) this._fxRaf = requestAnimationFrame((n) => this._fxFrame(n));
+  }
+  _fxDraw(cv, P, dt, t) {
+    const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1), W = Math.round(w * dpr), H = Math.round(h * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const g = cv.getContext("2d"), F = (cv._fx = cv._fx || { d: [], s: [], r: [], flash: 0, next: 2.5, bolt: null }), area = Math.min(3, (w * h) / 1e5), sec = t / 1000;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const dark = Math.max(P.rain * 0.16, P.storm * 0.1, P.snow * 0.06, P.cloud * 0.05);
+    if (dark) { g.fillStyle = `rgba(12,20,38,${dark.toFixed(3)})`; g.fillRect(0, 0, w, h); }
+    if (P.cloud) for (let i = 0; i < 4; i++) {
+      const x = (((sec * (6 + i * 3) + i * w * 0.37) % (w * 1.6)) + w * 1.6) % (w * 1.6) - w * 0.3, y = h * (0.18 + i * 0.22), r = Math.max(w, h) * (0.3 + 0.05 * i), gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, `rgba(8,14,28,${(0.16 * P.cloud).toFixed(3)})`); gr.addColorStop(1, "rgba(8,14,28,0)"); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    if (P.fog) {
+      const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "rgba(220,228,238,.30)"); gr.addColorStop(0.5, "rgba(220,228,238,.12)"); gr.addColorStop(1, "rgba(220,228,238,.28)"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 3; i++) { const x = (((sec * (8 + i * 5)) % (w * 1.4)) - w * 0.2) * (i % 2 ? -1 : 1) + (i % 2 ? w : 0), y = h * (0.25 + i * 0.25), r = w * 0.45, gr2 = g.createRadialGradient(x, y, 0, x, y, r); gr2.addColorStop(0, "rgba(235,240,248,.16)"); gr2.addColorStop(1, "rgba(235,240,248,0)"); g.fillStyle = gr2; g.fillRect(x - r, y - r, r * 2, r * 2); }
+    }
+    if (P.rain) {
+      const n = Math.round((30 + P.rain * 170) * area), len = 14 + P.rain * 14;
+      while (F.d.length < n) F.d.push({ x: Math.random() * (w + 80), y: -Math.random() * h, v: 700 + Math.random() * 500, l: len * (0.6 + Math.random() * 0.8) });
+      if (F.d.length > n) F.d.length = n;
+      g.strokeStyle = `rgba(205,220,240,${(0.28 + P.rain * 0.22).toFixed(2)})`; g.lineWidth = 1.1; g.beginPath();
+      F.d.forEach((q) => {
+        q.y += q.v * dt; q.x -= q.v * dt * 0.18;
+        if (q.y > h) { if (Math.random() < 0.3 && F.r.length < 60) F.r.push({ x: q.x, y: Math.random() * h, a: 1, s: 1 }); q.y = -q.l; q.x = Math.random() * (w + 80); }
+        g.moveTo(q.x, q.y); g.lineTo(q.x + q.l * 0.18, q.y - q.l);
+      });
+      g.stroke();
+      F.r = F.r.filter((p) => { p.a -= dt * 1.4; p.s += dt * 26; if (p.a <= 0) return false; g.strokeStyle = `rgba(220,232,250,${(p.a * 0.45).toFixed(2)})`; g.lineWidth = 1; g.beginPath(); g.ellipse(p.x, p.y, p.s, p.s * 0.45, 0, 0, 6.283); g.stroke(); return true; });
+    } else F.d.length = 0;
+    if (P.snow) {
+      const n = Math.round((30 + P.snow * 120) * area);
+      while (F.s.length < n) F.s.push({ x: Math.random() * w, y: -Math.random() * h, r: 1 + Math.random() * 1.8, v: 40 + Math.random() * 50, ph: Math.random() * 6 });
+      if (F.s.length > n) F.s.length = n;
+      g.fillStyle = "rgba(255,255,255,.85)";
+      F.s.forEach((q) => { q.y += q.v * dt; q.x += Math.sin(sec * 1.2 + q.ph) * 14 * dt; if (q.y > h) { q.y = -4; q.x = Math.random() * w; } g.beginPath(); g.arc(q.x, q.y, q.r, 0, 6.283); g.fill(); });
+    } else F.s.length = 0;
+    if (P.storm) {
+      F.next -= dt;
+      if (F.next <= 0) { F.flash = 1; F.next = 4 + Math.random() * 9; if (Math.random() < 0.6) { let x = w * (0.15 + Math.random() * 0.7), y = 0; F.bolt = [[x, y]]; while (y < h * 0.55) { y += 18 + Math.random() * 22; x += (Math.random() - 0.5) * 36; F.bolt.push([x, y]); } } else F.bolt = null; }
+      if (F.flash > 0) {
+        g.fillStyle = `rgba(215,228,255,${(F.flash * 0.5).toFixed(2)})`; g.fillRect(0, 0, w, h);
+        if (F.bolt && F.flash > 0.35) { g.strokeStyle = `rgba(240,245,255,${F.flash.toFixed(2)})`; g.lineWidth = 2.2; g.shadowColor = "#bcd2ff"; g.shadowBlur = 14; g.beginPath(); F.bolt.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.stroke(); g.shadowBlur = 0; }
+        F.flash = Math.max(0, F.flash - dt * 2.8);
+      }
+    }
+  }
   _h3dOpenEditor() { this._nav("h3edit"); }
   /* ---------- the rendered-picture house: a picture of each floor (made with any 3D program), rooms and devices placed on it ---------- */
   _pic() {
-    const p = (this._c && this._c.pic) || {};
-    return { floors: Array.isArray(p.floors) ? p.floors.filter((f) => f && typeof f.id === "string") : [], names: p.names === true, temp: p.temp !== false, glow: p.glow !== false, nightAuto: p.nightAuto !== false };
+    const p = (this._c && this._c.pic) || {}, opt = { names: p.names === true, temp: p.temp !== false, glow: p.glow !== false, nightAuto: p.nightAuto !== false };
+    if (this._h3d().view === "auto") return { floors: this._autoPic(), ...opt };
+    return { floors: Array.isArray(p.floors) ? p.floors.filter((f) => f && typeof f.id === "string") : [], ...opt };
   }
-  _picOn() { return this._h3d().view === "picture" && this._pic().floors.some((f) => f.img); }
+  _picOn() { const v = this._h3d().view; if (v === "auto") return this._autoRoomList().length > 0; return v === "picture" && this._pic().floors.some((f) => f.img); }
   _picNightNow() { const s = this._h && this._h.states && this._h.states["sun.sun"]; return !!s && s.state === "below_horizon"; }
   _picFloor() {
     const fl = this._pic().floors.filter((f) => f.img);
-    return fl.find((f) => f.id === this._pf) || fl[0] || null;
+    return fl.find((f) => (f.qf || f.id) === this._pf) || fl.find((f) => f.auto && f.lv === 0) || fl[0] || null;
   }
-  _picImgId(f, night) { return night && f.night ? f.id + "n" : f.id; }
+  _picImgId(f, night) { return f.auto ? (night && f.night ? f.id + ":n" : f.id) : night && f.night ? f.id + "n" : f.id; }
   _picSrc(id) {
+    if (id.startsWith("a:")) return this._autoSvg(id);
     const c = (this._pimg = this._pimg || {});
     if (id in c) return c[id] || "";
     c[id] = "";
@@ -3290,17 +3528,18 @@ class QuintDashboard extends HTMLElement {
   _picBuild(p, ctx) {
     const E = (t) => this._esc(t), pic = this._pic(), fl = this._picFloor();
     p._pic = ctx;
-    if (!fl) { if (p._pk !== "none") { p._pk = "none"; p.innerHTML = '<div class="h3n"><b>No picture yet</b><span>Add a picture of your house in Settings → 3D house → Rendered picture.</span></div>'; } return; }
+    if (!fl) { const au = this._h3d().view === "auto", k = "none" + (au ? (this._am ? "a" : "l") : ""); if (p._pk !== k || !p.querySelector(".h3n")) { p._pk = k; p.innerHTML = au ? (this._am ? '<div class="h3n"><b>Nothing is ticked yet</b><span>Tick the floors and rooms to use in Settings → 3D house → Auto house.</span></div>' : '<div class="h3ld">Drawing the house…</div>') : '<div class="h3n"><b>No picture yet</b><span>Add a picture of your house in Settings → 3D house → Rendered picture.</span></div>'; } return; }
     const night = pic.nightAuto && this._picNightNow() && !!fl.night, iid = this._picImgId(fl, night), ar = fl.w && fl.h ? fl.w / fl.h : 4 / 3, VH = 1000 / ar;
     const tabs = pic.floors.filter((f) => f.img);
-    const key = JSON.stringify([ctx, fl.id, iid, ar, fl.rooms, fl.devs, pic.names, tabs.map((f) => f.id + f.name), this._h3dSwitch() ? 1 : 0]);
-    if (p._pk !== key) {
+    const key = JSON.stringify([ctx, fl.id, iid, ar, fl.rooms, fl.devs, pic.names, this._h3d().room_names !== false, tabs.map((f) => f.id + f.name), this._h3dSwitch() ? 1 : 0]);
+    if (p._pk !== key || !p.querySelector(".pic")) {
       p._pk = key;
       const rooms = (fl.rooms || []).map((r) => `<polygon class="pic-room" data-pic="room|${E(r.id)}" data-pr="${E(r.id)}" points="${this._picPts(r, 1000, VH)}"/>`).join("");
-      const labels = (fl.rooms || []).map((r) => { const c = this._picCenter(r), ys = (r.pts || []).map((q) => q[1]), y = ys.length ? Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) * 0.84 : c[1]; return `<span class="pic-tmp" data-ptmp="${E(r.id)}" style="left:${(c[0] * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%"></span>`; }).join("");
+      const labels = (fl.rooms || []).map((r) => { const c = this._picCenter(r), ys = (r.pts || []).map((q) => q[1]), y = ys.length ? Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) * (fl.auto ? 0.3 : 0.84) : c[1]; return `<span class="pic-tmp" data-ptmp="${E(r.id)}" style="left:${(c[0] * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%"></span>`; }).join("");
+      const nms = fl.auto && this._h3d().room_names !== false ? (fl.rooms || []).map((r) => { const q = this._rooms().find((x) => x.id === r.room), c = this._picCenter(r), ys = (r.pts || []).map((z) => z[1]), y = ys.length ? Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) * 0.14 : c[1]; return q ? `<span class="pic-nm" style="left:${(c[0] * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%">${E(q.name)}</span>` : ""; }).join("") : "";
       const pins = (fl.devs || []).map((d) => `<button class="pic-pin" data-pin="${E(d.id)}" data-pent="${E(d.ent)}" style="left:${(d.x * 100).toFixed(2)}%;top:${(d.y * 100).toFixed(2)}%" title="${E(d.ent)}"><i>${this._picPinIcon(d.ent)}</i><b></b>${pic.names ? '<em></em>' : ""}</button>`).join("");
-      const fb = tabs.length > 1 ? `<div class="seg pic-fl">${tabs.map((f) => `<button class="${f.id === fl.id ? "on" : ""}" data-pic="floor|${E(f.id)}">${E(f.name || "Floor")}</button>`).join("")}</div>` : "";
-      p.innerHTML = `<div class="pic ${ctx}" style="--ar:${ar.toFixed(4)}"><div class="pic-st" data-pic="clear|"><img class="pic-img" data-pimg="${E(iid)}" alt="" draggable="false"><svg class="pic-svg" viewBox="0 0 1000 ${VH.toFixed(1)}" preserveAspectRatio="none">${rooms}</svg>${labels}${pins}<div class="pic-ld">Loading the picture…</div></div>${fb}<button class="pic-chip" data-pic="open|" hidden></button></div>`;
+      const fb = tabs.length > 1 ? `<div class="seg pic-fl">${tabs.map((f) => `<button class="${f.id === fl.id ? "on" : ""}" data-pic="floor|${E(f.qf || f.id)}">${E(f.name || "Floor")}</button>`).join("")}</div>` : "";
+      p.innerHTML = `<div class="pic ${ctx}" style="--ar:${ar.toFixed(4)}"><div class="pic-st" data-pic="clear|"><img class="pic-img" data-pimg="${E(iid)}" alt="" draggable="false"><svg class="pic-svg" viewBox="0 0 1000 ${VH.toFixed(1)}" preserveAspectRatio="none">${rooms}</svg>${nms}${labels}${pins}<div class="pic-ld">Loading the picture…</div></div>${fb}<button class="pic-chip" data-pic="open|" hidden></button></div>`;
       p._chipRoom = "";
     }
     this._picImgSet(p); this._picState(p, fl, pic);
@@ -3617,10 +3856,11 @@ class QuintDashboard extends HTMLElement {
             (o.layout !== "classic" ? row("Menu bar", "whether the bar with the clock and pages is open when Home appears. A person can hide or show it with the round icon at the top left", sg("bar", ["Open", "Hidden"])) +
               row("Hide the bar by itself", "after this long without a touch", sg("bar_hide", ["Never", "10 s", "30 s", "1 min"])) : "") : "")) +
         sec("Rendered picture", "the house as a beautiful picture you made, with the rooms and devices live on top of it",
-          row("House view", "Live 3D: the Quinteca 3D house you can turn and zoom. Picture: a rendered picture of each floor (made with Sweet Home 3D, Blender, SketchUp, Planner 5D or any program that can save a picture), with rooms that light up, temperatures and devices you can tap", sg("view", ["Live 3D", "Picture"])) +
+          row("House view", "Live 3D: the Quinteca 3D house you can turn and zoom. Picture: a rendered picture of each floor (made with Sweet Home 3D, Blender, SketchUp, Planner 5D or any program that can save a picture), with rooms that light up, temperatures and devices you can tap", sg("view", ["Live 3D", "My pictures", "Auto picture"])) +
           row("Picture editor", ((this._c.pic || {}).floors || []).filter((f) => f.img).length ? "floors with a picture: " + ((this._c.pic || {}).floors || []).filter((f) => f.img).length + ". Add or change pictures, draw the rooms and place the devices" : "add a floor, upload its picture, draw the rooms and place the devices", `<button class="sbtn pri2" data-h3d="piceditor">Open the picture editor</button>`) +
           (o.view === "picture" && !this._picOn() ? `<div class="lbl" style="padding:8px 4px;color:var(--warn)">Picture view is chosen, but no floor has a picture yet. The live 3D house is shown until you add one.</div>` : "") +
           `<div class="lbl" style="padding:8px 4px">Tip: render each floor from above at an angle, with the furniture and lights on, 2000 to 2400 pixels wide. A night version of the same view makes the house change after sunset. Room taps follow the setting “When a room is tapped”.</div>`) +
+        this._autoSec(o, sec, row, sg) +
         sec("Plan and devices", "draw the house once; its rooms and devices are the same Home Assistant ones Quint already uses",
           row("3D editor and Quinteca settings", "draw floors, rooms, walls, doors, windows, furniture and roof, place and link lamps, blinds, cameras and every other device, packs, voice, locating, backup and the rest of Quinteca 3D", `<button class="sbtn pri2" data-h3d="editor" ${inst ? "" : "disabled"}>Open the 3D editor</button>`) +
           row("Rooms linked to Quint", zones.length ? (lost.length ? "Not linked yet: " + E(lost.map((z) => z.name || z.id).join(", ")) + ". Give these rooms a Home Assistant area (or the same name as a Quint room) in the 3D editor." : "every room of the 3D plan opens its Quint room") : "draw your rooms in the 3D editor first", `<b>${zones.length - lost.length} of ${zones.length}</b>`) +
