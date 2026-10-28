@@ -14,6 +14,57 @@ const SV = {
   more:    { n: "More",     c: "#ff6fae", i: ic('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>') },
 };
 SV.house = { n: "3D house", c: "#22d3ee", i: ic('<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/>') };
+/* a painted aerial view for the back of the 3D house (paving, lawn, trees, a car, neighbouring roofs), made once on a canvas; day, evening and night are the same picture lit differently */
+const GROUND = {};
+function groundPicture(variant) {
+  if (GROUND[variant]) return GROUND[variant];
+  const W = 1280, H = 800;
+  const mk = () => { const c = document.createElement("canvas"); c.width = W; c.height = H; return c; };
+  if (!GROUND.base) {
+    let sd = 20240; const R = () => { sd |= 0; sd = (sd + 0x6d2b79f5) | 0; let t = Math.imul(sd ^ (sd >>> 15), 1 | sd); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const cv = mk(), g = cv.getContext("2d"), rgb = (r, gg, b, a) => `rgba(${r | 0},${gg | 0},${b | 0},${a === undefined ? 1 : a})`;
+    // paving: slabs with grout
+    g.fillStyle = "#5d6368"; g.fillRect(0, 0, W, H);
+    for (let y = 0; y < H; y += 56) for (let x = 0; x < W; x += 72) { const v = 86 + R() * 26; g.fillStyle = rgb(v, v + 3, v + 7); g.fillRect(x + 1.5, y + 1.5, 69, 53); }
+    for (let n = 0; n < 5200; n++) { const v = R() * 70 + 70; g.fillStyle = rgb(v, v, v + 4, 0.18); g.fillRect(R() * W, R() * H, 1 + R() * 2, 1 + R() * 2); }
+    // a darker paved drive along the bottom left
+    g.fillStyle = "rgba(40,44,50,.38)"; g.beginPath(); g.moveTo(0, H * 0.74); g.lineTo(W * 0.46, H * 0.9); g.lineTo(W * 0.5, H); g.lineTo(0, H); g.fill();
+    // lawn: soft blobs of green with speckle
+    const lawn = (cx, cy, rx, ry) => {
+      for (let n = 0; n < 34; n++) { const a = R() * 6.283, d = Math.sqrt(R()), x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * ry * d, r = 60 + R() * 90; const gr = g.createRadialGradient(x, y, 0, x, y, r); const v = R(); gr.addColorStop(0, rgb(52 + v * 22, 92 + v * 36, 44 + v * 14, 0.95)); gr.addColorStop(0.75, rgb(52 + v * 22, 92 + v * 36, 44 + v * 14, 0.85)); gr.addColorStop(1, rgb(60, 100, 50, 0)); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }
+      for (let n = 0; n < 2600; n++) { const a = R() * 6.283, d = Math.sqrt(R()), x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * ry * d, v = R(); g.fillStyle = rgb(40 + v * 70, 80 + v * 80, 30 + v * 30, 0.5); g.fillRect(x, y, 2, 2); }
+    };
+    lawn(W * 0.9, H * 0.42, W * 0.22, H * 0.62); lawn(W * 0.62, H * 1.02, W * 0.3, H * 0.16); lawn(W * 0.03, H * 0.1, W * 0.1, H * 0.16);
+    // neighbouring roofs
+    const roof = (x, y, w, h, col) => { g.fillStyle = "rgba(0,0,0,.28)"; g.fillRect(x + 14, y + 16, w, h); g.fillStyle = col; g.fillRect(x, y, w, h); g.fillStyle = "rgba(255,255,255,.22)"; g.fillRect(x, y, w, 5); g.fillStyle = "rgba(0,0,0,.14)"; g.fillRect(x, y + h - 5, w, 5); g.strokeStyle = "rgba(60,70,84,.5)"; g.lineWidth = 2; g.beginPath(); g.moveTo(x, y + h / 2); g.lineTo(x + w, y + h / 2); g.stroke(); for (let k = 1; k < 6; k++) { g.strokeStyle = "rgba(70,82,98,.22)"; g.lineWidth = 1; g.beginPath(); g.moveTo(x + (w / 6) * k, y); g.lineTo(x + (w / 6) * k, y + h); g.stroke(); } };
+    roof(-20, -20, W * 0.26, H * 0.2, "#a9b6c4"); roof(W * 0.3, -30, W * 0.2, H * 0.14, "#b9c3cc"); roof(-30, H * 0.84, W * 0.2, H * 0.22, "#aab5c0");
+    // a car
+    const car = (x, y, w, h, col) => { g.save(); g.translate(x, y); g.fillStyle = "rgba(0,0,0,.38)"; g.beginPath(); g.ellipse(10, 12, w * 0.58, h * 0.56, 0, 0, 6.283); g.fill(); g.fillStyle = col; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, 26); g.fill(); g.fillStyle = "rgba(20,28,40,.9)"; g.beginPath(); g.roundRect(-w * 0.38, -h * 0.2, w * 0.76, h * 0.42, 14); g.fill(); g.fillStyle = "rgba(255,255,255,.18)"; g.beginPath(); g.roundRect(-w * 0.34, -h * 0.34, w * 0.68, h * 0.16, 10); g.fill(); g.fillStyle = "rgba(255,240,200,.9)"; g.fillRect(-w * 0.4, -h * 0.5, w * 0.18, 5); g.fillRect(w * 0.22, -h * 0.5, w * 0.18, 5); g.restore(); };
+    car(W * 0.075, H * 0.52, 92, 200, "#1d2733");
+    // shrubs and pots
+    const shrub = (x, y, r) => { g.fillStyle = "rgba(0,0,0,.3)"; g.beginPath(); g.ellipse(x + 8, y + 10, r, r * 0.9, 0, 0, 6.283); g.fill(); const gr = g.createRadialGradient(x - r * 0.3, y - r * 0.3, 2, x, y, r); gr.addColorStop(0, "#7ac060"); gr.addColorStop(1, "#2f6a34"); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); };
+    [[0.2, 0.7, 20], [0.23, 0.76, 15], [0.04, 0.92, 22], [0.33, 0.3, 14], [0.42, 0.95, 18]].forEach(([x, y, r]) => shrub(W * x, H * y, r));
+    // trees: shadow first, then round crowns made of leaf clusters
+    const tree = (x, y, r) => {
+      g.fillStyle = "rgba(0,0,0,.34)"; g.beginPath(); g.ellipse(x + r * 0.28, y + r * 0.34, r * 1.02, r * 0.95, 0, 0, 6.283); g.fill();
+      for (let n = 0; n < 9; n++) { const a = R() * 6.283, d = R() * r * 0.55, cx = x + Math.cos(a) * d, cy = y + Math.sin(a) * d, rr = r * (0.5 + R() * 0.32); const gr = g.createRadialGradient(cx - rr * 0.3, cy - rr * 0.35, 1, cx, cy, rr); const v = R(); gr.addColorStop(0, rgb(120 + v * 40, 170 + v * 40, 70 + v * 25)); gr.addColorStop(0.6, rgb(52 + v * 20, 110 + v * 30, 44)); gr.addColorStop(1, rgb(24, 66, 34)); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, rr, 0, 6.283); g.fill(); }
+      for (let n = 0; n < 160; n++) { const a = R() * 6.283, d = Math.sqrt(R()) * r * 0.95, v = R(); g.fillStyle = rgb(60 + v * 110, 120 + v * 90, 40 + v * 40, 0.55); g.beginPath(); g.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, 2 + R() * 3, 0, 6.283); g.fill(); }
+    };
+    [[0.93, 0.14, 86], [0.84, 0.3, 74], [0.95, 0.42, 78], [0.86, 0.52, 70], [0.94, 0.66, 82], [0.8, 0.8, 72], [0.68, 0.96, 66], [0.97, 0.9, 70], [0.02, 0.04, 54]].forEach(([x, y, r]) => tree(W * x, H * y, r));
+    // clouds drifting over a corner
+    [[0.12, 0.3, 190, 80], [0.18, 0.4, 150, 60], [0.74, 0.04, 220, 70], [0.55, 0.02, 160, 50]].forEach(([x, y, rx, ry]) => { const gr = g.createRadialGradient(W * x, H * y, 0, W * x, H * y, rx); gr.addColorStop(0, "rgba(246,248,252,.34)"); gr.addColorStop(1, "rgba(246,248,252,0)"); g.save(); g.translate(W * x, H * y); g.scale(1, ry / rx); g.translate(-W * x, -H * y); g.fillStyle = gr; g.beginPath(); g.arc(W * x, H * y, rx, 0, 6.283); g.fill(); g.restore(); });
+    GROUND.base = cv;
+  }
+  const out = mk(), o = out.getContext("2d"); o.drawImage(GROUND.base, 0, 0);
+  if (variant === "dusk") { o.globalCompositeOperation = "multiply"; o.fillStyle = "rgba(255,168,110,1)"; o.fillRect(0, 0, W, H); o.globalCompositeOperation = "source-over"; o.fillStyle = "rgba(40,30,90,.2)"; o.fillRect(0, 0, W, H); }
+  if (variant === "night") {
+    o.globalCompositeOperation = "multiply"; o.fillStyle = "rgb(34,48,100)"; o.fillRect(0, 0, W, H); o.globalCompositeOperation = "source-over"; o.fillStyle = "rgba(4,8,24,.34)"; o.fillRect(0, 0, W, H);
+    o.globalCompositeOperation = "screen"; [[0.3, 0.62, 150], [0.55, 0.9, 130], [0.78, 0.2, 120], [0.14, 0.86, 120]].forEach(([x, y, r]) => { const gr = o.createRadialGradient(W * x, H * y, 0, W * x, H * y, r); gr.addColorStop(0, "rgba(255,196,110,.5)"); gr.addColorStop(1, "rgba(255,196,110,0)"); o.fillStyle = gr; o.fillRect(W * x - r, H * y - r, r * 2, r * 2); }); o.globalCompositeOperation = "source-over";
+  }
+  let url = ""; try { url = out.toDataURL("image/jpeg", 0.8); } catch (e) {}
+  GROUND[variant] = url; return url;
+}
+
 const H3D_DEF = {
   show: false, home: "full", page: true, switch: false, tap: "quint", height: 360,
   theme: "auto", accent: "", quality: "auto", walls: "auto", roof: true, roof_fade: true, explode: true, floor_stack: "dim", floor_thumbs: true, room_names: true,
@@ -22,7 +73,7 @@ const H3D_DEF = {
   alerts: true, alert_jump: false, energy: true, flows: "auto", holograms: "auto", weather: true, household_card: true, motion_trail: false, pets: true, ghost: true,
   time_travel: null, time_travel_range: "24h", voice: true, director: null, screen: "",
   idle_return: 0, idle_orbit: false, night: "off", floor: "", room: "",
-  sky: "live", clouds: true, stars: true, shadow: "soft", haze: true, vignette: false, sun_glow: true,
+  ground: true, sky: "live", clouds: true, stars: true, shadow: "soft", haze: true, vignette: false, sun_glow: true,
   layout: "immersive", bar: "open", bar_hide: 0, cam: "default", fx: "live", color: true,
 };
 const H3D_OPT = {
@@ -37,7 +88,7 @@ const H3D_OPT = {
 const H3D_REAL = {
   natural: { sky: "live", clouds: true, stars: true, shadow: "soft", haze: true, vignette: false, sun_glow: true, theme: "neon", quality: "high", roof: true, roof_fade: true, walls: "auto", weather: true, floor_stack: "dim", markers: "important", marker_names: false },
   cinema: { sky: "live", clouds: true, stars: true, shadow: "strong", haze: true, vignette: true, sun_glow: true, theme: "neon", quality: "high", roof: true, roof_fade: false, walls: "auto", weather: true, floor_stack: "dim", markers: "none", marker_names: false, controls_hidden: true, controls_hide_after: 5 },
-  clean: { sky: "off", clouds: false, stars: false, shadow: "off", haze: false, vignette: false, sun_glow: false },
+  clean: { sky: "off", ground: false, clouds: false, stars: false, shadow: "off", haze: false, vignette: false, sun_glow: false },
 };
 const SV_DEF = Object.fromEntries(Object.entries(SV).map(([k, v]) => [k, v.n]));
 const HOME_I = ic('<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>');
@@ -104,7 +155,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.44.0";
+const VER = "1.45.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -3191,6 +3242,16 @@ class QuintDashboard extends HTMLElement {
     c = c.map((x) => mix(x, grey, dim));
     const day = Math.max(0, Math.min(1, (e + 6) / 14)), night = 1 - day;
     const L = [];
+    if (o.ground !== false) {                                                  // a painted aerial view of the surroundings instead of the sky
+      const v = e > 10 ? "day" : e > -3 ? "dusk" : "night"; let img = GROUND[v] || "";
+      if (!img && !GROUND["w" + v]) { GROUND["w" + v] = 1; setTimeout(() => { try { groundPicture(v); } catch (er) {} this._h3dRealAll(true); }, 60); }   /* painted a moment later, so the page never stalls; the sky shows until then */
+      if (img) {
+        if (o.clouds !== false && st.cloud > 0.12) [[18, 22, 34, 9], [52, 14, 40, 8], [82, 26, 30, 9], [34, 42, 36, 7]].forEach(([x, y, w, h]) => L.push(`radial-gradient(ellipse ${w}% ${h}% at ${x}% ${y}%, ${css([255, 255, 255], (v === "night" ? 0.05 : 0.14) * st.cloud)} 0, transparent 100%)`));
+        if (st.rain) L.push(`repeating-linear-gradient(105deg, rgba(190,210,235,${0.05 + st.cloud * 0.05}) 0 1px, transparent 1px 9px)`);
+        L.push(`url("${img}") center / cover no-repeat`);
+        return { bg: L.join(", "), key: `g:${v}|${st.cloud > 0.12 ? Math.round(st.cloud * 10) : 0}|${st.rain}|${o.clouds}` };
+      }
+    }
     const gx = Math.max(6, Math.min(94, 12 + ((st.az - 70) / 220) * 76));
     if (o.sun_glow !== false && e > -4 && st.cloud < 0.95) {                 // the sun
       const gy = Math.max(6, Math.min(96, 82 - e * 1.15)), k = (1 - st.cloud * 0.85) * Math.min(1, (e + 4) / 6), warm = e < 10 ? [255, 176, 96] : [255, 236, 190];
@@ -3221,7 +3282,7 @@ class QuintDashboard extends HTMLElement {
     const root = stage.getRootNode(), o = this._h3d();
     let css = "";
     let key = "";
-    if (o.sky && o.sky !== "off") { const s = this._h3dSkyCss(o); key += s.key; css += `.fp3d-stage{background:${s.bg}!important;transition:background 3s}`; }
+    if ((o.sky && o.sky !== "off") || o.ground !== false) { const s = this._h3dSkyCss(o); key += s.key; css += `.fp3d-stage{background:${s.bg}!important;transition:background 3s}`; }
     if (o.shadow === "soft" || o.shadow === "strong") { key += "|sh" + o.shadow; css += `.fp3d-stage:not(.fp3d-low) canvas.fp3d-canvas{filter:drop-shadow(0 ${o.shadow === "strong" ? 26 : 16}px ${o.shadow === "strong" ? 28 : 20}px rgba(0,0,0,${o.shadow === "strong" ? 0.62 : 0.42}))}`; }
     if (o.vignette) { key += "|vg"; css += `.fp3d-stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 46%,transparent 52%,rgba(0,0,0,.5) 100%)}`; }
     if (!force && el._qreal === key && el._qrealRoot === root) return true;
@@ -3564,6 +3625,7 @@ class QuintDashboard extends HTMLElement {
           row("Quint rooms", "the rooms Quint shows on the Rooms page", `<b>${rooms.length}</b>`)) +
         sec("Realism", "a living picture around the house: the real sun, moon, stars and weather behind it, and a soft shadow under it",
           row("Quick look", "Natural: sky, soft shadow and haze with the sharp Neon house. Cinema: darker, deeper shadow, vignette and a clean view. Plain: all of this off", `<div class="seg sm" style="flex-wrap:wrap"><button data-s="h3d|preset|natural">Natural</button><button data-s="h3d|preset|cinema">Cinema</button><button data-s="h3d|preset|clean">Plain</button></div>`) +
+          row("Realistic surroundings", "a painted aerial view behind the house: paving, lawn, trees and a car, lit for day, evening or night. Off shows the sky", B("ground")) +
           row("Sky behind the house", "Live follows the real sun and your weather entity. Day, Dusk and Night show a fixed time, to try it", sg("sky", ["Off", "Live", "Day", "Dusk", "Night"])) +
           (o.sky && o.sky !== "off" ? row("Sun and moon", "a glow where the sun or moon really is (east left, west right)", B("sun_glow")) + row("Clouds and rain", "clouds, rain and snow when the weather says so", B("clouds")) + row("Stars", "at night, when it is clear", B("stars")) + row("Haze at the horizon", "a soft mist near the ground", B("haze")) : "") +
           row("Shadow under the house", "a soft shadow on the ground (off on weak tablets: the card then uses its low quality)", sg("shadow", ["Off", "Soft", "Strong"])) +
