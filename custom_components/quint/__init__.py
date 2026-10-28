@@ -13,7 +13,7 @@ from .const import DOMAIN, PANEL_PATH, STATIC_URL, VERSION
 from .neon import async_setup_neon, async_unload_neon
 from .updater import QuintUpdater, read_disk_version
 from .push import QuintPush
-from .util import clean_perms, is_newer, pic_id_ok, valid_image, valid_new_user
+from .util import clean_perms, is_newer, valid_image, valid_new_user
 
 
 class QuintConfigView(HomeAssistantView):
@@ -273,51 +273,6 @@ class QuintRoomImageView(HomeAssistantView):
         return self.json({"ok": True})
 
 
-class QuintPicView(HomeAssistantView):
-    """Rendered pictures of the floors for the picture house (day and night), set by an admin, shown to every user."""
-
-    url = "/api/quint/pic"
-    name = "api:quint:pic"
-    requires_auth = True
-
-    def __init__(self, store: Store) -> None:
-        self._store = store
-
-    async def get(self, request):
-        data = await self._store.async_load() or {}
-        pid = request.query.get("id", "")
-        if not pid:
-            return self.json({"ids": sorted(data)})
-        if pid not in data:
-            return self.json_message("No picture", 404)
-        return self.json({"data": data[pid]})
-
-    async def post(self, request):
-        user = request.get("hass_user")
-        if user is None or not user.is_admin:
-            return self.json_message("Admin required", 403)
-        body = await request.json()
-        pid = body.get("id", "") if isinstance(body, dict) else ""
-        image = body.get("data", "") if isinstance(body, dict) else ""
-        if not isinstance(pid, str) or not pic_id_ok(pid) or not valid_image(image):
-            return self.json_message("Invalid picture", 400)
-        data = await self._store.async_load() or {}
-        if pid not in data and len(data) >= 40:
-            return self.json_message("Too many pictures", 400)
-        data[pid] = image
-        await self._store.async_save(data)
-        return self.json({"ok": True})
-
-    async def delete(self, request):
-        user = request.get("hass_user")
-        if user is None or not user.is_admin:
-            return self.json_message("Admin required", 403)
-        data = await self._store.async_load() or {}
-        data.pop(request.query.get("id", ""), None)
-        await self._store.async_save(data)
-        return self.json({"ok": True})
-
-
 class QuintPushView(HomeAssistantView):
     """The alerts sent to phones (for the bell) and the phones that can be chosen; an admin can send a test."""
 
@@ -355,7 +310,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         store = Store(hass, 1, f"{DOMAIN}.config")
         hass.http.register_view(QuintConfigView(store, hass))
         hass.http.register_view(QuintPushView(hass))
-        hass.http.register_view(QuintPicView(Store(hass, 1, f"{DOMAIN}.pics")))
         data["push"] = QuintPush(hass, store)
         updater = QuintUpdater(hass, store)
         data["updater"] = updater

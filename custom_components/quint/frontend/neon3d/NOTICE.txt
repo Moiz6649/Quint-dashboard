@@ -1,3 +1,6 @@
 Quinteca 3D is based on NeonPlan 3D by Mastershort (https://github.com/Mastershort/neonplan3d),
 used under the MIT licence (see LICENSE). The display name was changed to Quinteca; the original
 copyright notice stays in LICENSE.
+
+Quint v1.43.0 patched neonplan3d-3d.js so floors, walls and furniture can take colours from
+globalThis.__qcol (set by the Quint panel). Without it the file draws exactly as before.

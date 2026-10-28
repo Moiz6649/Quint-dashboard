@@ -16,11 +16,6 @@ def valid_image(data: object) -> bool:
     )
 
 
-def pic_id_ok(value: object) -> bool:
-    """A picture id such as "a1b2c3" or "a1b2c3n" (day / night picture of a floor)."""
-    return isinstance(value, str) and re.fullmatch(r"[a-z0-9]{1,24}", value) is not None
-
-
 def parse_version(value: object) -> tuple[int, ...]:
     """'1.11.0' / 'v1.11.0' -> (1, 11, 0). Unknown text -> ()."""
     if not isinstance(value, str):
