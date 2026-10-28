@@ -23,6 +23,7 @@ const H3D_DEF = {
   time_travel: null, time_travel_range: "24h", voice: true, director: null, screen: "",
   idle_return: 0, idle_orbit: false, night: "off", floor: "", room: "",
   sky: "live", clouds: true, stars: true, shadow: "soft", haze: true, vignette: false, sun_glow: true,
+  layout: "immersive", bar: "open", bar_hide: 0, view: "live",
 };
 const H3D_OPT = {
   home: ["off", "full", "block"], tap: ["quint", "panel", "both"], height: [280, 360, 440, 520, 640], theme: ["auto", "neon", "blueprint", "day"], quality: ["auto", "low", "high"], walls: ["auto", "cut"],
@@ -30,6 +31,7 @@ const H3D_OPT = {
   clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
   time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
   sky: ["off", "live", "day", "dusk", "night"], shadow: ["off", "soft", "strong"],
+  layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], view: ["live", "picture"],
 };
 // the realism presets: what they switch (the rest of the look stays as the admin set it)
 const H3D_REAL = {
@@ -102,7 +104,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.39.0";
+const VER = "1.40.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -618,6 +620,66 @@ input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 
 .h3swr{display:flex;justify-content:flex-end;margin:0 0 6px}.h3sw{flex:none}
 .phero.ph3{padding-bottom:6px}.phouse.full{margin:0 -2px 4px}
 .app.ed nav,.app.ed .pbar,.app.ed .tbell{display:none}.app.ed::before{display:none}
+/* full-screen 3D Home */
+.app.imm{min-height:var(--vh,100vh)}.app.imm>nav,.app.imm>.tbell{display:none}.app.imm::before{display:none}.app.imm>main{position:absolute;inset:0}
+.home.h3imm,:host([data-dev]) .home.h3imm{position:absolute;inset:0;padding:0;display:block;gap:0}
+.h3imm>.h3d.imm{position:absolute;inset:0;border:0;border-radius:0;overflow:hidden}
+.h3bar{position:absolute;left:14px;top:14px;bottom:14px;width:272px;z-index:4;display:flex;flex-direction:column;gap:16px;padding:92px 18px 18px;border-radius:24px;background:linear-gradient(180deg,rgba(14,19,30,.72),rgba(8,11,18,.78));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.12);box-shadow:0 26px 60px -20px #000;overflow:hidden;transition:transform .38s cubic-bezier(.2,.8,.2,1),opacity .28s}
+.h3imm[data-bar="0"] .h3bar{transform:translateX(calc(-100% - 28px));opacity:0;pointer-events:none}
+.h3tog{position:absolute;left:28px;top:28px;z-index:6;width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(14,19,30,.6);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);display:grid;place-items:center;padding:0;color:var(--tx);box-shadow:0 8px 22px -8px #000}.h3tog .si{width:22px;height:22px}.h3tog:active{transform:scale(.93)}
+.h3clk{display:flex;flex-direction:column;gap:4px;padding:0 4px}.h3clk b{font-family:var(--serif);font-weight:300;font-size:54px;letter-spacing:1px;line-height:1}.h3clk span{color:var(--mu);font-size:13px}
+.h3pages{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-height:0;overflow:auto;scrollbar-width:none}.h3pages::-webkit-scrollbar{display:none}
+.h3pg{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:10px 14px;border:0;border-radius:16px;background:transparent;color:var(--tx);font-size:16px;letter-spacing:.3px;text-align:left;transition:background .2s}.h3pg i{display:grid;place-items:center;width:30px;height:30px;color:var(--c,var(--ac));opacity:.9}.h3pg .si{width:24px;height:24px}.h3pg:hover{background:rgba(255,255,255,.06)}.h3pg.act{background:rgba(255,255,255,.1);font-weight:600}
+.h3ppl{display:flex;flex-wrap:wrap;gap:10px;padding:6px 4px}.h3av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:rgba(255,255,255,.08);border:2px dashed rgba(255,255,255,.25);font-size:14px;font-weight:600;color:var(--mu)}.h3av.at{border:2px solid var(--ok);color:var(--tx)}.h3av img{width:100%;height:100%;object-fit:cover}
+.h3sp{display:none}.h3wx{display:flex;align-items:center;gap:12px;color:var(--tx);font-size:15px}.h3wx i{display:grid;place-items:center;width:30px;height:30px;color:var(--mu)}.h3wx .si{width:26px;height:26px}.h3cr{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mu);opacity:.8}
+.h3bell{position:absolute;left:84px;top:28px;z-index:6;width:46px;height:46px}.h3bell .si{width:22px;height:22px}.h3acts{display:flex;justify-content:space-between;gap:8px}.h3acts .h3rb{width:46px;height:46px;flex:none}.h3acts .h3rb .si{width:22px;height:22px}
+.h3rb{position:relative;width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(10,14,22,.66);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);display:grid;place-items:center;padding:0;color:var(--tx);box-shadow:0 10px 26px -10px #000;transition:transform .15s,background .2s}.h3rb .si{width:26px;height:26px}.h3rb:hover{background:rgba(30,40,60,.8)}.h3rb:active{transform:scale(.92)}.h3rb .nbd{top:-2px;right:-2px;min-width:20px;height:20px;font-size:11px}
+.h3swi{position:absolute;left:50%;transform:translateX(-50%);top:16px;z-index:4}
+:host([data-dev="phone"]) .h3imm{display:none}
+/* rendered-picture house */
+.h3d.pich{background:radial-gradient(120% 90% at 50% 30%,#1a2231,#0a0e16 70%)}
+.h3d.pich.home,.h3d.pich.page,.h3d.pich.full,.h3d.pich.pfull,.h3d.pich.phone{border-radius:18px;overflow:hidden}
+.h3d.pich.home{height:var(--ph,360px)}.h3d.pich.phone{height:min(var(--ph,360px),380px)}.h3d.pich.pfull{height:62vh;min-height:340px;max-height:640px}
+.h3d.pich.page,.h3d.pich.full{height:calc(var(--vh,100vh) - 170px);min-height:360px}
+.pic{position:absolute;inset:0;container-type:size;display:grid;place-items:center;padding:0;user-select:none;-webkit-user-select:none}
+.h3imm[data-bar="1"] .pic.imm{padding-left:306px}.h3imm .pic.imm{padding-right:84px;transition:padding .3s}
+.pic-st{position:relative;aspect-ratio:var(--ar,1.333);width:min(100cqw,calc(100cqh * var(--ar,1.333)));touch-action:manipulation}
+.pic-img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:fill;border-radius:14px;box-shadow:0 30px 70px -26px #000;background:#0d1219;-webkit-user-drag:none;pointer-events:none}
+.pic-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.pic-room{fill:transparent;stroke:transparent;stroke-width:3;stroke-linejoin:round;vector-effect:non-scaling-stroke;cursor:pointer;transition:fill .35s,stroke .25s}
+.pic-room.lit{fill:rgba(255,196,110,.15)}
+.pic-room:hover{fill:rgba(255,255,255,.08)}
+.pic-room.sel{fill:rgba(61,219,208,.13);stroke:#3ddbd0}
+.pic-tmp{position:absolute;transform:translate(-50%,-50%);pointer-events:none;padding:2px 9px;border-radius:999px;background:rgba(10,14,22,.62);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font-size:clamp(10px,1.5cqw,15px);font-weight:600;letter-spacing:.3px;white-space:nowrap}.pic-tmp[hidden]{display:none}
+.pic-pin{--s:clamp(26px,3.3cqw,44px);position:absolute;transform:translate(-50%,-50%);width:var(--s);height:var(--s);padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(10,14,22,.66);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e8ecf4;display:grid;place-items:center;box-shadow:0 6px 16px -6px #000;transition:background .25s,box-shadow .25s,transform .15s}
+.pic-pin i{display:grid;place-items:center;width:58%;height:58%;font-style:normal}.pic-pin i svg{width:100%;height:100%}
+.pic-pin:active{transform:translate(-50%,-50%) scale(.92)}
+.pic-pin.on{background:#ffc66e;color:#1a1204;border-color:#ffe2ab;box-shadow:0 0 0 4px rgba(255,198,110,.22),0 0 22px rgba(255,198,110,.65)}
+.pic-pin.alert{background:#ff5a5a;color:#fff;border-color:#ffb0b0;animation:picp 1s infinite}
+.pic-pin.unav{opacity:.45}.pic-pin.gone{display:none}
+.pic-pin b{position:absolute;left:50%;top:calc(100% + 3px);transform:translateX(-50%);font-size:clamp(9px,1.25cqw,13px);font-weight:600;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;white-space:nowrap;pointer-events:none}.pic-pin b:empty{display:none}
+.pic-pin em{position:absolute;left:50%;bottom:calc(100% + 3px);transform:translateX(-50%);font-style:normal;font-size:clamp(9px,1.2cqw,12px);color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;white-space:nowrap;pointer-events:none}
+@keyframes picp{50%{box-shadow:0 0 0 10px rgba(255,90,90,0)}}
+.pic-ld{position:absolute;inset:0;display:grid;place-items:center;color:var(--mu);font-size:14px}.pic-ld[hidden]{display:none}
+.pic-fl{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);margin:0;z-index:3;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);background:rgba(10,14,22,.66)}.pic-fl button{padding:9px 18px;white-space:nowrap}
+.pic-chip{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:3;border:0;border-radius:999px;padding:10px 20px;background:var(--ac);color:#12151c;font-weight:600;font-size:14px;box-shadow:0 8px 22px -8px #000;width:auto}.pic-chip[hidden]{display:none}
+.h3imm[data-bar="1"] .pic.imm .pic-fl,.h3imm[data-bar="1"] .pic.imm .pic-chip{margin-left:111px}
+/* the picture editor */
+.h3ep.pe{position:relative;overflow:hidden}
+.pe-wrap{display:flex;height:100%;min-height:0}.pe-main{position:relative;flex:1 1 auto;min-width:0;background:radial-gradient(120% 90% at 50% 30%,#1a2231,#0a0e16 70%)}
+.pe-side{flex:0 0 330px;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:14px;background:rgba(9,12,19,.94);border-left:1px solid var(--bd)}
+.pe-sec{display:flex;flex-direction:column;gap:8px}.pe-h{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+.pe-side input[type=text],.pe-side select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:rgba(0,0,0,.3);color:var(--tx);font-size:14px}
+.pe-side .sbtn{align-self:stretch;text-align:center}.pe-side .seg button[disabled]{opacity:.4}
+.pe-file{display:block;cursor:pointer}
+.pe-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mu);font-size:15px;text-align:center;padding:20px}
+.pe-st{cursor:default}.pe-st.room,.pe-st.pin{cursor:crosshair}.pe-st .pic-img{pointer-events:none}
+.pe-st .pic-pin{cursor:grab;touch-action:none}.pe-st .pic-pin.sel{outline:3px solid #3ddbd0;outline-offset:3px}.pe-st .pic-pin em{display:block}
+.pe-st .pe-r{fill:rgba(255,255,255,.07);stroke:rgba(255,255,255,.6);stroke-width:2}.pe-st .pe-r.sel{fill:rgba(61,219,208,.18);stroke:#3ddbd0}
+.pe-st.room .pe-r,.pe-st.pin .pe-r{pointer-events:none}
+.pe-draft{fill:none;stroke:#3ddbd0;stroke-width:3;stroke-dasharray:8 6;vector-effect:non-scaling-stroke}.pe-dot{fill:#3ddbd0;stroke:#06201e;stroke-width:2;cursor:pointer}
+.pe-vx{cursor:grab;fill:#fff;stroke:#3ddbd0;stroke-width:3;letter-spacing:0}
+:host([data-dev="phone"]) .pe-wrap{flex-direction:column}:host([data-dev="phone"]) .pe-side{flex:0 0 46%;border-left:0;border-top:1px solid var(--bd)}
 .h3e{display:flex;flex-direction:column;height:var(--vh);width:100%}.h3eb{display:flex;align-items:center;gap:14px;padding:8px 14px;background:rgba(7,10,17,.9);border-bottom:1px solid var(--bd)}.h3eb span{color:var(--mu);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.h3ep{flex:1;min-height:0;overflow:hidden;background:#070b14}.h3ep>neonplan3d-panel{display:block;height:100%}
 .phouse{margin:0 0 4px;border-radius:2px;overflow:hidden;background:var(--tc)}
 .housepg{padding:0!important}.housepg .h3d{min-height:60vh}
@@ -732,7 +794,8 @@ class QuintDashboard extends HTMLElement {
     this._c = { rooms: [], map: {}, hide: [], name: "", custom: {}, order: {}, ...c };
     this.shadowRoot.addEventListener("click", (e) => this._click(e));
     this.shadowRoot.addEventListener("change", (e) => this._change(e));
-    this.shadowRoot.addEventListener("pointerdown", (e) => { if (e.target.type === "range") this._drag = true; });
+    this.shadowRoot.addEventListener("pointerdown", (e) => { if (e.target.type === "range") this._drag = true; this._h3lt = Date.now(); const pn = e.composedPath().find((n) => n.classList && n.classList.contains("pic-pin") && n.dataset.pent); clearTimeout(this._picLp); this._picHeld = false; if (pn) this._picLp = setTimeout(() => { this._picHeld = true; this._picPin(pn.dataset.pent, true); }, 550); });
+    this.shadowRoot.addEventListener("pointerup", () => clearTimeout(this._picLp)); this.shadowRoot.addEventListener("pointercancel", () => clearTimeout(this._picLp));
     window.addEventListener("pointerup", () => { this._drag = false; });
     const R = this.shadowRoot;
     R.addEventListener("pointerdown", (e) => { if (!this._wdown(e)) this._pdown(e); });
@@ -1056,7 +1119,7 @@ class QuintDashboard extends HTMLElement {
     this._lastAct = Date.now(); this._actf = () => this._act(); this._visf = () => { if (!document.hidden) this._wake(); };
     ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.addEventListener(ev, this._actf, { passive: true, capture: true }));
     document.addEventListener("visibilitychange", this._visf);
-    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); }, 1000);
+    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); this._h3dBarTick(); }, 1000);
     this._iv = setInterval(() => { const r = this.shadowRoot; this._tickClock(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 1000);
   }
   disconnectedCallback() { this._hOff(); clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
@@ -1158,6 +1221,7 @@ class QuintDashboard extends HTMLElement {
     if (o.tileAlpha !== undefined && Number.isFinite(+o.tileAlpha)) c.tileAlpha = Math.max(0, Math.min(100, Math.round(+o.tileAlpha)));
     if (o.eng === "std" || o.eng === "auto") c.eng = o.eng;
     if (o.cks === "analog" || o.cks === "digital") c.cks = o.cks;
+    if (o.push && typeof o.push === "object") c.push = { on: o.push.on === true, targets: (Array.isArray(o.push.targets) ? o.push.targets : []).filter((t) => typeof t === "string" && /^mobile_app_[a-z0-9_]{1,60}$/.test(t)).slice(0, 12) };
     if (o.ntf && typeof o.ntf === "object") { const x = o.ntf, y = {}; if (typeof x.on === "boolean") y.on = x.on; if ([3, 5, 10, 30].includes(+x.mins)) y.mins = +x.mins; if (x.types && typeof x.types === "object") { y.types = {}; Object.keys(NT).forEach((k) => { if (typeof x.types[k] === "boolean") y.types[k] = x.types[k]; }); } c.ntf = y; }
     if (o.scr && typeof o.scr === "object") { const x = o.scr, y = {}; if (typeof x.awake === "boolean") y.awake = x.awake; if (typeof x.night === "boolean") y.night = x.night; if (["off", "aurora", "night", "analog", "frame", "home", "a", "b", "c"].includes(x.idle)) y.idle = { a: "analog", b: "aurora", c: "night" }[x.idle] || x.idle; ["mins", "n1", "n2"].forEach((k) => { if (Number.isFinite(+x[k])) y[k] = +x[k]; }); c.scr = y; }
     if (typeof o.clockTile === "boolean") c.clockTile = o.clockTile;
@@ -1172,6 +1236,11 @@ class QuintDashboard extends HTMLElement {
     const c = this._c;
     if (a === "icsel") { this._icSel = +v; return this._draw(true); }
     if (a === "rdsel") { this._rd = v; return this._draw(true); }
+    if (a === "pushtest") {
+      this._toast("Sending…");
+      Promise.resolve(this._h.callApi("POST", "quint/config", c)).then(() => this._h.callApi("POST", "quint/push", {})).then((r) => this._toast(r && r.sent ? "Sent to " + r.sent + " phone" + (r.sent > 1 ? "s" : "") + (r.missing && r.missing.length ? " (not found: " + r.missing.join(", ") + ")" : "") : "No phone could be reached. Check that the Home Assistant app is signed in")).catch((e) => this._toast("Could not send: " + this._err(e, "error")));
+      return;
+    }
     if (a === "save") { this._push(); this._dirty = false; this._snap = JSON.stringify(c); this._toast("Saved"); this._draw(true); return; }
     if (a === "close") { if (this._dirty && !confirm("Discard unsaved changes?")) return; if (this._dirty) this._revert(); return this._nav("home"); }
     if (a === "reset") {
@@ -1210,6 +1279,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "tszd0") { delete c.tszd; delete c.tsz; }
     else if (a === "scr") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.scr = c.scr || {}); if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (["idle"].includes(k)) o.idle = x; else o[k] = +x; this._wkT = 0; this._ambHide(); }
     else if (a === "hbreset") { delete c.hbOrder; delete c.hlay; delete c.hlist; try { localStorage.removeItem("quint_hbo"); localStorage.removeItem("quint_hlay"); localStorage.removeItem("quint_hlist"); } catch (e) {} }
+    else if (a === "push") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.push = c.push || { on: false, targets: [] }); if (k === "on") o.on = x === "1"; else if (k === "t" && /^mobile_app_[a-z0-9_]{1,60}$/.test(x)) { const s = new Set(o.targets || []); s.has(x) ? s.delete(x) : s.add(x); o.targets = [...s].slice(0, 12); } }
     else if (a === "ntf") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.ntf = c.ntf || {}); if (k === "on") o.on = x === "1"; else if (k === "mins") o.mins = +x; else if (k.startsWith("t:") && NT[k.slice(2)]) (o.types = o.types || {})[k.slice(2)] = x === "1"; }
     else if (a === "cks") c.cks = v === "analog" ? "analog" : "digital";
     else if (a === "ctile") c.clockTile = !c.clockTile;
@@ -1490,7 +1560,7 @@ class QuintDashboard extends HTMLElement {
   _click(e) {
     if (this._mv && this._mv.carry) return this._carryClick(e);
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.h3d || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.h3d || n.dataset.pic || n.dataset.pin || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
@@ -1501,8 +1571,12 @@ class QuintDashboard extends HTMLElement {
     if (d.rimgb) return this._rimgDel(d.rimgb);
     if (d.pick) { const i = d.pick.indexOf("|"); (this._pick = this._pick || {})[d.pick.slice(0, i)] = d.pick.slice(i + 1); return this._draw(true); }
     if (d.ntf) { if (d.ntf === "bg" && e.composedPath()[0] !== t) return; if (d.ntf === "bg") { this._nc = false; return this._draw(true); } return this._ntfAct(d.ntf); }
+    if (d.pic) return this._picClick(d.pic, t);
+    if (d.pin) { if (this._picHeld) { this._picHeld = false; return; } return this._picPin(t.dataset.pent, false); }
     if (d.h3d) {
+      if (d.h3d === "piceditor") { if (this._admin()) { if (this._dirty) this._save(true); this._nav("picedit"); } return; }
       if (d.h3d === "editor") { if (this._admin()) this._h3dOpenEditor(); }
+      else if (d.h3d === "bar") { this._h3dBarSet(!this._h3dBarOpen()); }
       else if (d.h3d === "retry") { this._neonP = null; this._neonErr = ""; this._last = null; this._draw(true); }
       else if (d.h3d === "open") { const r = t.dataset.room, el = Object.values(this._h3el || {}).find((x) => x._chip === t); if (el) { el._roomId = null; try { el.requestUpdate(); } catch (er) {} } t.hidden = true; if (r) this._nav("room", { room: r }); }
       return;
@@ -1901,7 +1975,8 @@ class QuintDashboard extends HTMLElement {
     this._lvc = this._lvc || {};
     for (const p of ph) {
       const [r, i] = p.dataset.lv.split(":");
-      if (r === "house") { if (i === "edit") await this._mountH3Edit(p); else await this._mountH3(p, i); continue; }
+      if (r === "pic") { this._mountPicEdit(p); continue; }
+      if (r === "house") { if (i === "edit") await this._mountH3Edit(p); else if (this._picOn()) this._picBuild(p, i); else await this._mountH3(p, i); continue; }
       const it = (this._c.custom[r] || [])[+i]; if (!it) continue;
       const k = JSON.stringify(it.config); let el = this._lvc[k];
       if (!el) { try { const hp = await window.loadCardHelpers(); el = await hp.createCardElement(it.config); } catch (e) { el = document.createElement("div"); el.textContent = "Card error: " + e.message; } this._lvc[k] = el; }
@@ -1940,6 +2015,33 @@ class QuintDashboard extends HTMLElement {
     if (d === "binary_sensor") return (["door", "garage_door", "window", "opening"].includes(dc) || (sec && !["motion", "occupancy", "presence", "tamper", "smoke", "gas", "moisture", "carbon_monoxide"].includes(dc))) && n.state === "on";
     return false;
   }
+  /* phone notifications: the server sends the alerts to the Home Assistant mobile app, so they arrive with no Quint page open */
+  _pushInfo() {
+    if (!this._pi && !this._piBusy && this._h && this._h.callApi) {
+      this._piBusy = true;
+      this._h.callApi("GET", "quint/push").then((d) => { this._pi = { phones: (d && d.phones) || [], log: (d && d.log) || [] }; this._pushMerge(this._pi.log); }).catch(() => { this._pi = { phones: [], log: [], err: true }; })
+        .finally(() => { this._piBusy = false; if (this._v.p === "settings") { this._last = null; this._draw(true); } });
+    }
+    return this._pi || { phones: [], log: [], loading: true };
+  }
+  _pushSec(sec, row, tg) {
+    const p = { on: false, targets: [], ...(this._c.push || {}) }, pi = this._pushInfo();
+    const names = pi.phones.map((n) => `<button class="sbtn ${p.targets.includes(n) ? "pri2" : ""}" data-s="push|t|${n}">${p.targets.includes(n) ? "✓ " : ""}${this._esc(n.replace(/^mobile_app_/, "").replace(/_/g, " "))}</button>`).join("");
+    return sec("Phone notifications", "the same alerts on the Home Assistant mobile app, even when Quint is closed",
+      row("Send alerts to phones", "alarm, smoke, leaks, doors left open, low batteries and Home Assistant messages, as chosen above (quiet hours apply; alarm and smoke alerts still ring)", tg(p.on, `data-s="push|on|${p.on ? 0 : 1}"`)) +
+      (p.on ? row("Which phones", pi.loading ? "looking for phones…" : pi.phones.length ? "every phone with the Home Assistant app that is signed in to this Home Assistant" : "No phone with the Home Assistant app was found. Install the app, sign in and allow notifications, then reload this page", `<div class="chks" style="display:flex;flex-wrap:wrap;gap:10px">${names}</div>`) +
+        row("Try it", "sends a test alert to the phones you ticked. It saves your settings first", `<button class="sbtn" data-s="pushtest|" ${p.targets.length ? "" : "disabled"}>Send to phones</button>`) : ""));
+  }
+  /* alerts the server sent while this screen was closed show up in the bell as well */
+  _pushMerge(log) {
+    if (!Array.isArray(log) || !log.length) return;
+    let last = 0; try { last = +localStorage.getItem("quint_pushts") || 0; } catch (e) {}
+    const l = this._nList(), have = new Set(l.map((x) => x.id)); let add = 0, newest = last;
+    log.slice().reverse().forEach((x) => { if (x && x.t > last && !have.has(x.id)) { l.unshift({ id: x.id, type: x.type, title: x.title, msg: x.msg || "", t: x.t, crit: !!x.crit, read: false }); add++; } if (x && x.t > newest) newest = x.t; });
+    l.sort((a, b) => b.t - a.t); this._nl = l.slice(0, 50);
+    try { localStorage.setItem("quint_pushts", String(newest)); } catch (e) {}
+    if (add) { this._nSave(); this._nBadge(); }
+  }
   _ntfScan(h) {
     const S = h.states, prev = this._nS || (this._nS = {}), o2 = this._nOpen || (this._nOpen = {}), of = this._nOff || (this._nOff = {}), now = Date.now();
     if (!this._nInit) { this._nInit = true; this._nQuiet = now + 20000; }
@@ -1963,6 +2065,7 @@ class QuintDashboard extends HTMLElement {
     if (d === "sensor" && dc === "battery") { const v = parseFloat(ns), ov = parseFloat(os); if (isFinite(v) && v < 15 && v >= 0 && !(isFinite(ov) && ov < 15)) this._notify({ type: "battery", ent: id, title: "Low battery", msg: nm + " · " + Math.round(v) + "%", day: true }); }
   }
   _ntfTick() {
+    if (this._h && this._h.callApi && this._loaded && Date.now() - (this._pgt || 0) > 90000) { this._pgt = Date.now(); Promise.resolve(this._h.callApi("GET", "quint/push")).then((d) => this._pushMerge(d && d.log)).catch(() => {}); }
     if (!this._nInit && this._h && this._loaded) this._ntfScan(this._h);
     if (!this._nInit) return;
     const now = Date.now(), nt = this._ntf(), S = this._h.states;
@@ -2640,8 +2743,42 @@ class QuintDashboard extends HTMLElement {
   _homeFull(g, who, date) {
     const c = this._c, E = (t) => this._esc(t), phone = this.getAttribute("data-dev") === "phone", greet = g + (who ? ", " + E(who) : "");
     if (phone) return this._homePhone({ houseFull: this._h3dBox("pfull"), sw: this._h3dSwitch(), g: greet, date, sc: c.noScenes ? [] : this._scenes(), bento: "", hasFav: false, cr: this._credit() });
+    if (this._h3dImm()) return this._homeImm(date);
     const wx = c.noWeather ? null : this._wx();
     return `<div class="home h3full"><div class="hh">${this._brand()}</div><div class="h3top"><div class="hgr gr">${greet}</div><div class="h3meta">${c.noClock ? "" : '<span class="tm">@@T@@</span>'}<span>${E(date)}</span>${wx ? `<span class="wx">${wx.ic}<span>${wx.t}</span></span>` : ""}</div>${this._h3dSwitch()}</div>${this._h3dBox("full")}</div>`;
+  }
+  /* ---------- the full-screen 3D Home: the house fills the screen, a glass bar (clock, pages, people, weather) hides and shows with one icon, round buttons on the right ---------- */
+  _h3dImm() { return this._h3dFull() && this.getAttribute("data-dev") !== "phone" && this._h3d().layout !== "classic"; }
+  _h3dBarOpen() {
+    let u = ""; try { u = localStorage.getItem("quint_h3bar") || ""; } catch (e) {}
+    return u === "1" ? true : u === "0" ? false : this._h3d().bar !== "closed";
+  }
+  _h3dBarSet(open) { try { localStorage.setItem("quint_h3bar", open ? "1" : "0"); } catch (e) {} this._h3lt = Date.now(); this._last = null; this._draw(true); }
+  _h3dBarTick() {
+    const s = +this._h3d().bar_hide || 0;
+    if (!s || !this._h3dImm() || this._v.p !== "home" || !this._h3dBarOpen()) return;
+    if (Date.now() - (this._h3lt || (this._h3lt = Date.now())) > s * 1000) this._h3dBarSet(false);
+  }
+  _people() {
+    const H = this._h.states, E = (t) => this._esc(t);
+    return Object.keys(H).filter((i) => i.startsWith("person.")).slice(0, 8).map((id) => {
+      const s = H[id], a = s.attributes || {}, nm = a.friendly_name || id, home = s.state === "home", pic = a.entity_picture;
+      const ini = String(nm).trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+      return `<span class="h3av ${home ? "at" : ""}" title="${E(nm)} · ${E(s.state)}">${pic ? `<img src="${E(pic)}" alt="">` : E(ini)}</span>`;
+    }).join("");
+  }
+  _homeImm(date) {
+    const c = this._c, E = (t) => this._esc(t), open = this._h3dBarOpen(), pages = this._pgs || [], adm = this._admin(), wx = c.noWeather ? null : this._wx();
+    const nU = this._nList().filter((x) => !x.read).length;
+    const pg = pages.map((x) => `<button class="h3pg ${x[1] ? "act" : ""}" style="--c:${x[5]}" ${x[2]}><span>${E(x[4])}</span><i>${x[3]}</i></button>`).join("");
+    const ppl = this._people();
+    const rb = (inner, attrs, extra = "") => `<button class="h3rb ${extra}" ${attrs}>${inner}</button>`;
+    const rail = rb(BELL_I + (nU ? `<span class="nbd">${nU > 9 ? "9+" : nU}</span>` : ""), 'data-ntf="open" title="Notifications"', "nbell h3bell");
+    const acts = `<div class="h3acts">${this._svcs().includes("cameras") ? rb(SV.cameras.i, `data-go='{"p":"cameras"}' title="Cameras"`) : ""}${adm ? rb('<svg class="si" viewBox="0 0 24 24"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/></svg>', 'data-h3d="editor" title="3D editor"') : ""}${rb(PALETTE_I, 'data-pers="open" title="Background"')}${rb(GEAR_I, `data-go='{"p":"settings"}' title="Settings"`)}</div>`;
+    const bar = `<aside class="h3bar" aria-hidden="${open ? "false" : "true"}">${c.noClock ? "" : `<div class="h3clk"><b>@@T@@</b><span>${E(date)}</span></div>`}<div class="h3pages">${pg}</div>${ppl ? `<div class="h3ppl">${ppl}</div>` : ""}<div class="h3sp"></div>${acts}${wx ? `<div class="h3wx"><i>${wx.ic}</i><span>${wx.t}</span></div>` : ""}${this._credit() ? `<div class="h3cr">${this._credit()}</div>` : ""}</aside>`;
+    const tog = `<button class="h3tog" data-h3d="bar" title="${open ? "Hide the menu" : "Show the menu"}">${open ? CHEV_I : '<svg class="si" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'}</button>`;
+    const sw = this._h3dSwitch();
+    return `<div class="home h3imm" data-bar="${open ? 1 : 0}">${this._h3dBox("imm")}${bar}${tog}${rail}${sw ? `<div class="h3swi">${sw}</div>` : ""}</div>`;
   }
   _wxIcon(st) { return st === "sunny" ? SUN_I : st === "clear-night" ? MOON_I : st === "partlycloudy" ? PART_I : ["rainy", "pouring", "lightning-rainy", "snowy-rainy", "lightning", "hail"].includes(st) ? RAIN_I : CLOUD_I; }
   _fcast(id) {
@@ -2884,7 +3021,7 @@ class QuintDashboard extends HTMLElement {
     return this._neonP;
   }
   _h3dDev() { try { return localStorage.getItem("quint_h3d") !== "0"; } catch (e) { return true; } }
-  _h3dShow() { const o = this._h3d(); return !!o.show && this._h3dDev() && (this._h3dInst() || this._admin()); }
+  _h3dShow() { const o = this._h3d(); return !!o.show && this._h3dDev() && (this._h3dInst() || this._admin() || this._picOn()); }
   /* what the Home page shows: "off" (tiles), "block" (the house above the tiles) or "full" (the house is the Home page) */
   _h3dMode() {
     if (!this._h3dShow()) return "off";
@@ -2951,6 +3088,7 @@ class QuintDashboard extends HTMLElement {
     if (o.screen && String(o.screen).trim()) cfg.screen = String(o.screen).trim().slice(0, 60);
     if (o.floor) cfg.floor = o.floor;
     if (o.room) cfg.room = o.room;
+    if (ctx === "imm") { cfg.controls_side = "right"; cfg.fullscreen_button = false; }
     if (ctx === "pfull" || ctx === "phone") cfg.controls_hidden = true;   // a phone is small: the house first, the buttons come back with the eye
     cfg.height = this._h3dH(p, ctx);
     return cfg;
@@ -2958,6 +3096,7 @@ class QuintDashboard extends HTMLElement {
   /* the height of the 3D card in pixels: a fixed size in a block, the free screen below the top and above the menu bar otherwise */
   _h3dH(p, ctx) {
     const o = this._h3d(), hh = +o.height || 360, vh = this.clientHeight || (typeof innerHeight === "number" && innerHeight) || 800;
+    if (ctx === "imm") return Math.max(360, vh);
     if (ctx === "home") return hh;
     if (ctx === "phone") return Math.min(hh, 380);
     if (ctx === "pfull") return Math.max(340, Math.min(Math.round(vh * 0.62), 640));
@@ -2975,6 +3114,7 @@ class QuintDashboard extends HTMLElement {
     return false;
   }
   _h3dBox(ctx) {
+    if (this._picOn()) return `<div class="h3d pich ${ctx}" style="--ph:${+this._h3d().height || 360}px" data-lv="house:${ctx}"><div class="h3ld">Loading the house…</div></div>`;
     if (!this._h3dInst()) return `<div class="h3n"><b>The 3D house is not available</b><span>${this._esc((this._neon && this._neon.error) || "Restart Home Assistant after installing or updating Quint, then reload this page.")}</span></div>`;
     return `<div class="h3d ${ctx}" data-lv="house:${ctx}"><div class="h3ld">Loading the 3D house…</div></div>`;
   }
@@ -3002,7 +3142,7 @@ class QuintDashboard extends HTMLElement {
     el.hass = this._h;
     if (el.parentNode !== p) {
       while (p.firstChild) p.removeChild(p.firstChild);
-      p.appendChild(el);
+      p.appendChild(el); p._pk = ""; p._pic = null;
       el._qreal = ""; setTimeout(() => this._h3dRealAll(true), 400); setTimeout(() => this._h3dRealAll(true), 1800);
       const chip = document.createElement("button"); chip.className = "h3chip"; chip.hidden = true; chip.setAttribute("data-h3d", "open"); p.appendChild(chip); el._chip = chip;
     }
@@ -3092,6 +3232,273 @@ class QuintDashboard extends HTMLElement {
   }
   _h3dRealTick() { const t = Date.now(); if (t - (this._h3rt || 0) > 60000) { this._h3rt = t; this._h3dRealAll(false); } }
   _h3dOpenEditor() { this._nav("h3edit"); }
+  /* ---------- the rendered-picture house: a picture of each floor (made with any 3D program), rooms and devices placed on it ---------- */
+  _pic() {
+    const p = (this._c && this._c.pic) || {};
+    return { floors: Array.isArray(p.floors) ? p.floors.filter((f) => f && typeof f.id === "string") : [], names: p.names === true, temp: p.temp !== false, glow: p.glow !== false, nightAuto: p.nightAuto !== false };
+  }
+  _picOn() { return this._h3d().view === "picture" && this._pic().floors.some((f) => f.img); }
+  _picNightNow() { const s = this._h && this._h.states && this._h.states["sun.sun"]; return !!s && s.state === "below_horizon"; }
+  _picFloor() {
+    const fl = this._pic().floors.filter((f) => f.img);
+    return fl.find((f) => f.id === this._pf) || fl[0] || null;
+  }
+  _picImgId(f, night) { return night && f.night ? f.id + "n" : f.id; }
+  _picSrc(id) {
+    const c = (this._pimg = this._pimg || {});
+    if (id in c) return c[id] || "";
+    c[id] = "";
+    if (this._h && this._h.callApi) Promise.resolve(this._h.callApi("GET", "quint/pic?id=" + encodeURIComponent(id))).then((d) => { c[id] = (d && d.data) || null; }).catch(() => { c[id] = null; }).finally(() => this._picRefreshAll());
+    return "";
+  }
+  _picRefreshAll() {
+    this.shadowRoot.querySelectorAll('[data-lv^="house:"]').forEach((p) => { if (p._pic) this._picBuild(p, p._pic); });
+    const e = this.shadowRoot.querySelector('[data-lv="pic:edit"]'); if (e && e._pe) this._peImg(e);
+  }
+  _picTemp(rid) {
+    const H = this._h.states, v = [];
+    Object.keys(H).forEach((i) => {
+      const s = H[i], d = i.split(".")[0];
+      if (this._roomOf(i) !== rid) return;
+      if (d === "sensor" && s.attributes.device_class === "temperature" && isFinite(parseFloat(s.state))) v.push(parseFloat(s.state));
+      else if (d === "climate" && isFinite(+s.attributes.current_temperature)) v.push(+s.attributes.current_temperature);
+    });
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  }
+  _picLights(rid) { const S = this._h.states; const l = this._ents("lights", rid); return { n: l.length, on: l.filter((i) => S[i].state === "on").length }; }
+  _picToggle(id) { return ["light", "switch", "fan", "input_boolean", "cover", "humidifier"].includes(id.split(".")[0]); }
+  _picPinOn(id, s) {
+    const d = id.split(".")[0], st = s.state;
+    if (d === "cover") return ["open", "opening"].includes(st);
+    if (d === "lock") return st === "unlocked";
+    if (d === "media_player") return ["playing", "on"].includes(st);
+    if (d === "climate") return !["off", "unavailable", "unknown"].includes(st);
+    if (d === "binary_sensor" || d === "sensor") return st === "on";
+    if (d === "alarm_control_panel") return st === "triggered";
+    return st === "on";
+  }
+  _picPinIcon(id) {
+    const sv = this._svcOf(id); if (sv && SV[sv]) return SV[sv].i;
+    const d = id.split(".")[0], dc = (this._h.states[id] || { attributes: {} }).attributes.device_class;
+    if (d === "sensor" && dc === "temperature") return SV.climate.i;
+    if (d === "vacuum" || d === "switch" || d === "fan" || d === "input_boolean") return ic('<circle cx="12" cy="12" r="8"/><path d="M12 7v5"/>');
+    return ic('<circle cx="12" cy="12" r="4"/>');
+  }
+  _picPts(rm, W, H) { return (rm.pts || []).map((q) => (q[0] * W).toFixed(1) + "," + (q[1] * H).toFixed(1)).join(" "); }
+  _picCenter(rm) { const p = rm.pts || []; if (!p.length) return [0.5, 0.5]; let a = 0, cx = 0, cy = 0; for (let i = 0; i < p.length; i++) { const [x0, y0] = p[i], [x1, y1] = p[(i + 1) % p.length], f = x0 * y1 - x1 * y0; a += f; cx += (x0 + x1) * f; cy += (y0 + y1) * f; } if (Math.abs(a) < 1e-6) return [p.reduce((s, q) => s + q[0], 0) / p.length, p.reduce((s, q) => s + q[1], 0) / p.length]; return [cx / (3 * a), cy / (3 * a)]; }
+  /* the picture view on Home, on the 3D page and in a block: built once per picture and layout, then only its classes and labels change */
+  _picBuild(p, ctx) {
+    const E = (t) => this._esc(t), pic = this._pic(), fl = this._picFloor();
+    p._pic = ctx;
+    if (!fl) { if (p._pk !== "none") { p._pk = "none"; p.innerHTML = '<div class="h3n"><b>No picture yet</b><span>Add a picture of your house in Settings → 3D house → Rendered picture.</span></div>'; } return; }
+    const night = pic.nightAuto && this._picNightNow() && !!fl.night, iid = this._picImgId(fl, night), ar = fl.w && fl.h ? fl.w / fl.h : 4 / 3, VH = 1000 / ar;
+    const tabs = pic.floors.filter((f) => f.img);
+    const key = JSON.stringify([ctx, fl.id, iid, ar, fl.rooms, fl.devs, pic.names, tabs.map((f) => f.id + f.name), this._h3dSwitch() ? 1 : 0]);
+    if (p._pk !== key) {
+      p._pk = key;
+      const rooms = (fl.rooms || []).map((r) => `<polygon class="pic-room" data-pic="room|${E(r.id)}" data-pr="${E(r.id)}" points="${this._picPts(r, 1000, VH)}"/>`).join("");
+      const labels = (fl.rooms || []).map((r) => { const c = this._picCenter(r), ys = (r.pts || []).map((q) => q[1]), y = ys.length ? Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) * 0.84 : c[1]; return `<span class="pic-tmp" data-ptmp="${E(r.id)}" style="left:${(c[0] * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%"></span>`; }).join("");
+      const pins = (fl.devs || []).map((d) => `<button class="pic-pin" data-pin="${E(d.id)}" data-pent="${E(d.ent)}" style="left:${(d.x * 100).toFixed(2)}%;top:${(d.y * 100).toFixed(2)}%" title="${E(d.ent)}"><i>${this._picPinIcon(d.ent)}</i><b></b>${pic.names ? '<em></em>' : ""}</button>`).join("");
+      const fb = tabs.length > 1 ? `<div class="seg pic-fl">${tabs.map((f) => `<button class="${f.id === fl.id ? "on" : ""}" data-pic="floor|${E(f.id)}">${E(f.name || "Floor")}</button>`).join("")}</div>` : "";
+      p.innerHTML = `<div class="pic ${ctx}" style="--ar:${ar.toFixed(4)}"><div class="pic-st" data-pic="clear|"><img class="pic-img" data-pimg="${E(iid)}" alt="" draggable="false"><svg class="pic-svg" viewBox="0 0 1000 ${VH.toFixed(1)}" preserveAspectRatio="none">${rooms}</svg>${labels}${pins}<div class="pic-ld">Loading the picture…</div></div>${fb}<button class="pic-chip" data-pic="open|" hidden></button></div>`;
+      p._chipRoom = "";
+    }
+    this._picImgSet(p); this._picState(p, fl, pic);
+  }
+  _picImgSet(p) {
+    const im = p.querySelector("img[data-pimg]"); if (!im) return;
+    const src = this._picSrc(im.dataset.pimg), ld = p.querySelector(".pic-ld");
+    if (src && im.getAttribute("data-set") !== im.dataset.pimg) { im.src = src; im.setAttribute("data-set", im.dataset.pimg); }
+    if (ld) ld.hidden = !!src;
+  }
+  _picState(p, fl, pic) {
+    const S = this._h.states;
+    p.querySelectorAll(".pic-room").forEach((el) => {
+      const r = (fl.rooms || []).find((x) => x.id === el.dataset.pr); if (!r) return;
+      const lit = pic.glow && r.room && this._picLights(r.room).on > 0;
+      el.classList.toggle("lit", !!lit); el.classList.toggle("sel", p._sel === r.id);
+    });
+    p.querySelectorAll(".pic-tmp").forEach((el) => {
+      const r = (fl.rooms || []).find((x) => x.id === el.dataset.ptmp), t = r && r.room && pic.temp ? this._picTemp(r.room) : null;
+      const txt = t == null ? "" : this._fmt(t) + "°"; if (el.textContent !== txt) el.textContent = txt; el.hidden = t == null;
+    });
+    p.querySelectorAll(".pic-pin").forEach((el) => {
+      const s = S[el.dataset.pent]; if (!s) { el.classList.add("gone"); return; }
+      el.classList.remove("gone");
+      const on = this._picPinOn(el.dataset.pent, s), d = el.dataset.pent.split(".")[0];
+      el.classList.toggle("on", on); el.classList.toggle("unav", s.state === "unavailable");
+      el.classList.toggle("alert", (d === "binary_sensor" && on && ["smoke", "gas", "moisture", "carbon_monoxide", "safety"].includes(s.attributes.device_class)) || (d === "alarm_control_panel" && s.state === "triggered"));
+      let br = ""; if (d === "light" && on && s.attributes.brightness != null) br = String(Math.round((s.attributes.brightness / 255) * 100) + "%");
+      let val = ""; if (d === "sensor" && isFinite(parseFloat(s.state))) val = this._fmt(parseFloat(s.state)) + (s.attributes.unit_of_measurement || ""); else if (d === "climate" && s.attributes.current_temperature != null) val = this._fmt(s.attributes.current_temperature) + "°";
+      const b = el.querySelector("b"); if (b && b.textContent !== (val || br)) b.textContent = val || br;
+      el.classList.toggle("val", !!val);
+      const em = el.querySelector("em"); if (em) { const n = this._nm(el.dataset.pent); if (em.textContent !== n) em.textContent = n; }
+    });
+    const chip = p.querySelector(".pic-chip");
+    if (chip) {
+      const r = p._sel && (fl.rooms || []).find((x) => x.id === p._sel), q = r && r.room && this._rooms().find((x) => x.id === r.room);
+      if (r && q && this._h3d().tap !== "quint") {
+        const lt = this._picLights(q.room || r.room), t = this._picTemp(q.id), txt = `${q.name}${t != null ? " · " + this._fmt(t) + "°" : ""}${lt.n ? " · " + lt.on + "/" + lt.n + " lights" : ""}  ›`;
+        chip.hidden = false; chip.dataset.pic = "open|" + q.id; if (chip.textContent !== txt) chip.textContent = txt;
+      } else chip.hidden = true;
+    }
+  }
+  _picClick(a, t) {
+    const i = a.indexOf("|"), k = a.slice(0, i), x = a.slice(i + 1), host = t.closest("[data-lv]"), fl = this._picFloor();
+    if (k === "floor") { this._pf = x; (this.shadowRoot.querySelectorAll('[data-lv^="house:"]')).forEach((p) => { p._sel = ""; if (p._pic) this._picBuild(p, p._pic); }); return; }
+    if (k === "clear") { if (host && host._sel) { host._sel = ""; this._picBuild(host, host._pic); } return; }
+    if (k === "open") { if (x) this._nav("room", { room: x }); return; }
+    if (k === "room" && host && fl) {
+      const r = (fl.rooms || []).find((y) => y.id === x); if (!r) return;
+      host._sel = r.id; this._picState(host, fl, this._pic());
+      const q = r.room && this._rooms().find((y) => y.id === r.room);
+      if (q && this._h3d().tap === "quint") setTimeout(() => { host._sel = ""; this._nav("room", { room: q.id }); }, 220);
+    }
+  }
+  _picPin(id, hold) {
+    const e = this._h.states[id]; if (!e) return;
+    if (hold || !this._picToggle(id)) return this._details({ entity: id });
+    const d = id.split(".")[0];
+    this._h.callService(d, "toggle", { entity_id: id });
+  }
+  /* ---------- the picture editor (admin) ---------- */
+  _picEditPage() {
+    return `<div class="h3e"><div class="h3eb"><button class="back" data-go='{"p":"settings","tab":"h3d"}'>‹ 3D house settings</button><span>Place rooms and devices on your picture</span></div><div class="h3ep pe" data-lv="pic:edit"><div class="h3ld">Loading the editor…</div></div></div>`;
+  }
+  _peNew() { return Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(2, 8) || "x" + Date.now().toString(36).slice(-5); }
+  _mountPicEdit(p) {
+    if (!p._pe) {
+      const pic = this._c.pic = this._c.pic || {}; pic.floors = Array.isArray(pic.floors) ? pic.floors : [];
+      p._pe = { fid: (pic.floors[0] || {}).id || "", tool: "select", draft: [], sel: null, night: false, ent: "" };
+    }
+    this._peRender(p);
+  }
+  _peFloor(p) { const f = ((this._c.pic || {}).floors || []).find((x) => x.id === p._pe.fid); return f || null; }
+  _peSave() { this._save(true); }
+  _peRender(p) {
+    const E = (t) => this._esc(t), pe = p._pe, pic = this._c.pic = this._c.pic || { floors: [] }, fl = this._peFloor(p) || (pe.fid = ((pic.floors[0] || {}).id || ""), pic.floors[0] || null);
+    const rooms = this._rooms(), ar = fl && fl.w && fl.h ? fl.w / fl.h : 4 / 3, VH = 1000 / ar;
+    const tabs = pic.floors.map((f) => `<button class="${fl && f.id === fl.id ? "on" : ""}" data-pe="floor|${E(f.id)}">${E(f.name || "Floor")}</button>`).join("");
+    const tool = (k, n) => `<button class="${pe.tool === k ? "on" : ""}" data-pe="tool|${k}">${n}</button>`;
+    let side = `<div class="pe-sec"><div class="pe-h">Floors</div><div class="seg sm" style="flex-wrap:wrap">${tabs}<button data-pe="addfloor|">＋ Floor</button></div>`;
+    if (fl) {
+      side += `<input type="text" data-pe-name value="${E(fl.name || "")}" placeholder="Floor name"><button class="sbtn" data-pe="delfloor|">Delete this floor</button></div>`;
+      side += `<div class="pe-sec"><div class="pe-h">Picture</div><label class="sbtn pe-file">${fl.img ? "Change the picture" : "Choose the picture"}<input type="file" accept="image/*" data-pe-file="day" hidden></label>${fl.img ? `<div class="lbl">A rendered picture of this floor, any angle (up to about 2400 px wide). The shape of your rooms is drawn on top of it.</div>` : '<div class="lbl">Render each floor from above (Sweet Home 3D, Blender, SketchUp, Planner 5D…) and upload it here.</div>'}`;
+      if (fl.img) side += `<label class="sbtn pe-file">${fl.night ? "Change the night picture" : "Add a night picture (optional)"}<input type="file" accept="image/*" data-pe-file="night" hidden></label>${fl.night ? `<div class="seg sm"><button class="${!pe.night ? "on" : ""}" data-pe="night|0">Edit on day</button><button class="${pe.night ? "on" : ""}" data-pe="night|1">Edit on night</button></div><button class="sbtn" data-pe="delnight|">Remove the night picture</button>` : ""}`;
+      side += `</div>`;
+      if (fl.img) {
+        side += `<div class="pe-sec"><div class="pe-h">Draw and place</div><div class="seg sm" style="flex-wrap:wrap">${tool("select", "Select and move")}${tool("room", "Draw a room")}${tool("pin", "Place a device")}</div>`;
+        if (pe.tool === "room") side += `<div class="lbl">Tap the corners of the room on the picture (at least 3), then press Done.</div><select data-pe-room><option value="">Which room is this?</option>${rooms.map((r) => `<option value="${E(r.id)}">${E(r.name)}</option>`).join("")}</select><div class="seg sm"><button data-pe="done|" ${pe.draft.length >= 3 ? "" : "disabled"}>Done (${pe.draft.length} corners)</button><button data-pe="undo|">Undo corner</button><button data-pe="cancel|">Cancel</button></div>`;
+        if (pe.tool === "pin") side += `<div class="lbl">Choose the device, then tap the picture where it is. The same device can be placed again after you choose it again.</div><input type="text" list="pe-list" data-pe-ent value="${E(pe.ent)}" placeholder="light.kitchen"><datalist id="pe-list">${this._opts("")}</datalist>`;
+        const sr = pe.sel && pe.sel.t === "room" ? (fl.rooms || []).find((r) => r.id === pe.sel.id) : null, sp = pe.sel && pe.sel.t === "pin" ? (fl.devs || []).find((d) => d.id === pe.sel.id) : null;
+        if (sr) side += `<div class="pe-h">Selected room</div><select data-pe-roomsel>${`<option value="">— not linked —</option>` + rooms.map((r) => `<option value="${E(r.id)}" ${r.id === sr.room ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select><div class="lbl">Drag the white dots to change the shape.</div><button class="sbtn" data-pe="delroom|">Delete this room</button>`;
+        if (sp) side += `<div class="pe-h">Selected device</div><input type="text" list="pe-list" data-pe-entsel value="${E(sp.ent)}"><datalist id="pe-list">${this._opts("")}</datalist><div class="lbl">Drag it on the picture to move it.</div><button class="sbtn" data-pe="delpin|">Delete this device</button>`;
+        side += `</div>`;
+        side += `<div class="pe-sec"><div class="pe-h">Show</div><div class="lbl">${(fl.rooms || []).length} rooms · ${(fl.devs || []).length} devices on this floor</div>${[["names", "Device names under the icons"], ["temp", "Room temperatures on the picture"], ["glow", "Warm glow in rooms with lights on"], ["nightAuto", "Night picture after sunset"]].map(([k, n]) => { const on = k === "names" ? pic.names === true : pic[k] !== false; return `<button class="sbtn ${on ? "pri2" : ""}" data-pe="opt|${k}">${on ? "✓ " : ""}${n}</button>`; }).join("")}</div>`;
+      }
+    } else side += `</div><div class="lbl">Start by adding a floor, then upload its picture.</div>`;
+    const night = pe.night && fl && fl.night, iid = fl ? this._picImgId(fl, night) : "";
+    let stage = `<div class="pe-empty">${fl ? (fl.img ? "" : "Choose a picture for this floor to start") : "Add a floor to start"}</div>`;
+    if (fl && fl.img) {
+      const rs = (fl.rooms || []).map((r) => `<polygon class="pic-room ${pe.sel && pe.sel.t === "room" && pe.sel.id === r.id ? "sel" : ""} pe-r" data-pr="${E(r.id)}" points="${this._picPts(r, 1000, VH)}"/>`).join("");
+      const dr = pe.draft.length ? `<polyline class="pe-draft" points="${pe.draft.map((q) => (q[0] * 1000).toFixed(1) + "," + (q[1] * VH).toFixed(1)).join(" ")}"/>${pe.draft.map((q, i) => `<circle class="pe-dot" cx="${(q[0] * 1000).toFixed(1)}" cy="${(q[1] * VH).toFixed(1)}" r="9" data-i="${i}"/>`).join("")}` : "";
+      const sr = pe.sel && pe.sel.t === "room" ? (fl.rooms || []).find((r) => r.id === pe.sel.id) : null;
+      const hd = sr ? (sr.pts || []).map((q, i) => `<circle class="pe-vx" cx="${(q[0] * 1000).toFixed(1)}" cy="${(q[1] * VH).toFixed(1)}" r="10" data-vi="${i}"/>`).join("") : "";
+      const pins = (fl.devs || []).map((d) => `<button class="pic-pin pe-p ${pe.sel && pe.sel.t === "pin" && pe.sel.id === d.id ? "sel" : ""} ${this._h.states[d.ent] && this._picPinOn(d.ent, this._h.states[d.ent]) ? "on" : ""}" data-pid="${E(d.id)}" style="left:${(d.x * 100).toFixed(2)}%;top:${(d.y * 100).toFixed(2)}%" title="${E(d.ent)}"><i>${this._picPinIcon(d.ent)}</i><em>${E(this._h.states[d.ent] ? this._nm(d.ent) : d.ent)}</em></button>`).join("");
+      stage = `<div class="pic" style="--ar:${ar.toFixed(4)}"><div class="pic-st pe-st ${pe.tool}" data-pe-stage><img class="pic-img" data-pimg="${E(iid)}" alt="" draggable="false"><svg class="pic-svg" viewBox="0 0 1000 ${VH.toFixed(1)}" preserveAspectRatio="none">${rs}${dr}${hd}</svg>${pins}<div class="pic-ld">Loading the picture…</div></div></div>`;
+    }
+    p.innerHTML = `<div class="pe-wrap"><div class="pe-main">${stage}</div><aside class="pe-side">${side}</aside></div>`;
+    p._pe.vh = VH; p._pe.ar = ar;
+    this._peImg(p); this._peWire(p);
+  }
+  _peImg(p) {
+    const im = p.querySelector("img[data-pimg]"); if (!im) return;
+    const src = this._picSrc(im.dataset.pimg), ld = p.querySelector(".pic-ld");
+    if (src && im.getAttribute("data-set") !== im.dataset.pimg) { im.src = src; im.setAttribute("data-set", im.dataset.pimg); }
+    if (ld) ld.hidden = !!src;
+  }
+  _pePt(p, e) {
+    const st = p.querySelector("[data-pe-stage]"), r = st.getBoundingClientRect();
+    return [Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))];
+  }
+  _peWire(p) {
+    const pe = p._pe, fl = this._peFloor(p);
+    p.querySelectorAll("[data-pe]").forEach((b) => b.addEventListener("click", () => this._peAct(p, b.dataset.pe)));
+    const nm = p.querySelector("[data-pe-name]"); if (nm) nm.addEventListener("change", () => { fl.name = nm.value.trim().slice(0, 40); this._peSave(); this._peRender(p); });
+    p.querySelectorAll("[data-pe-file]").forEach((f) => f.addEventListener("change", () => { if (f.files && f.files[0]) this._peUpload(p, f.files[0], f.dataset.peFile === "night"); }));
+    const ent = p.querySelector("[data-pe-ent]"); if (ent) ent.addEventListener("input", () => { pe.ent = ent.value.trim(); });
+    const rs = p.querySelector("[data-pe-roomsel]"); if (rs) rs.addEventListener("change", () => { const r = (fl.rooms || []).find((x) => x.id === pe.sel.id); if (r) { r.room = rs.value; this._peSave(); } });
+    const es = p.querySelector("[data-pe-entsel]"); if (es) es.addEventListener("change", () => { const d = (fl.devs || []).find((x) => x.id === pe.sel.id); if (d && this._h.states[es.value.trim()]) { d.ent = es.value.trim(); this._peSave(); this._peRender(p); } });
+    const st = p.querySelector("[data-pe-stage]"); if (!st || !fl) return;
+    const sel = (t, id) => { pe.sel = { t, id }; this._peRender(p); };
+    st.addEventListener("pointerdown", (e) => {
+      const tg = e.target, pin = tg.closest && tg.closest(".pe-p"), vh = tg.closest && tg.closest("[data-vi]"), dot = tg.closest && tg.closest(".pe-dot");
+      if (pe.tool === "select" || pin || vh) {
+        if (pin) {   // move a device
+          e.preventDefault(); const id = pin.dataset.pid, d = (fl.devs || []).find((x) => x.id === id); if (!d) return;
+          pe.sel = { t: "pin", id }; let moved = false;
+          const mv = (ev) => { moved = true; const q = this._pePt(p, ev); d.x = q[0]; d.y = q[1]; pin.style.left = (q[0] * 100).toFixed(2) + "%"; pin.style.top = (q[1] * 100).toFixed(2) + "%"; };
+          const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); if (moved) this._peSave(); this._peRender(p); };
+          window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up); return;
+        }
+        if (vh) {   // move a corner of the selected room
+          e.preventDefault(); const r = (fl.rooms || []).find((x) => x.id === pe.sel.id), i = +vh.dataset.vi; if (!r) return; let moved = false;
+          const mv = (ev) => { moved = true; const q = this._pePt(p, ev); r.pts[i] = q; vh.setAttribute("cx", (q[0] * 1000).toFixed(1)); vh.setAttribute("cy", (q[1] * pe.vh).toFixed(1)); const poly = st.querySelector(`.pe-r[data-pr="${r.id}"]`); if (poly) poly.setAttribute("points", this._picPts(r, 1000, pe.vh)); };
+          const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); if (moved) this._peSave(); this._peRender(p); };
+          window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up); return;
+        }
+        const poly = tg.closest && tg.closest(".pe-r"); if (poly) { sel("room", poly.dataset.pr); return; }
+        if (pe.sel) { pe.sel = null; this._peRender(p); }
+        return;
+      }
+      if (pe.tool === "room") { if (dot && +dot.dataset.i === 0 && pe.draft.length >= 3) { this._peAct(p, "done|"); return; } pe.draft.push(this._pePt(p, e)); this._peRender(p); return; }
+      if (pe.tool === "pin") {
+        const id = (pe.ent || "").trim(); if (!this._h.states[id]) { this._toast("Choose a device first (type or pick one in the list)"); return; }
+        const q = this._pePt(p, e), nd = { id: this._peNew(), ent: id, x: q[0], y: q[1] };
+        (fl.devs = fl.devs || []).push(nd); pe.sel = { t: "pin", id: nd.id }; this._peSave(); this._peRender(p);
+      }
+    });
+    st.addEventListener("dblclick", () => { if (pe.tool === "room" && pe.draft.length >= 3) this._peAct(p, "done|"); });
+  }
+  _peAct(p, a) {
+    const i = a.indexOf("|"), k = a.slice(0, i), x = a.slice(i + 1), pe = p._pe, pic = this._c.pic = this._c.pic || { floors: [] }, fl = this._peFloor(p);
+    if (k === "floor") { pe.fid = x; pe.sel = null; pe.draft = []; pe.night = false; }
+    else if (k === "addfloor") { if (pic.floors.length >= 8) return this._toast("Eight floors at most"); const f = { id: this._peNew(), name: "Floor " + (pic.floors.length + 1), rooms: [], devs: [] }; pic.floors.push(f); pe.fid = f.id; pe.sel = null; this._peSave(); }
+    else if (k === "delfloor") { if (!fl || !confirm("Delete this floor, its rooms and devices?")) return; pic.floors = pic.floors.filter((f) => f.id !== fl.id); [fl.id, fl.id + "n"].forEach((id) => { try { this._h.callApi("DELETE", "quint/pic?id=" + id).catch(() => {}); } catch (e) {} if (this._pimg) delete this._pimg[id]; }); pe.fid = (pic.floors[0] || {}).id || ""; pe.sel = null; this._peSave(); }
+    else if (k === "tool") { pe.tool = x; pe.draft = []; if (x !== "select") pe.sel = null; }
+    else if (k === "night") pe.night = x === "1";
+    else if (k === "delnight") { if (!fl) return; fl.night = false; pe.night = false; try { this._h.callApi("DELETE", "quint/pic?id=" + fl.id + "n").catch(() => {}); } catch (e) {} if (this._pimg) delete this._pimg[fl.id + "n"]; this._peSave(); }
+    else if (k === "undo") pe.draft.pop();
+    else if (k === "cancel") pe.draft = [];
+    else if (k === "done") {
+      if (!fl || pe.draft.length < 3) return;
+      const sel = p.querySelector("[data-pe-room]"), r = { id: this._peNew(), room: sel ? sel.value : "", pts: pe.draft.map((q) => [+q[0].toFixed(4), +q[1].toFixed(4)]) };
+      (fl.rooms = fl.rooms || []).push(r); pe.draft = []; pe.tool = "select"; pe.sel = { t: "room", id: r.id }; this._peSave();
+    }
+    else if (k === "delroom") { if (fl && pe.sel) { fl.rooms = (fl.rooms || []).filter((r) => r.id !== pe.sel.id); pe.sel = null; this._peSave(); } }
+    else if (k === "delpin") { if (fl && pe.sel) { fl.devs = (fl.devs || []).filter((d) => d.id !== pe.sel.id); pe.sel = null; this._peSave(); } }
+    else if (k === "opt") { pic[x] = x === "names" ? !(pic.names === true) : pic[x] === false; this._peSave(); }
+    this._peRender(p);
+  }
+  /* a picture file is shrunk in the browser (long side 2400 px, JPEG) before it is stored */
+  async _peUpload(p, file, night) {
+    const pe = p._pe, fl = this._peFloor(p); if (!fl) return;
+    this._toast("Preparing the picture…");
+    try {
+      const url = URL.createObjectURL(file), im = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error("This file is not a picture")); i.src = url; });
+      let W = im.naturalWidth, H = im.naturalHeight; const M = 2400, sc = Math.min(1, M / Math.max(W, H)); W = Math.round(W * sc); H = Math.round(H * sc);
+      let data = "", q = 0.86, w = W, h = H;
+      for (let n = 0; n < 6; n++) { const cv = document.createElement("canvas"); cv.width = w; cv.height = h; cv.getContext("2d").drawImage(im, 0, 0, w, h); data = cv.toDataURL("image/jpeg", q); if (data.length < 5600000) break; q -= 0.08; if (q < 0.6) { w = Math.round(w * 0.8); h = Math.round(h * 0.8); q = 0.8; } }
+      URL.revokeObjectURL(url);
+      if (data.length >= 5900000) throw new Error("The picture is too large");
+      const id = night ? fl.id + "n" : fl.id;
+      await this._h.callApi("POST", "quint/pic", { id, data });
+      (this._pimg = this._pimg || {})[id] = data;
+      if (night) { fl.night = true; pe.night = true; } else { fl.img = true; fl.w = w; fl.h = h; }
+      this._peSave(); this._toast("Picture saved"); this._peRender(p);
+    } catch (e) { this._toast("Could not use the picture: " + this._err(e, "error")); }
+  }
+
   /* the plan editor and all Quinteca settings: the Quinteca 3D panel inside Quint (admins) */
   _h3editPage() {
     return `<div class="h3e"><div class="h3eb"><button class="back" data-go='{"p":"settings","tab":"h3d"}'>‹ 3D house settings</button><span>Draw the house, place devices, packs, voice and everything else of Quinteca 3D</span></div><div class="h3ep" data-lv="house:edit"><div class="h3ld">Loading the 3D editor…</div></div></div>`;
@@ -3168,6 +3575,7 @@ class QuintDashboard extends HTMLElement {
       const pers = this._ntfPers();
       body = sec("Your notifications", pers ? "this device only" : "using the shared setting", ntfRows(this._ntf(), "data-sc", true) + (pers ? row("Shared setting", "forget the choices on this device", '<button class="sbtn" data-sc="ntfd|">Same as shared</button>') : "")) +
         sec("Try it", "see how an alert looks on this screen", row("Send a test notification", "", '<button class="sbtn" data-ntf="test">Send test</button>')) +
+        (adm ? this._pushSec(sec, row, tg) : "") +
         (adm ? sec("Shared setting for everyone", "what everybody gets unless they choose their own", ntfRows(this._ntf0(), "data-s", false)) : "");
     } else if (tab === "general") {
       const bg = { preset: "midnight", mode: "preset", dim: 0, blur: 0, ...(c.bg || {}) }, dv = localStorage.getItem("quint_dev") || "auto";
@@ -3204,7 +3612,15 @@ class QuintDashboard extends HTMLElement {
           row("Let people switch", "adds a “3D house / Tiles” switch on Home; each person's choice is kept on their own device", B("switch")) +
           row("When a room is tapped", "Quint room page: its devices as usual. 3D room panel: Quinteca's own list of lights, blinds and cameras. Panel + button: the panel, with a button to the Quint room", sg("tap", ["Quint room page", "3D room panel", "Panel + button"])) +
           row("Own page in the menu", "a full-screen 3D house page with its own menu tile (when Home is not already the 3D house)", B("page")) +
-          (o.home === "block" ? row("Height on Home", "how tall the 3D house is above the tiles", sg("height", ["Small", "Medium", "Large", "Extra large", "Huge"])) : "")) +
+          (o.home === "block" ? row("Height on Home", "how tall the 3D house is above the tiles", sg("height", ["Small", "Medium", "Large", "Extra large", "Huge"])) : "") +
+          (o.home === "full" ? row("Full-screen layout", "Full screen: the house fills the screen, the menu is a bar you can hide, buttons sit on the right. Classic: the house under the greeting, with the menu bar at the bottom (a phone always uses its own layout)", sg("layout", ["Full screen", "Classic"])) +
+            (o.layout !== "classic" ? row("Menu bar", "whether the bar with the clock and pages is open when Home appears. A person can hide or show it with the round icon at the top left", sg("bar", ["Open", "Hidden"])) +
+              row("Hide the bar by itself", "after this long without a touch", sg("bar_hide", ["Never", "10 s", "30 s", "1 min"])) : "") : "")) +
+        sec("Rendered picture", "the house as a beautiful picture you made, with the rooms and devices live on top of it",
+          row("House view", "Live 3D: the Quinteca 3D house you can turn and zoom. Picture: a rendered picture of each floor (made with Sweet Home 3D, Blender, SketchUp, Planner 5D or any program that can save a picture), with rooms that light up, temperatures and devices you can tap", sg("view", ["Live 3D", "Picture"])) +
+          row("Picture editor", ((this._c.pic || {}).floors || []).filter((f) => f.img).length ? "floors with a picture: " + ((this._c.pic || {}).floors || []).filter((f) => f.img).length + ". Add or change pictures, draw the rooms and place the devices" : "add a floor, upload its picture, draw the rooms and place the devices", `<button class="sbtn pri2" data-h3d="piceditor">Open the picture editor</button>`) +
+          (o.view === "picture" && !this._picOn() ? `<div class="lbl" style="padding:8px 4px;color:var(--warn)">Picture view is chosen, but no floor has a picture yet. The live 3D house is shown until you add one.</div>` : "") +
+          `<div class="lbl" style="padding:8px 4px">Tip: render each floor from above at an angle, with the furniture and lights on, 2000 to 2400 pixels wide. A night version of the same view makes the house change after sunset. Room taps follow the setting “When a room is tapped”.</div>`) +
         sec("Plan and devices", "draw the house once; its rooms and devices are the same Home Assistant ones Quint already uses",
           row("3D editor and Quinteca settings", "draw floors, rooms, walls, doors, windows, furniture and roof, place and link lamps, blinds, cameras and every other device, packs, voice, locating, backup and the rest of Quinteca 3D", `<button class="sbtn pri2" data-h3d="editor" ${inst ? "" : "disabled"}>Open the 3D editor</button>`) +
           row("Rooms linked to Quint", zones.length ? (lost.length ? "Not linked yet: " + E(lost.map((z) => z.name || z.id).join(", ")) + ". Give these rooms a Home Assistant area (or the same name as a Quint room) in the 3D editor." : "every room of the 3D plan opens its Quint room") : "draw your rooms in the 3D editor first", `<b>${zones.length - lost.length} of ${zones.length}</b>`) +
@@ -3478,13 +3894,14 @@ class QuintDashboard extends HTMLElement {
     const ae = this.shadowRoot.activeElement;
     if (!force && (this._drag || (ae && ["INPUT", "SELECT"].includes(ae.tagName)))) return;
     if (this._v.p === "intercom" && !this._icOn()) this._v = { p: "home" };
-    if (this._v.p === "h3edit" && !this._admin()) this._v = { p: "home" };
+    if ((this._v.p === "h3edit" || this._v.p === "picedit") && !this._admin()) this._v = { p: "home" };
     if (this._perm()) { const v = this._v; if ((["cameras", "security", "intercom", "automations", "camwall", "house"].includes(v.p) && !this._svOk(v.p)) || (v.p === "rooms" && v.svc && !this._svOk(v.svc)) || (v.p === "room" && !this._svOk("rooms"))) this._v = { p: "home" }; }
     const c = this._c;
     this._track = new Set(Object.keys(this._h.states).filter((i) => this._svcOf(i) || i.startsWith("scene.") || i.startsWith("weather.") || i === "sun.sun"));
     Object.values(c.custom).flat().forEach((x) => x.entity && this._track.add(x.entity));
     this._ics().forEach((ic) => [ic.camera, ic.bell].forEach((i) => i && this._track.add(i)));
     (c.autos || []).forEach((i) => this._track.add(i));
+    if (this._picOn()) { ((c.pic || {}).floors || []).forEach((f) => (f.devs || []).forEach((d) => this._track.add(d.ent))); Object.keys(this._h.states).forEach((i) => { const d = i.split(".")[0]; if (d === "climate" || (d === "sensor" && this._h.states[i].attributes.device_class === "temperature")) this._track.add(i); }); }
     this._myScenes().forEach((x) => (x.items || []).forEach((y) => this._track.add(y.e)));
     this._seen = {}; this._track.forEach((i) => (this._seen[i] = this._h.states[i]));
     this._n = Object.keys(this._h.states).length;
@@ -3493,17 +3910,18 @@ class QuintDashboard extends HTMLElement {
     this._ringPrev = ringer ? ringer.id : null;
     const p = this._v.p, V = this._v;
     if (this._cam && !(this._h.states[this._cam] && this._h.states[this._cam].attributes.entity_picture)) this._cam = null;
+    const pages = [["home", p === "home", `data-go='{"p":"home"}'`, HOME_I, "Home", "#e8c98f"]];
+    if (!(c.noRooms || !this._rooms().length)) pages.push(["room", p === "room", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", "#7dd3fc"]);
+    this._svcs().forEach((s) => pages.push([s, (p === "rooms" && V.svc === s) || p === s, this._tileGo(s), SV[s].i, SV[s].n, SV[s].c]));
+    this._pgs = pages;
     this._roomBg = "";
-    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : p === "intercom" ? this._icPage() : p === "automations" ? this._autoPage() : p === "camwall" ? this._wallPage() : p === "house" ? this._housePage() : p === "h3edit" ? this._h3editPage() : this._settings();
-    if (p !== "home" && p !== "room" && p !== "house" && p !== "h3edit") body = `<div class="page${p === "camwall" ? " wallpage" : ""}">${body}</div>`;
+    let body = p === "home" ? this._home() : p === "rooms" ? this._roomsPage() : p === "room" ? this._areaPage() : p === "cameras" ? this._list("cameras") : p === "security" ? this._list("security") : p === "intercom" ? this._icPage() : p === "automations" ? this._autoPage() : p === "camwall" ? this._wallPage() : p === "house" ? this._housePage() : p === "h3edit" ? this._h3editPage() : p === "picedit" ? this._picEditPage() : this._settings();
+    if (p !== "home" && p !== "room" && p !== "house" && p !== "h3edit" && p !== "picedit") body = `<div class="page${p === "camwall" ? " wallpage" : ""}">${body}</div>`;
     if ((this._roomBg || "") !== (this._rbgOn || "")) {
       this._rbgOn = this._roomBg || "";
       this._applyBg();
     }
     const tab = (cls, go, ico, t, col) => `<button class="t ${cls}" data-c="${col}" style="--c:${col}" ${go}>${ico}<span>${t}</span></button>`;
-    const pages = [["home", p === "home", `data-go='{"p":"home"}'`, HOME_I, "Home", "#e8c98f"]];
-    if (!(c.noRooms || !this._rooms().length)) pages.push(["room", p === "room", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", "#7dd3fc"]);
-    this._svcs().forEach((s) => pages.push([s, (p === "rooms" && V.svc === s) || p === s, this._tileGo(s), SV[s].i, SV[s].n, SV[s].c]));
     const phone = this.getAttribute("data-dev") === "phone";
     let tabs = "", more = "", pbar = "";
     if (phone) {
@@ -3521,8 +3939,8 @@ class QuintDashboard extends HTMLElement {
     const cr = this._credit(), adm = this._admin();
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="bgl"><i></i></div><div class="app${p === "h3edit" ? " ed" : ""}">${phone ? pbar : `<button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button>`}<main class="${changed ? "anim" : ""}">${body}</main>${phone ? "" : `<nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav>`}</div>${more}${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
-    if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); Object.values(this._h3el || {}).forEach((e) => (e.hass = this._h)); if (this._h3panel) this._h3panel.hass = this._h; if (this._h3dNeedsFit()) this._mountLv(); this._h3dRealTick(); return; }
+    const html = `<div class="bgl"><i></i></div><div class="app${p === "h3edit" || p === "picedit" ? " ed" : ""}${p === "home" && this._h3dImm() ? " imm" : ""}">${phone ? pbar : `<button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button>`}<main class="${changed ? "anim" : ""}">${body}</main>${phone ? "" : `<nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav>`}</div>${more}${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
+    if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); Object.values(this._h3el || {}).forEach((e) => (e.hass = this._h)); if (this._h3panel) this._h3panel.hass = this._h; if (this._h3dNeedsFit()) this._mountLv(); this._h3dRealTick(); this._picRefreshAll(); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
     tpl.innerHTML = html.replaceAll("@@T@@", this._time()).replaceAll("@@C@@", this._clockHtml());
