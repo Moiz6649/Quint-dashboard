@@ -104,7 +104,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.43.0";
+const VER = "1.44.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -634,6 +634,7 @@ input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 
 .h3sp{display:none}.h3wx{display:flex;align-items:center;gap:12px;color:var(--tx);font-size:15px}.h3wx i{display:grid;place-items:center;width:30px;height:30px;color:var(--mu)}.h3wx .si{width:26px;height:26px}.h3cr{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mu);opacity:.8}
 .h3bell{position:absolute;left:84px;top:28px;z-index:6;width:46px;height:46px}.h3bell .si{width:22px;height:22px}.h3acts{display:flex;justify-content:space-between;gap:8px}.h3acts .h3rb{width:46px;height:46px;flex:none}.h3acts .h3rb .si{width:22px;height:22px}
 .h3rb{position:relative;width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(10,14,22,.66);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);display:grid;place-items:center;padding:0;color:var(--tx);box-shadow:0 10px 26px -10px #000;transition:transform .15s,background .2s}.h3rb .si{width:26px;height:26px}.h3rb:hover{background:rgba(30,40,60,.8)}.h3rb:active{transform:scale(.92)}.h3rb .nbd{top:-2px;right:-2px;min-width:20px;height:20px;font-size:11px}
+.h3hr{position:absolute;right:12px;bottom:12px;z-index:6;background:rgba(10,16,34,.72);backdrop-filter:blur(8px)}.h3hr button{padding:5px 10px;font-size:12px}
 .h3swi{position:absolute;left:50%;transform:translateX(-50%);top:16px;z-index:4}
 :host([data-dev="phone"]) .h3imm{display:none}
 /* rendered-picture house */
@@ -2431,6 +2432,9 @@ class QuintDashboard extends HTMLElement {
   _scAct(a, v) {
     const find = (key) => { const [k, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)]; return this._myScenes().find((s) => s.sc === k && s.id === id); };
     if (a === "run") { const s = find(v); if (s) this._applyScene(s); return; }
+    if (a === "h3hr") { this._hr = v; try { localStorage.setItem("quint_h3hr", v); } catch (e) {}
+      this.shadowRoot.querySelectorAll(".h3hr button").forEach((x) => x.classList.toggle("on", x.dataset.sc === "h3hr|" + v));
+      this._last = null; this._draw(true); setTimeout(() => this._h3dRealAll(true), 150); setTimeout(() => this._h3dRealAll(true), 1200); return; }
     if (a === "h3v") { try { localStorage.setItem("quint_h3dv", v === "3d" ? "3d" : "tiles"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "h3") { try { if (v === "1") localStorage.removeItem("quint_h3d"); else localStorage.setItem("quint_h3d", "0"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "ntfd") {
@@ -2952,8 +2956,15 @@ class QuintDashboard extends HTMLElement {
     return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(calc(${s === "cameras" ? 320 : 200}px * var(--tm,1)),1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
   }
   /* ---------- 3D house: Quinteca 3D (carried inside Quint) as the Home page, a page of its own and the plan editor ---------- */
+  /* the time of day shown on the 3D house, chosen on the house itself and kept on this device: live (the real sun), day, evening, night */
+  _hour() {
+    if (this._hr === undefined) { try { this._hr = localStorage.getItem("quint_h3hr") || "live"; } catch (e) { this._hr = "live"; } }
+    return ["live", "day", "dusk", "night"].includes(this._hr) ? this._hr : "live";
+  }
   _h3d() {
     const o = { ...H3D_DEF, ...((this._c && this._c.h3d) || {}) };
+    const hr = this._hour();
+    if (hr !== "live") { o.sky = hr; o.theme = hr === "day" ? "day" : "neon"; }
     o.home = o.home === true ? "block" : o.home === false ? "off" : ["off", "block", "full"].includes(o.home) ? o.home : "full";
     return o;
   }
@@ -3090,21 +3101,24 @@ class QuintDashboard extends HTMLElement {
     const o = this._h3d(), m = this._am;
     if (!o.color) { globalThis.__qcol = { on: false }; return "0"; }
     const T = {   /* floor, wall, wall top */
-      living: [0xb07a48, 0xc9ccd4, 0xf2f2f4], dining: [0xa87040, 0xd8cdb8, 0xf6f0e4], kitchen: [0xc4a070, 0xd0d4da, 0xf4f6f8], hall: [0x9a6a40, 0xd8cdb8, 0xf4eee2],
-      bed: [0x9a6038, 0xb8c0d0, 0xe6ecf6], kids: [0xc08850, 0xf0d0a0, 0xfff0d8], guest: [0x8a6a4a, 0xb8d0c0, 0xe6f4ea], bath: [0x5a7a86, 0xc8dce4, 0xeef8fc],
-      wc: [0x5a7a86, 0xc8dce4, 0xeef8fc], office: [0x7a4a34, 0xb8b4d0, 0xe8e6f6], garage: [0x6a6e76, 0x9096a0, 0xc8ccd4], laundry: [0x6a8a90, 0xc4d8dc, 0xecf6f8],
-      storage: [0x7a6a58, 0xa8a8b0, 0xd0d0d8], tech: [0x7a6a58, 0xa8a8b0, 0xd0d0d8], hobby: [0x8a5a6a, 0xd0b0c8, 0xf4e0ec], other: [0xa07a50, 0xcfcfd4, 0xf2f2f4],
-      outdoor: [0xb89868, 0xb0a890, 0xe0d8c0], garden: [0x3f7a3a, 0x5a9a50, 0x8aca7a],
+      living: [0xc2702e, 0xe8d8b8, 0xfff4dc], dining: [0xe2b878, 0xf2ead8, 0xffffff], kitchen: [0xe2b878, 0x9a5a34, 0xd08a58], hall: [0xb8662c, 0xf0e4cc, 0xffffff],
+      bed: [0xc2702e, 0xe5846a, 0xffb09a], kids: [0xd89a50, 0xe0b040, 0xffe08a], guest: [0xb88050, 0x8fb583, 0xc4e3b8], bath: [0x46505e, 0x4fa8a8, 0x9adada],
+      wc: [0x46505e, 0x4fa8a8, 0x9adada], office: [0x8a4a2a, 0x6a7aa8, 0xa8b8e8], garage: [0x5a5e66, 0x8a92a0, 0xc0c8d4], laundry: [0x56707a, 0x6a9ae0, 0xa8c8ff],
+      storage: [0x70604e, 0xa88ad8, 0xd8c4ff], tech: [0x4a5260, 0x6a7aa8, 0xa8b8e8], hobby: [0x8a4a5a, 0xa88ad8, 0xd8c4ff], other: [0xb8662c, 0xe8d8b8, 0xfff4dc],
+      outdoor: [0xc09060, 0xd8b890, 0xf0dcb8], garden: [0x3f8a3a, 0x6aaa58, 0x9ada80],
     };
+    const ACC = [[0xe5846a, 0xffb09a], [0x8fb583, 0xc4e3b8], [0x4fa8a8, 0x9adada], [0xe0b040, 0xffe08a], [0x6a9ae0, 0xa8c8ff], [0xa88ad8, 0xd8c4ff]];
+    const hs = (t) => { let h = 7; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; };
     const pick = (r) => {
       const n = String((r && r.name) || ""), id = String((r && r.id) || "");
       if (/garden|lawn|yard|grass/i.test(n + " " + id)) return T.garden;
       let k = "other"; try { if (m) k = m.kindOf(n, id); } catch (e) {}
-      return T[k] || T.other;
+      const t = T[k] || T.other;
+      return k === "other" ? [t[0], ...ACC[hs(id || n) % ACC.length]] : t;   /* rooms we cannot name get a colour of their own */
     };
     globalThis.__qcol = {
       on: true,
-      furn: { body: 0x6a7078, bodyTop: 0x8a9098, fabric: 0x5a6a90, fabricTop: 0x7a8ab4, cushion: 0xe8c820, wood: 0xb07a48, woodTop: 0xd09860, white: 0xe8e8ec, whiteTop: 0xfafafc, metal: 0xa0a8b4, glass: 0x6aa8c8, plant: 0x2f9a45, plantTop: 0x4cc060, pot: 0xc07840, accent: 0xf0c020 },
+      furn: { body: 0x2f5fb0, bodyTop: 0x4f82d8, fabric: 0xe0705a, fabricTop: 0xff9a80, cushion: 0xf2b830, wood: 0xb8672a, woodTop: 0xdc8a44, white: 0xf6f0e6, whiteTop: 0xffffff, metal: 0x9aa6b4, glass: 0x58b0d8, plant: 0x2faa4a, plantTop: 0x58d870, pot: 0xc86a34, accent: 0xffc020 },
       floor: (r) => pick(r)[0],
       wall: (r, top) => pick(r)[top ? 2 : 1],
     };
@@ -3132,6 +3146,7 @@ class QuintDashboard extends HTMLElement {
       while (p.firstChild) p.removeChild(p.firstChild);
       p.appendChild(el); p._pk = "";
       el._qreal = ""; setTimeout(() => this._h3dRealAll(true), 400); setTimeout(() => this._h3dRealAll(true), 1800);
+      if (ctx !== "edit") { const hb = document.createElement("div"); hb.className = "seg sm h3hr"; hb.innerHTML = [["live", "Now"], ["day", "Day"], ["dusk", "Evening"], ["night", "Night"]].map(([k, n]) => `<button class="${this._hour() === k ? "on" : ""}" data-sc="h3hr|${k}">${n}</button>`).join(""); p.appendChild(hb); }
       const chip = document.createElement("button"); chip.className = "h3chip"; chip.hidden = true; chip.setAttribute("data-h3d", "open"); p.appendChild(chip); el._chip = chip;
     }
   }
