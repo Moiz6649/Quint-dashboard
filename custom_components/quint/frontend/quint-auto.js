@@ -683,4 +683,216 @@ export function picGeometry(plan, floorId) {
     devs: (f.devs || []).map((d, i) => { const p = n(d.x, d.z); return { id: "a" + i, ent: d.ent, x: p[0], y: p[1] }; }),
   };
 }
-export const AUTO_VERSION = 1;
+/* ---------- 9. the solid house: an own 3D drawing, no 3D engine. Full colour walls, floors and furniture, turnable ---------- */
+const SC = 84; // pixels per metre
+export const SOLID_CAM = { default: [38, 46], corner: [45, 40], dollhouse: [-32, 56], top: [0, 78], front: [0, 32], side: [90, 34] };
+const WALL_COL = { living: "#f0cf8f", dining: "#efc48a", kitchen: "#bfe0ee", bed: "#b8cdf0", kids: "#f7c48f", guest: "#c6e0b8", bath: "#b4e4ee", wc: "#b4e4ee", hall: "#e8d9c2", office: "#c4cdf0", garage: "#bcc4d0", laundry: "#c4e6ee", storage: "#c8cfd8", tech: "#b6c0cc", hobby: "#d9c2ee", other: "#e6dccb" };
+const EXT_COL = "#f3ece0", CAP_COL = "#fbf9f4";
+const hexRgb = (h) => { h = String(h).replace("#", ""); if (h.length === 3) h = h.split("").map((c) => c + c).join(""); const n = parseInt(h, 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const rgbHex = (a) => "#" + a.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+const shade = (c, f) => { const a = hexRgb(c); return rgbHex(a.map((v) => (f > 1 ? v + (255 - v) * (f - 1) : v * f))); };
+const mixc = (a, b, t) => { const A = hexRgb(a), B = hexRgb(b); return rgbHex(A.map((v, i) => v + (B[i] - v) * t)); };
+
+function mkView(W, D, yaw, pitch) {
+  const a = (yaw * Math.PI) / 180, p = (pitch * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a), sp = Math.sin(p), cp = Math.cos(p), cx = W / 2, cz = D / 2;
+  const rot = (X, Z) => { const u = X - cx, v = Z - cz; return [u * c - v * s, u * s + v * c]; };
+  const V = { tx: 0, ty: 0, rot, nb: (nx, nz) => nx * s + nz * c, na: (nx, nz) => nx * c - nz * s };
+  V.raw = (X, Y, Z) => { const q = rot(X, Z); return [q[0] * SC, (q[1] * sp - Y * cp) * SC]; };
+  V.P = (X, Y, Z) => { const q = V.raw(X, Y, Z); return [q[0] + V.tx, q[1] + V.ty]; };
+  // the box around the house fixes the size of the picture
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  [-0.6, W + 0.6].forEach((X) => [-0.6, D + 0.6].forEach((Z) => [-0.4, 2.7].forEach((Y) => { const q = V.raw(X, Y, Z); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); })));
+  const M = 18; V.tx = M - x0; V.ty = M - y0; V.w = Math.round(x1 - x0 + M * 2); V.h = Math.round(y1 - y0 + M * 2);
+  return V;
+}
+const f1 = (v) => Math.round(v * 10) / 10;
+const path = (pts) => "M" + pts.map((p) => f1(p[0]) + " " + f1(p[1])).join("L") + "Z";
+
+// a prism standing on the floor: its side faces that look at the viewer and its top
+function prism(V, pts, y0, y1, col) {
+  const fn = col && col.fn, c = typeof col === "string" ? col : col.c || "#ccc", top = (col && col.top) || shade(c, 1.14), op = col && col.op != null ? ` fill-opacity="${col.op}"` : "";
+  let A = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; A += p[0] * q[1] - q[0] * p[1]; }
+  const sg = A >= 0 ? 1 : -1; let out = "";
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[(i + 1) % pts.length], dx = q[0] - p[0], dz = q[1] - p[1], L = Math.hypot(dx, dz) || 1, nx = (sg * dz) / L, nz = (-sg * dx) / L;
+    const nb = V.nb(nx, nz); if (nb <= 0.02) continue;
+    const f = Math.max(0.62, Math.min(1.1, 0.86 - 0.17 * V.na(nx, nz) + 0.08 * nb));
+    out += `<path d="${path([V.P(p[0], y1, p[1]), V.P(q[0], y1, q[1]), V.P(q[0], y0, q[1]), V.P(p[0], y0, p[1])])}" fill="${shade(fn ? fn(nx, nz) : c, f)}"${op}/>`;
+  }
+  return out + `<path d="${path(pts.map((p) => V.P(p[0], y1, p[1])))}" fill="${top}"${op}/>`;
+}
+const rectPts = (xa, xb, za, zb) => [[xa, za], [xb, za], [xb, zb], [xa, zb]];
+const circPts = (X, Z, r, n) => Array.from({ length: n || 14 }, (_, i) => [X + Math.cos((i / (n || 14)) * 6.2832) * r, Z + Math.sin((i / (n || 14)) * 6.2832) * r]);
+
+// one piece of furniture as a list of parts in its own frame (back = -z, as in the flat picture)
+function furnParts(it) {
+  const w = it.w, d = it.d, h = Math.min(it.h || 0.8, 2.45), hw = w / 2, hd = d / 2, c = it.color, T = it.type, P = [];
+  const rad = ((it.rotation || 0) * Math.PI) / 180, cs = Math.cos(rad), sn = Math.sin(rad);
+  const tr = (lx, lz) => [it.x + lx * cs - lz * sn, it.z + lx * sn + lz * cs];
+  const B = (lx, lz, W, D, y0, y1, col) => { if (y1 <= y0) return; P.push({ pts: [[-W / 2, -D / 2], [W / 2, -D / 2], [W / 2, D / 2], [-W / 2, D / 2]].map((q) => tr(lx + q[0], lz + q[1])), y0, y1, col }); };
+  const C = (lx, lz, r, y0, y1, col, n) => { if (y1 <= y0) return; const m = tr(lx, lz); P.push({ pts: circPts(m[0], m[1], r, n), y0, y1, col }); };
+  const legs = (inset, th, hh, col) => [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(a * (hw - inset), b * (hd - inset), th, th, 0, hh, col));
+  switch (T) {
+    case "rug": B(0, 0, w, d, 0, 0.014, c || "#e7b53c"); B(0, 0, w - 0.22, d - 0.22, 0.014, 0.018, shade(c || "#e7b53c", 1.25)); B(0, 0, w - 0.6, d - 0.6, 0.018, 0.02, shade(c || "#e7b53c", 0.9)); break;
+    case "sofa": { const b = c || "#3b6ea5"; B(0, 0.02, w, d - 0.04, 0.08, 0.4, shade(b, 0.85)); B(0, -hd + 0.14, w, 0.28, 0.08, h, b); B(-hw + 0.12, 0.05, 0.24, d - 0.1, 0.08, 0.62, b); B(hw - 0.12, 0.05, 0.24, d - 0.1, 0.08, 0.62, b); const n = w > 1.5 ? 3 : 2, cw = (w - 0.48) / n; for (let i = 0; i < n; i++) B(-hw + 0.24 + cw * (i + 0.5), 0.12, cw - 0.03, d - 0.36, 0.4, 0.5, shade(b, 1.18)); B(0, -hd + 0.32, w - 0.5, 0.2, 0.5, 0.78, shade(b, 1.05)); legs(0.05, 0.05, 0.08, "#3a2f2a"); break; }
+    case "armchair": { const b = c || "#d6a23a"; B(0, 0.02, w, d - 0.04, 0.08, 0.4, shade(b, 0.85)); B(0, -hd + 0.12, w, 0.24, 0.08, h, b); B(-hw + 0.1, 0.05, 0.2, d - 0.1, 0.08, 0.6, b); B(hw - 0.1, 0.05, 0.2, d - 0.1, 0.08, 0.6, b); B(0, 0.1, w - 0.4, d - 0.4, 0.4, 0.5, shade(b, 1.2)); break; }
+    case "tv_board": B(0, 0, w, d, 0, 0.5, "#4a3a31"); B(0, 0.04, w - 0.06, d - 0.1, 0.5, 0.52, "#6b5547"); B(0, -0.04, w * 0.62, 0.05, 0.55, 1.1, it.tv ? "#2c6aa0" : "#10151f"); B(0, -0.04, 0.2, 0.1, 0.52, 0.56, "#20252e"); break;
+    case "coffee_table": B(0, 0, w, d, 0.34, 0.4, "#e8dcc8"); B(0, 0, w - 0.1, d - 0.1, 0.4, 0.405, "#fff"); legs(0.06, 0.05, 0.34, "#8a6a4a"); B(-w * 0.2, 0, 0.18, 0.18, 0.405, 0.46, "#7aa874"); B(w * 0.2, 0.05, 0.14, 0.1, 0.405, 0.43, "#d6a23a"); break;
+    case "plant": C(0, 0, hw * 0.55, 0, 0.3, "#b5653a", 10); C(0, 0, hw, 0.3, h * 0.62, "#2f7a3e", 10); C(0, 0, hw * 0.72, h * 0.62, h * 0.88, "#4c9a54", 10); C(0, 0, hw * 0.4, h * 0.88, h, "#69bd70", 10); break;
+    case "shelf": case "tall_cabinet": { B(0, 0, w, d, 0, h, "#7a5a3f"); B(0, hd, w - 0.06, 0.02, 0.05, h - 0.05, "#97724c"); const lv = T === "shelf" ? 4 : 2; for (let i = 1; i <= lv; i++) { const y = (h / (lv + 1)) * i; B(0, hd + 0.012, w - 0.06, 0.012, y, y + 0.025, "#5b4030"); if (T === "shelf") ["#c2564b", "#3f8f9b", "#e7b53c", "#7d6bb3"].forEach((bc, k) => B(-hw + 0.14 + k * 0.18, hd + 0.03, 0.12, 0.05, y + 0.025, y + 0.25 + (k % 2) * 0.06, bc)); } break; }
+    case "sideboard": case "dresser": B(0, 0, w, d, 0, h, "#b98552"); B(0, 0, w + 0.03, d + 0.02, h, h + 0.03, "#d1a06c"); B(-w / 4, hd, w / 2 - 0.05, 0.015, 0.06, h - 0.06, "#cb9a68"); B(w / 4, hd, w / 2 - 0.05, 0.015, 0.06, h - 0.06, "#cb9a68"); B(-0.05, hd + 0.02, 0.05, 0.02, h * 0.55, h * 0.62, "#f3e3c3"); B(0.05, hd + 0.02, 0.05, 0.02, h * 0.55, h * 0.62, "#f3e3c3"); break;
+    case "nightstand": B(0, 0, w, d, 0, h, "#a3703f"); B(0, 0, w + 0.02, d + 0.02, h, h + 0.025, "#c79a6a"); B(0, hd, w - 0.06, 0.015, 0.06, h - 0.06, "#b98552"); C(0, -0.02, 0.09, h + 0.025, h + 0.04, "#444", 8); C(0, -0.02, 0.07, h + 0.04, h + 0.3, "#f6e2a8", 8); break;
+    case "table": B(0, 0, w, d, 0.69, 0.75, "#d1a06c"); B(0, 0, w - 0.08, d - 0.08, 0.75, 0.755, "#e0b784"); legs(0.07, 0.07, 0.69, "#8a5d3a"); break;
+    case "table_round": C(0, 0, hw, 0.69, 0.75, "#d1a06c", 18); C(0, 0, hw * 0.12, 0, 0.69, "#8a5d3a", 8); C(0, 0, hw * 0.4, 0, 0.04, "#8a5d3a", 10); break;
+    case "chair": { const b = c || "#c2564b"; B(0, 0.02, w * 0.92, d * 0.84, 0.4, 0.46, b); B(0, -hd + 0.05, w * 0.92, 0.05, 0.46, 0.9, shade(b, 0.9)); legs(0.05, 0.04, 0.4, "#6a4a32"); break; }
+    case "bed": { const b = c || "#3f8f9b"; B(0, 0, w, d, 0, 0.3, "#8a5d3a"); B(0, -hd + 0.04, w + 0.04, 0.08, 0.3, 1.0, "#6c4528"); B(0, 0.04, w - 0.1, d - 0.16, 0.3, 0.5, "#f6f6f2"); B(0, 0.3, w - 0.04, d * 0.62, 0.5, 0.57, b); B(0, 0.3 - d * 0.31 + 0.1, w - 0.04, 0.16, 0.57, 0.6, shade(b, 1.25)); if (w > 1.2) { B(-w / 4, -hd + 0.34, w / 2 - 0.16, 0.36, 0.5, 0.63, "#fff"); B(w / 4, -hd + 0.34, w / 2 - 0.16, 0.36, 0.5, 0.63, "#fff"); } else B(0, -hd + 0.34, w - 0.2, 0.36, 0.5, 0.63, "#fff"); break; }
+    case "wardrobe": B(0, 0, w, d, 0, h, "#8a5d3a"); B(0, 0, w + 0.03, d + 0.02, h, h + 0.04, "#a37249"); B(-w / 4, hd, w / 2 - 0.04, 0.02, 0.05, h - 0.06, "#b4824f"); B(w / 4, hd, w / 2 - 0.04, 0.02, 0.05, h - 0.06, "#b4824f"); B(-0.05, hd + 0.03, 0.025, 0.02, h * 0.45, h * 0.58, "#f3e3c3"); B(0.05, hd + 0.03, 0.025, 0.02, h * 0.45, h * 0.58, "#f3e3c3"); break;
+    case "kitchen": B(0, 0, w, d, 0, 0.86, "#f2f4f6"); B(0, 0, w + 0.01, d + 0.02, 0.86, 0.92, "#7f8a96"); B(0, hd, w - 0.05, 0.015, 0.07, 0.8, "#ffffff"); B(0, hd + 0.02, 0.2, 0.02, 0.72, 0.75, "#9aa4af"); break;
+    case "kitchen_wall": B(0, 0, w, d, 1.45, 2.15, "#f2f4f6"); B(0, hd, w - 0.05, 0.015, 1.5, 2.1, "#ffffff"); B(0, hd + 0.02, 0.2, 0.02, 1.55, 1.58, "#9aa4af"); break;
+    case "fridge": B(0, 0, w, d, 0, h, "#d5dce3"); B(0, hd, w - 0.05, 0.015, 0.05, h * 0.62, "#eef2f6"); B(0, hd, w - 0.05, 0.015, h * 0.64, h - 0.05, "#eef2f6"); B(-hw + 0.1, hd + 0.025, 0.03, 0.03, h * 0.7, h * 0.9, "#59606b"); B(-hw + 0.1, hd + 0.025, 0.03, 0.03, h * 0.3, h * 0.55, "#59606b"); break;
+    case "sink": B(0, 0, w, d, 0, 0.86, "#f2f4f6"); B(0, 0, w + 0.01, d + 0.02, 0.86, 0.92, "#7f8a96"); B(-w * 0.12, 0.02, w * 0.5, d * 0.62, 0.92, 0.925, "#9fb4c4"); C(w * 0.3, -hd + 0.1, 0.025, 0.92, 1.1, "#9aa4af", 6); B(0, hd, w - 0.05, 0.015, 0.07, 0.8, "#fff"); break;
+    case "stove": B(0, 0, w, d, 0, 0.86, "#e9edf1"); B(0, 0, w + 0.01, d + 0.02, 0.86, 0.92, "#2b2f38"); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => C(a * w * 0.22, b * d * 0.2, w * 0.14, 0.92, 0.935, "#14171d", 10)); B(0, hd, w - 0.06, 0.015, 0.1, 0.7, "#2b2f38"); break;
+    case "dishwasher": B(0, 0, w, d, 0, 0.86, "#d5dce3"); B(0, 0, w + 0.01, d + 0.02, 0.86, 0.92, "#7f8a96"); B(0, hd, w - 0.05, 0.015, 0.07, 0.8, "#eef2f6"); B(0, hd + 0.02, w - 0.2, 0.02, 0.75, 0.78, "#7f8a96"); break;
+    case "island": B(0, 0, w, d, 0, 0.86, "#7a8794"); B(0, 0, w + 0.08, d + 0.08, 0.86, 0.92, "#e7ecf0"); B(0, hd, w - 0.1, 0.015, 0.07, 0.8, "#94a0ad"); break;
+    case "bathtub": B(0, 0, w, d, 0, 0.58, "#f4f7f9"); B(0, 0, w - 0.16, d - 0.16, 0.58, 0.585, "#9fd3e8"); C(hw - 0.12, 0, 0.03, 0.58, 0.7, "#8aa3b0", 6); break;
+    case "shower": B(0, 0, w, d, 0, 0.05, "#cfeaf3"); B(0, hd - 0.02, w, 0.03, 0.05, 2.0, { c: "#bfe6f5", op: 0.38, top: "#e3f5fb" }); B(hw - 0.02, 0, 0.03, d, 0.05, 2.0, { c: "#bfe6f5", op: 0.38, top: "#e3f5fb" }); C(-hw + 0.15, -hd + 0.15, 0.07, 1.9, 1.95, "#8aa3b0", 8); break;
+    case "wc": B(0, -hd + 0.1, w, 0.2, 0, 0.8, "#f4f7f9"); B(0, 0.08, w * 0.9, d * 0.56, 0, 0.4, "#f9fbfc"); B(0, 0.1, w * 0.62, d * 0.4, 0.4, 0.42, "#d7e6ee"); C(0, -hd + 0.1, 0.03, 0.8, 0.84, "#9aa4af", 6); break;
+    case "washbasin": B(0, -0.06, 0.14, 0.14, 0, 0.7, "#f4f7f9"); B(0, 0, w, d, 0.7, 0.85, "#f4f7f9"); B(0, 0.02, w * 0.66, d * 0.56, 0.85, 0.855, "#d7e6ee"); C(0, -hd + 0.05, 0.025, 0.85, 1.0, "#8aa3b0", 6); break;
+    case "washer": case "dryer": B(0, 0, w, d, 0, h, "#f1f4f7"); B(0, hd, w * 0.62, 0.015, h * 0.2, h * 0.78, "#9fb0bd"); B(0, hd + 0.015, w * 0.4, 0.012, h * 0.3, h * 0.66, "#6e8ca5"); B(0, 0, w - 0.04, d - 0.04, h, h + 0.015, "#dfe8ef"); break;
+    case "desk": B(0, 0, w, d, 0.7, 0.75, "#dcb583"); B(-hw + 0.04, 0, 0.06, d - 0.06, 0, 0.7, "#a3703f"); B(hw - 0.04, 0, 0.06, d - 0.06, 0, 0.7, "#a3703f"); B(0, -hd + 0.06, w - 0.1, 0.03, 0.2, 0.7, "#b98552"); B(0, -hd + 0.18, 0.62, 0.03, 0.78, 1.18, "#12161d"); B(0, -hd + 0.18, 0.16, 0.12, 0.75, 0.8, "#2b2f38"); B(0, 0.02, 0.4, 0.14, 0.75, 0.765, "#20252e"); break;
+    case "office_chair": { const b = c || "#2f3744"; C(0, 0, hw * 0.75, 0, 0.05, "#1b1e24", 8); C(0, 0, 0.04, 0.05, 0.42, "#444c58", 6); C(0, 0, hw * 0.7, 0.42, 0.52, b, 12); B(0, -hw * 0.6, hw * 1.1, 0.09, 0.52, 1.1, shade(b, 1.1)); break; }
+    case "coat_rack": B(0, -hd + 0.03, w, 0.05, 1.3, 1.85, "#6a4a32"); [-0.6, -0.2, 0.2, 0.6].forEach((a) => B(a * hw, -hd + 0.1, 0.04, 0.1, 1.55, 1.59, "#c9cdd3")); break;
+    case "stairs": { const n = Math.max(6, Math.round(d / 0.27)), sd = d / n; for (let i = 0; i < n; i++) B(0, hd - (i + 0.5) * sd, w, sd, 0, ((i + 1) / n) * h, i % 2 ? "#cfae83" : "#caa77c"); B(-hw + 0.03, 0, 0.06, d, 0, h + 0.9, { c: "#8a6b44", top: "#a9895f" }); break; }
+    case "parking": { const b = c || "#d9dde4"; B(0, 0.05, 1.75, 4.3, 0.2, 0.66, b); B(0, 0.25, 1.6, 2.1, 0.66, 1.2, "#2b3a4d"); B(0, 0.25, 1.5, 1.95, 1.2, 1.25, shade(b, 1.05)); B(0, -2.1, 1.5, 0.05, 0.38, 0.5, "#f6e2a8"); [[-0.86, -1.35], [0.86, -1.35], [-0.86, 1.4], [0.86, 1.4]].forEach(([a, z]) => B(a, z, 0.2, 0.62, 0, 0.4, "#1b1e24")); break; }
+    case "lamp_floor": C(0, 0, 0.14, 0, 0.03, "#3a3f48", 10); C(0, 0, 0.02, 0.03, 1.5, "#555d68", 6); C(0, 0, 0.2, 1.42, 1.72, "#f6e2a8", 12); break;
+    case "water_heater": C(0, 0, hw, 0, h, "#d5dce3", 14); C(0, 0, hw * 0.8, h, h + 0.05, "#eef2f6", 14); C(0, hw * 0.7, 0.04, 0.9, 0.95, "#d9534f", 6); break;
+    case "bench": B(0, 0, w, d, 0.4, 0.46, "#d1a06c"); legs(0.06, 0.06, 0.4, "#8a5d3a"); break;
+    case "stool": C(0, 0, hw, 0.36, 0.42, c || "#d1a06c", 12); C(0, 0, hw * 0.2, 0, 0.36, "#8a5d3a", 6); break;
+    case "stairwell": case "lamp_pendant": break;
+    default: B(0, 0, w, d, 0, h, "#9aa3ad");
+  }
+  return P;
+}
+
+// everything of one floor as a picture
+function solidFloor(plan, f, o) {
+  const yaw = o.yaw, pitch = o.pitch, V = mkView(f.W, f.D, yaw, pitch), W = f.W, D = f.D;
+  // openings in the coordinates of the floor
+  const ops = f.openings.map((p) => {
+    const q = f.rooms.find((r) => r.rid === p.room_id); if (!q) return null;
+    const side = ["N", "E", "S", "W"][p.edge], c = side === "N" ? q.x0 + p.offset : side === "S" ? q.x1 - p.offset : side === "E" ? q.z0 + p.offset : q.z1 - p.offset;
+    const horiz = side === "N" || side === "S", pos = side === "N" ? q.z0 : side === "S" ? q.z1 : side === "W" ? q.x0 : q.x1;
+    return { p, horiz, pos, a: c - p.width / 2, b: c + p.width / 2, c };
+  }).filter(Boolean);
+  let under = "", things = [];
+  const T = (X, Z, svg) => { if (svg) things.push({ k: V.rot(X, Z)[1], s: svg }); };
+  // the plinth and the soft ground shadow
+  const bp = rectPts(-0.2, W + 0.2, -0.2, D + 0.2);
+  under += `<path d="${path(rectPts(-0.1, W + 0.5, 0.1, D + 0.6).map((p) => V.P(p[0], -0.35, p[1])))}" fill="#000" opacity=".4" filter="url(#bl)"/>`;
+  under += prism(V, bp, -0.32, 0, { c: "#6b7686", top: "#8792a3" });
+  // floors
+  f.rooms.forEach((q) => {
+    const m = FLOOR_FILL[q.mat] ? q.mat : "wood", base = mixc(FLOOR_FILL[m][0], KIND_TINT[q.kind] || "#ddd", 0.22), line = shade(base, 0.8);
+    const pts = rectPts(q.x0, q.x1, q.z0, q.z1).map((p) => V.P(p[0], 0, p[1]));
+    under += `<path d="${path(pts)}" fill="${base}"/>`;
+    let ln = "";
+    if (m === "oak" || m === "wood") { for (let z = q.z0 + 0.2; z < q.z1 - 0.01; z += 0.2) ln += `M${V.P(q.x0, 0, z).map(f1).join(" ")}L${V.P(q.x1, 0, z).map(f1).join(" ")}`; }
+    else if (m === "tiles" || m === "stone") { const st = m === "tiles" ? 0.5 : 0.6; for (let z = q.z0 + st; z < q.z1 - 0.01; z += st) ln += `M${V.P(q.x0, 0, z).map(f1).join(" ")}L${V.P(q.x1, 0, z).map(f1).join(" ")}`; for (let X = q.x0 + st; X < q.x1 - 0.01; X += st) ln += `M${V.P(X, 0, q.z0).map(f1).join(" ")}L${V.P(X, 0, q.z1).map(f1).join(" ")}`; }
+    if (ln) under += `<path d="${ln}" stroke="${line}" stroke-width=".9" fill="none" opacity=".55"/>`;
+  });
+  // soft shadows of the furniture on the floor
+  f.furniture.forEach((it) => {
+    if ((it.h || 0) < 0.06 || it.type === "stairwell") return;
+    const rad = (it.rotation * Math.PI) / 180, cs = Math.cos(rad), sn = Math.sin(rad), hw = it.w / 2, hd = it.d / 2;
+    const pts = [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map((q) => [it.x + q[0] * cs - q[1] * sn + 0.07, it.z + q[0] * sn + q[1] * cs + 0.09]).map((p) => V.P(p[0], 0, p[1]));
+    under += `<path d="${path(pts)}" fill="#1a1208" opacity=".2"/>`;
+  });
+  // walls
+  const HW = 2.5, HI = 1.25, HL = 0.28, TI = 0.07, TE = 0.14, MAXP = 0.8;
+  const winCol = { c: "#bfe4fb", op: 0.8, top: "#e3f3ff" };
+  f.rooms.forEach((q) => {
+    const E = { N: q.z0 < 0.001, S: q.z1 > D - 0.001, W: q.x0 < 0.001, E: q.x1 > W - 0.001 };
+    const wc = WALL_COL[q.kind] || "#e6dccb", wcol = { c: wc, top: CAP_COL };
+    [["N", true, q.z0, q.x0, q.x1, [0, 1]], ["S", true, q.z1, q.x0, q.x1, [0, -1]], ["W", false, q.x0, q.z0, q.z1, [1, 0]], ["E", false, q.x1, q.z0, q.z1, [-1, 0]]].forEach(([s, horiz, pos, a0, a1, inw]) => {
+      const ext = E[s], near = ext && V.nb(-inw[0], -inw[1]) > 0.2, Hw = ext ? (near ? HL : HW) : HI;
+      // the openings on this line
+      const cuts = ops.filter((op) => op.horiz === horiz && Math.abs(op.pos - pos) < 0.03 && op.b > a0 + 0.01 && op.a < a1 - 0.01).map((op) => ({ ...op, a: Math.max(a0, op.a), b: Math.min(a1, op.b) })).sort((x, y) => x.a - y.a);
+      const slab = (ta, tb, ca, cb, y0, y1, col) => { if (y1 - y0 < 0.005 || cb - ca < 0.004) return ""; const z0 = pos + inw[horiz ? 1 : 0] * ta, z1 = pos + inw[horiz ? 1 : 0] * tb; return prism(V, horiz ? rectPts(ca, cb, Math.min(z0, z1), Math.max(z0, z1)) : rectPts(Math.min(z0, z1), Math.max(z0, z1), ca, cb), y0, y1, col); };
+      // one wall piece: the room's colour on the inside, the neighbour's (or the outer plaster) on the other side
+      const both = (ca, cb, y0, y1, fixed) => {
+        const mid = (ca + cb) / 2, X = horiz ? mid : pos, Z = horiz ? pos : mid, px = horiz ? mid : pos - inw[0] * 0.1, pz = horiz ? pos - inw[1] * 0.1 : mid;
+        const nr = ext ? null : f.rooms.find((r) => r !== q && px > r.x0 - 0.001 && px < r.x1 + 0.001 && pz > r.z0 - 0.001 && pz < r.z1 + 0.001);
+        if (nr && nr.id < q.id && !fixed) return;
+        const outC = ext ? EXT_COL : nr ? WALL_COL[nr.kind] || "#e6dccb" : wc;
+        const col = fixed ? { c: fixed, top: fixed } : { fn: (nx, nz) => (nx * inw[0] + nz * inw[1] > 0 ? wc : outC), top: CAP_COL };
+        T(X, Z, slab(ext ? -TE : -TI, TI, ca, cb, y0, y1, col));
+      };
+      const solid = (ca, cb) => { const n = Math.max(1, Math.ceil((cb - ca) / MAXP)), st = (cb - ca) / n; for (let i = 0; i < n; i++) both(ca + i * st, ca + (i + 1) * st, 0, Hw); };
+      let cur = a0;
+      cuts.forEach((op) => {
+        if (op.a > cur) solid(cur, op.a);
+        const p = op.p, ca = op.a, cb = op.b, jam = 0.05;
+        if (p.type === "window") {
+          const sill = Math.min(p.sill || 0.9, Hw), top = Math.min((p.sill || 0.9) + (p.height || 1.3), Hw);
+          if (sill > 0.01) both(ca, cb, 0, sill);
+          if (Hw > top + 0.01) both(ca, cb, top, Hw);
+          if (top > sill + 0.02) {
+            both(ca, ca + jam, sill, top, "#f6f6f4"); both(cb - jam, cb, sill, top, "#f6f6f4");
+            if (p.leaves === 2) both((ca + cb) / 2 - 0.02, (ca + cb) / 2 + 0.02, sill, top, "#f6f6f4");
+            const mid = (ca + cb) / 2, X = horiz ? mid : pos, Z = horiz ? pos : mid;
+            T(X, Z, slab(-0.02, 0.03, ca + jam, cb - jam, sill, top, winCol) + (top - sill > 0.4 ? slab(-0.03, 0.04, ca + jam, cb - jam, sill + (top - sill) * 0.5 - 0.015, sill + (top - sill) * 0.5 + 0.015, { c: "#f6f6f4", top: "#fff" }) : ""));
+          }
+        } else if (p.type === "garage") {
+          const hh = Math.min(2.15, Hw), mid = (ca + cb) / 2, X = horiz ? mid : pos, Z = horiz ? pos : mid;
+          let sv = ""; const n = 6; for (let i = 0; i < n; i++) sv += slab(0.02, 0.07, ca, cb, (hh / n) * i, (hh / n) * (i + 1) - 0.01, { c: i % 2 ? "#dfe3e8" : "#cdd2d9", top: "#eef0f3" });
+          T(X, Z, sv); if (Hw > hh + 0.01) both(ca, cb, hh, Hw);
+        } else if (p.style === "front") {
+          const hh = Math.min(2.1, Hw), mid = (ca + cb) / 2, X = horiz ? mid : pos, Z = horiz ? pos : mid;
+          T(X, Z, slab(0.0, 0.06, ca, cb, 0, hh, { c: "#8a4f22", top: "#a86a36" }) + slab(0.06, 0.075, cb - 0.18, cb - 0.12, hh * 0.45, hh * 0.5, { c: "#f0d68a", top: "#fff2c0" }));
+          if (Hw > hh + 0.01) both(ca, cb, hh, Hw);
+        } else {
+          const hh = Math.min(p.style === "passage" ? 2.1 : 2.05, Hw);
+          if (Hw > hh + 0.01) both(ca, cb, hh, Hw);
+          if (p.style !== "passage") { both(ca, ca + 0.04, 0, hh, "#ffffff"); both(cb - 0.04, cb, 0, hh, "#ffffff"); }
+        }
+        cur = Math.max(cur, op.b);
+      });
+      if (cur < a1) solid(cur, a1);
+    });
+  });
+  // furniture
+  f.furniture.forEach((it) => {
+    const parts = furnParts(it); if (!parts.length) return;
+    const sv = parts.map((q) => prism(V, q.pts, q.y0, q.y1, q.col)).join("");
+    if (it.type === "rug") under += sv; else T(it.x, it.z, sv);
+  });
+  things.sort((a, b) => a.k - b.k);
+  return { V, under, body: things.map((t) => t.s).join("") };
+}
+
+export function toSolid(plan, floorId, o) {
+  o = o || {};
+  const f = plan.floors.find((q) => q.id === floorId); if (!f) return null;
+  const cam = SOLID_CAM.default, yaw = o.yaw != null ? o.yaw : cam[0], pitch = o.pitch != null ? o.pitch : cam[1];
+  const r = solidFloor(plan, f, { yaw, pitch }), V = r.V, night = !!o.night;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${V.w} ${V.h}" width="${V.w}" height="${V.h}">
+<defs><filter id="bl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${SC * 0.22}"/></filter>
+<filter id="nt" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values=".62 0 0 0 0  0 .68 0 0 0  0 0 .82 0 .02  0 0 0 1 0"/></filter></defs>
+<g${night ? ' filter="url(#nt)"' : ""}>${r.under}<g stroke="rgba(14,18,30,.3)" stroke-width=".7" stroke-linejoin="round" stroke-linecap="round">${r.body}</g></g>
+</svg>`;
+  return { svg, w: V.w, h: V.h };
+}
+
+// the room shapes and the places of the devices on the solid picture, as fractions of its size
+export function solidGeometry(plan, floorId, o) {
+  o = o || {};
+  const f = plan.floors.find((q) => q.id === floorId); if (!f) return null;
+  const cam = SOLID_CAM.default, V = mkView(f.W, f.D, o.yaw != null ? o.yaw : cam[0], o.pitch != null ? o.pitch : cam[1]);
+  const n = (X, Y, Z) => { const p = V.P(X, Y, Z); return [r2(p[0] / V.w), r2(p[1] / V.h)]; };
+  return {
+    w: V.w, h: V.h, solid: true,
+    rooms: f.rooms.map((q) => ({ id: q.rid, room: q.id, pts: [n(q.x0, 0, q.z0), n(q.x1, 0, q.z0), n(q.x1, 0, q.z1), n(q.x0, 0, q.z1)] })),
+    devs: (f.devs || []).map((d, i) => { const p = n(d.x, 0.9, d.z); return { id: "a" + i, ent: d.ent, x: p[0], y: p[1] }; }),
+  };
+}
+export const AUTO_VERSION = 2;

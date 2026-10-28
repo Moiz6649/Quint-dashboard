@@ -31,7 +31,7 @@ const H3D_OPT = {
   clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
   time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
   sky: ["off", "live", "day", "dusk", "night"], shadow: ["off", "soft", "strong"],
-  layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], view: ["live", "picture", "auto"], cam: ["default", "top", "corner", "dollhouse", "front", "side"], fx: ["live", "off"],
+  layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], view: ["live", "picture", "auto", "solid"], cam: ["default", "top", "corner", "dollhouse", "front", "side"], fx: ["live", "off"],
 };
 // the realism presets: what they switch (the rest of the look stays as the admin set it)
 const H3D_REAL = {
@@ -104,7 +104,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.41.0";
+const VER = "1.42.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -650,6 +650,7 @@ input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 
 .pic-room.lit{fill:rgba(255,196,110,.15)}
 .pic-room:hover{fill:rgba(255,255,255,.08)}
 .pic-room.sel{fill:rgba(61,219,208,.13);stroke:#3ddbd0}
+.pic-cam{position:absolute;right:16px;bottom:16px;display:flex;gap:8px;z-index:3}.pic-cam button{width:42px;height:42px;border-radius:50%;border:0;background:rgba(10,14,22,.66);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:0}.pic-cam button:active{background:var(--ac);color:#000}
 .pic-nm{position:absolute;transform:translate(-50%,0);pointer-events:none;padding:1px 8px;border-radius:999px;background:rgba(10,14,22,.5);color:#fff;font-size:11px;font-weight:600;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px;z-index:2}
 .h3d>canvas.fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;border-radius:inherit}
 .hal{display:flex;flex-direction:column;gap:10px;padding:4px 0 10px}.haf{border:1px solid var(--tbd);border-radius:14px;overflow:hidden}
@@ -3294,16 +3295,28 @@ class QuintDashboard extends HTMLElement {
     return this._ap;
   }
   /* the floors of the plan as pictures with rooms and device pins (the picture view shows them like a rendered picture) */
+  _h3dAuto() { const v = this._h3d().view; return v === "auto" || v === "solid"; }
+  /* the angle of the solid house: the camera choice, or what the person turned it to */
+  _solidCam() {
+    const m = this._am, o = this._h3d(), base = (m && m.SOLID_CAM && (m.SOLID_CAM[o.cam] || m.SOLID_CAM.default)) || [38, 46];
+    if (this._scam !== o.cam) { this._scam = o.cam; this._sy = null; this._sp = null; }
+    return [this._sy != null ? this._sy : base[0], this._sp != null ? this._sp : base[1]];
+  }
   _autoPic() {
     const plan = this._autoPlan(); if (!plan) return [];
-    if (this._apic) return this._apic;
-    const m = this._am;
-    return (this._apic = plan.floors.map((f) => { const g = m.picGeometry(plan, f.id); return { id: "a:" + f.id + ":" + this._aph, qf: f.id, lv: f.level, name: f.name, w: g.w, h: g.h, img: true, night: true, auto: true, rooms: g.rooms, devs: g.devs }; }));
+    const solid = this._h3d().view === "solid", cam = this._solidCam(), key = solid ? "s" + cam[0] + "_" + cam[1] : "flat", ck = this._aph + key;
+    if (this._apic && this._apicK === ck) return this._apic;
+    const m = this._am; this._apicK = ck;
+    return (this._apic = plan.floors.map((f) => { const g = solid ? m.solidGeometry(plan, f.id, { yaw: cam[0], pitch: cam[1] }) : m.picGeometry(plan, f.id); return { id: "a:" + f.id + ":" + this._aph + ":" + key, qf: f.id, lv: f.level, name: f.name, w: g.w, h: g.h, img: true, night: true, auto: true, solid, rooms: g.rooms, devs: g.devs }; }));
   }
   _autoSvg(id) {
     const plan = this._autoPlan(), m = this._am; if (!plan || !m) return "";
-    const c = (this._asv = this._asv || {}); if (id in c) return c[id];
-    const p = id.split(":"), r = m.toSvg(plan, p[1], { night: p[3] === "n" });
+    let c = (this._asv = this._asv || {}); if (id in c) return c[id];
+    if (Object.keys(c).length > 24) c = this._asv = {};
+    const p = id.split(":"), night = p[4] === "n";
+    let r = null;
+    if (p[3] && p[3][0] === "s") { const a = p[3].slice(1).split("_").map(Number); r = m.toSolid(plan, p[1], { yaw: a[0], pitch: a[1], night }); }
+    else r = m.toSvg(plan, p[1], { night });
     return (c[id] = r ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(r.svg) : "");
   }
   /* the house is drawn once in Quinteca 3D: rooms, walls, doors, windows, furniture and lamps; a restore point is kept first */
@@ -3358,7 +3371,7 @@ class QuintDashboard extends HTMLElement {
       }).join("")}</div>`;
     }).join("");
     const pf = plan && plan.floors.length ? plan.floors.find((f) => f.id === this._apf) || plan.floors[0] : null;
-    const pre = pf ? `<div class="hap">${plan.floors.length > 1 ? `<div class="seg sm">${plan.floors.map((f) => `<button class="${f.id === pf.id ? "on" : ""}" data-s="ah|pf|${E(f.id)}">${E(f.name)}</button>`).join("")}</div>` : ""}<img alt="" src="${this._autoSvg("a:" + pf.id + ":" + this._aph)}"></div>` : `<div class="lbl" style="padding:8px 4px">${plan === null && !this._ape ? "Loading…" : E(this._ape || "Nothing is ticked yet.")}</div>`;
+    const pre = pf ? `<div class="hap">${plan.floors.length > 1 ? `<div class="seg sm">${plan.floors.map((f) => `<button class="${f.id === pf.id ? "on" : ""}" data-s="ah|pf|${E(f.id)}">${E(f.name)}</button>`).join("")}</div>` : ""}<img alt="" src="${this._autoSvg("a:" + pf.id + ":" + this._aph + ":s" + this._solidCam().join("_"))}"></div>` : `<div class="lbl" style="padding:8px 4px">${plan === null && !this._ape ? "Loading…" : E(this._ape || "Nothing is ticked yet.")}</div>`;
     const st = this._autoSt || "";
     const cams = ["default", "top", "corner", "dollhouse", "front", "side"], cl = ["Standard", "From above", "Corner", "Dollhouse", "Front", "Side"];
     const fxs = [["live", "Follow the weather"], ["off", "Off"]];
@@ -3368,9 +3381,9 @@ class QuintDashboard extends HTMLElement {
       row("Furniture", "beds, sofas, kitchens, bathrooms and more, chosen by the kind of room", tg(a.furn, 'data-s="ah|o|furn"')) +
       row("Windows", "in the outer walls, sized by the room", tg(a.win, 'data-s="ah|o|win"')) +
       row("Preview", "the colourful picture of the house, as it will look", `<span></span>`) + pre +
-      row("Show the house as", "Auto picture: this plan as a colourful picture, no 3D engine needed. My pictures: pictures you rendered yourself. Live 3D: the Quinteca 3D house", sg("view", ["Live 3D", "My pictures", "Auto picture"])) +
+      row("Show the house as", "Auto 3D: a solid, full-colour 3D house drawn from your floors and rooms, turn it with the buttons, no 3D engine needed. Auto plan: the same as a flat picture from above. My pictures: pictures you rendered yourself. Live 3D: Quinteca's own see-through house", sg("view", ["Live 3D", "My pictures", "Auto plan", "Auto 3D"])) +
       row("Build the 3D house", "writes this plan into Quinteca 3D so you can turn, zoom and edit it. A restore point of your old plan is kept", `<button class="sbtn pri2" data-s="ah|build" ${this._h3dInst() ? "" : "disabled"}>${this._autoBusy ? "Building…" : "Build the 3D house"}</button>`) + (st ? `<div class="lbl" style="padding:6px 4px">${E(st)}</div>` : "") +
-      row("Camera of the 3D house", "the angle the 3D house opens with. “Standard” keeps Quinteca's own view", `<div class="seg sm" style="flex-wrap:wrap">${cams.map((k, i) => `<button class="${o.cam === k ? "on" : ""}" data-s="h3d|cam|${k}">${cl[i]}</button>`).join("")}</div>`)) +
+      row("Camera of the 3D house", "the angle the Auto 3D house and the Quinteca 3D house open with. “Standard” keeps Quinteca's own view", `<div class="seg sm" style="flex-wrap:wrap">${cams.map((k, i) => `<button class="${o.cam === k ? "on" : ""}" data-s="h3d|cam|${k}">${cl[i]}</button>`).join("")}</div>`)) +
       sec("Weather effects", "rain, snow, storms, fog and drifting clouds over the house, from your weather entity",
         row("Weather over the house", "shown on the 3D house and on the pictures", `<div class="seg sm">${fxs.map(([k, n]) => `<button class="${o.fx === k ? "on" : ""}" data-s="h3d|fx|${k}">${n}</button>`).join("")}</div>`) +
         row("Try it", "looks only on this screen, until you leave", `<div class="seg sm" style="flex-wrap:wrap">${prev.map(([k, n]) => `<button class="${(this._fxForce || "") === k ? "on" : ""}" data-s="ah|fx|${k}">${n}</button>`).join("")}</div>`));
@@ -3471,10 +3484,10 @@ class QuintDashboard extends HTMLElement {
   /* ---------- the rendered-picture house: a picture of each floor (made with any 3D program), rooms and devices placed on it ---------- */
   _pic() {
     const p = (this._c && this._c.pic) || {}, opt = { names: p.names === true, temp: p.temp !== false, glow: p.glow !== false, nightAuto: p.nightAuto !== false };
-    if (this._h3d().view === "auto") return { floors: this._autoPic(), ...opt };
+    if (this._h3dAuto()) return { floors: this._autoPic(), ...opt };
     return { floors: Array.isArray(p.floors) ? p.floors.filter((f) => f && typeof f.id === "string") : [], ...opt };
   }
-  _picOn() { const v = this._h3d().view; if (v === "auto") return this._autoRoomList().length > 0; return v === "picture" && this._pic().floors.some((f) => f.img); }
+  _picOn() { const v = this._h3d().view; if (v === "auto" || v === "solid") return this._autoRoomList().length > 0; return v === "picture" && this._pic().floors.some((f) => f.img); }
   _picNightNow() { const s = this._h && this._h.states && this._h.states["sun.sun"]; return !!s && s.state === "below_horizon"; }
   _picFloor() {
     const fl = this._pic().floors.filter((f) => f.img);
@@ -3528,18 +3541,19 @@ class QuintDashboard extends HTMLElement {
   _picBuild(p, ctx) {
     const E = (t) => this._esc(t), pic = this._pic(), fl = this._picFloor();
     p._pic = ctx;
-    if (!fl) { const au = this._h3d().view === "auto", k = "none" + (au ? (this._am ? "a" : "l") : ""); if (p._pk !== k || !p.querySelector(".h3n")) { p._pk = k; p.innerHTML = au ? (this._am ? '<div class="h3n"><b>Nothing is ticked yet</b><span>Tick the floors and rooms to use in Settings → 3D house → Auto house.</span></div>' : '<div class="h3ld">Drawing the house…</div>') : '<div class="h3n"><b>No picture yet</b><span>Add a picture of your house in Settings → 3D house → Rendered picture.</span></div>'; } return; }
+    if (!fl) { const au = this._h3dAuto(), k = "none" + (au ? (this._am ? "a" : "l") : ""); if (p._pk !== k || !p.querySelector(".h3n")) { p._pk = k; p.innerHTML = au ? (this._am ? '<div class="h3n"><b>Nothing is ticked yet</b><span>Tick the floors and rooms to use in Settings → 3D house → Auto house.</span></div>' : '<div class="h3ld">Drawing the house…</div>') : '<div class="h3n"><b>No picture yet</b><span>Add a picture of your house in Settings → 3D house → Rendered picture.</span></div>'; } return; }
     const night = pic.nightAuto && this._picNightNow() && !!fl.night, iid = this._picImgId(fl, night), ar = fl.w && fl.h ? fl.w / fl.h : 4 / 3, VH = 1000 / ar;
     const tabs = pic.floors.filter((f) => f.img);
     const key = JSON.stringify([ctx, fl.id, iid, ar, fl.rooms, fl.devs, pic.names, this._h3d().room_names !== false, tabs.map((f) => f.id + f.name), this._h3dSwitch() ? 1 : 0]);
     if (p._pk !== key || !p.querySelector(".pic")) {
       p._pk = key;
       const rooms = (fl.rooms || []).map((r) => `<polygon class="pic-room" data-pic="room|${E(r.id)}" data-pr="${E(r.id)}" points="${this._picPts(r, 1000, VH)}"/>`).join("");
-      const labels = (fl.rooms || []).map((r) => { const c = this._picCenter(r), ys = (r.pts || []).map((q) => q[1]), y = ys.length ? Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) * (fl.auto ? 0.3 : 0.84) : c[1]; return `<span class="pic-tmp" data-ptmp="${E(r.id)}" style="left:${(c[0] * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%"></span>`; }).join("");
-      const nms = fl.auto && this._h3d().room_names !== false ? (fl.rooms || []).map((r) => { const q = this._rooms().find((x) => x.id === r.room), c = this._picCenter(r), ys = (r.pts || []).map((z) => z[1]), y = ys.length ? Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) * 0.14 : c[1]; return q ? `<span class="pic-nm" style="left:${(c[0] * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%">${E(q.name)}</span>` : ""; }).join("") : "";
+      const labels = (fl.rooms || []).map((r) => { const c = this._picCenter(r), ys = (r.pts || []).map((q) => q[1]), y = ys.length ? Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) * (fl.solid ? 0.86 : fl.auto ? 0.3 : 0.84) : c[1]; return `<span class="pic-tmp" data-ptmp="${E(r.id)}" style="left:${(c[0] * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%"></span>`; }).join("");
+      const nms = fl.auto && this._h3d().room_names !== false ? (fl.rooms || []).map((r) => { const q = this._rooms().find((x) => x.id === r.room), c = this._picCenter(r), ys = (r.pts || []).map((z) => z[1]), y = ys.length ? Math.min(...ys) + (Math.max(...ys) - Math.min(...ys)) * (fl.solid ? 0.12 : 0.14) : c[1]; return q ? `<span class="pic-nm" style="left:${(c[0] * 100).toFixed(2)}%;top:${(y * 100).toFixed(2)}%">${E(q.name)}</span>` : ""; }).join("") : "";
       const pins = (fl.devs || []).map((d) => `<button class="pic-pin" data-pin="${E(d.id)}" data-pent="${E(d.ent)}" style="left:${(d.x * 100).toFixed(2)}%;top:${(d.y * 100).toFixed(2)}%" title="${E(d.ent)}"><i>${this._picPinIcon(d.ent)}</i><b></b>${pic.names ? '<em></em>' : ""}</button>`).join("");
+      const cam = fl.solid ? '<div class="pic-cam"><button data-pic="rot|-1" title="Turn left" aria-label="Turn left">↺</button><button data-pic="rot|1" title="Turn right" aria-label="Turn right">↻</button><button data-pic="tilt|1" title="Higher or lower view" aria-label="Tilt">⇕</button></div>' : "";
       const fb = tabs.length > 1 ? `<div class="seg pic-fl">${tabs.map((f) => `<button class="${f.id === fl.id ? "on" : ""}" data-pic="floor|${E(f.qf || f.id)}">${E(f.name || "Floor")}</button>`).join("")}</div>` : "";
-      p.innerHTML = `<div class="pic ${ctx}" style="--ar:${ar.toFixed(4)}"><div class="pic-st" data-pic="clear|"><img class="pic-img" data-pimg="${E(iid)}" alt="" draggable="false"><svg class="pic-svg" viewBox="0 0 1000 ${VH.toFixed(1)}" preserveAspectRatio="none">${rooms}</svg>${nms}${labels}${pins}<div class="pic-ld">Loading the picture…</div></div>${fb}<button class="pic-chip" data-pic="open|" hidden></button></div>`;
+      p.innerHTML = `<div class="pic ${ctx}" style="--ar:${ar.toFixed(4)}"><div class="pic-st" data-pic="clear|"><img class="pic-img" data-pimg="${E(iid)}" alt="" draggable="false"><svg class="pic-svg" viewBox="0 0 1000 ${VH.toFixed(1)}" preserveAspectRatio="none">${rooms}</svg>${nms}${labels}${pins}<div class="pic-ld">Loading the picture…</div></div>${cam}${fb}<button class="pic-chip" data-pic="open|" hidden></button></div>`;
       p._chipRoom = "";
     }
     this._picImgSet(p); this._picState(p, fl, pic);
@@ -3585,6 +3599,12 @@ class QuintDashboard extends HTMLElement {
   _picClick(a, t) {
     const i = a.indexOf("|"), k = a.slice(0, i), x = a.slice(i + 1), host = t.closest("[data-lv]"), fl = this._picFloor();
     if (k === "floor") { this._pf = x; (this.shadowRoot.querySelectorAll('[data-lv^="house:"]')).forEach((p) => { p._sel = ""; if (p._pic) this._picBuild(p, p._pic); }); return; }
+    if (k === "rot" || k === "tilt") {
+      const cam = this._solidCam();
+      if (k === "rot") { let y = cam[0] + 45 * (+x || 1); y = ((((y + 180) % 360) + 360) % 360) - 180; this._sy = y; this._sp = cam[1]; }
+      else { const L = [32, 46, 62, 78], j = L.findIndex((v) => v >= cam[1] - 1), n = L[(j + 1) % L.length]; this._sp = n; this._sy = cam[0]; }
+      this._apic = null; this._picRefreshAll(); return;
+    }
     if (k === "clear") { if (host && host._sel) { host._sel = ""; this._picBuild(host, host._pic); } return; }
     if (k === "open") { if (x) this._nav("room", { room: x }); return; }
     if (k === "room" && host && fl) {
@@ -3856,7 +3876,7 @@ class QuintDashboard extends HTMLElement {
             (o.layout !== "classic" ? row("Menu bar", "whether the bar with the clock and pages is open when Home appears. A person can hide or show it with the round icon at the top left", sg("bar", ["Open", "Hidden"])) +
               row("Hide the bar by itself", "after this long without a touch", sg("bar_hide", ["Never", "10 s", "30 s", "1 min"])) : "") : "")) +
         sec("Rendered picture", "the house as a beautiful picture you made, with the rooms and devices live on top of it",
-          row("House view", "Live 3D: the Quinteca 3D house you can turn and zoom. Picture: a rendered picture of each floor (made with Sweet Home 3D, Blender, SketchUp, Planner 5D or any program that can save a picture), with rooms that light up, temperatures and devices you can tap", sg("view", ["Live 3D", "My pictures", "Auto picture"])) +
+          row("House view", "Live 3D: the Quinteca 3D house you can turn and zoom. Picture: a rendered picture of each floor (made with Sweet Home 3D, Blender, SketchUp, Planner 5D or any program that can save a picture), with rooms that light up, temperatures and devices you can tap", sg("view", ["Live 3D", "My pictures", "Auto plan", "Auto 3D"])) +
           row("Picture editor", ((this._c.pic || {}).floors || []).filter((f) => f.img).length ? "floors with a picture: " + ((this._c.pic || {}).floors || []).filter((f) => f.img).length + ". Add or change pictures, draw the rooms and place the devices" : "add a floor, upload its picture, draw the rooms and place the devices", `<button class="sbtn pri2" data-h3d="piceditor">Open the picture editor</button>`) +
           (o.view === "picture" && !this._picOn() ? `<div class="lbl" style="padding:8px 4px;color:var(--warn)">Picture view is chosen, but no floor has a picture yet. The live 3D house is shown until you add one.</div>` : "") +
           `<div class="lbl" style="padding:8px 4px">Tip: render each floor from above at an angle, with the furniture and lights on, 2000 to 2400 pixels wide. A night version of the same view makes the house change after sunset. Room taps follow the setting “When a room is tapped”.</div>`) +
