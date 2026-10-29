@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.51.0";
+const VER = "1.52.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -2990,7 +2990,7 @@ class QuintDashboard extends HTMLElement {
   /* ---------- 3D house: Quinteca 3D (carried inside Quint) as the Home page, a page of its own and the plan editor ---------- */
   /* the time of day shown on the 3D house, chosen on the house itself and kept on this device: live (the real sun), day, evening, night */
   _hour() {
-    if (this._hr === undefined) { try { this._hr = localStorage.getItem("quint_h3hr") || "day"; } catch (e) { this._hr = "day"; } }
+    /* the Day/Night buttons are gone: the house is always the day house (only a test can set _hr) */
     return ["day", "dusk", "night"].includes(this._hr) ? this._hr : "day";
   }
   _h3d() {
@@ -3208,7 +3208,6 @@ class QuintDashboard extends HTMLElement {
     if (el.parentNode !== p) {
       while (p.firstChild) p.removeChild(p.firstChild);
       p.appendChild(el); p._pk = "";
-      if (ctx !== "edit") { const hb = document.createElement("div"); hb.className = "seg sm h3hr"; hb.innerHTML = [["day", "Day"], ["night", "Night"]].map(([k, n]) => `<button class="${this._hour() === k ? "on" : ""}" data-sc="h3hr|${k}">${n}</button>`).join(""); p.appendChild(hb); }
       const chip = document.createElement("button"); chip.className = "h3chip"; chip.hidden = true; chip.setAttribute("data-h3d", "open"); p.appendChild(chip); el._chip = chip;
       el._qreal = ""; setTimeout(() => this._h3dBackAll(true), 400); setTimeout(() => this._h3dBackAll(true), 1800);
     }
