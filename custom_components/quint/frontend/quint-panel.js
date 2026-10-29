@@ -17,7 +17,7 @@ SV.house = { n: "3D house", c: "#22d3ee", i: ic('<path d="M12 2l9 5v10l-9 5-9-5V
 
 const H3D_DEF = {
   show: false, home: "full", page: true, switch: false, tap: "quint", height: 360,
-  theme: "auto", bg: "auto", bright: "soft", real: true, accent: "", quality: "auto", walls: "auto", roof: true, roof_fade: true, explode: true, floor_stack: "dim", floor_thumbs: true, room_names: true,
+  theme: "auto", bg: "auto", bright: "soft", real: true, pool: true, solid: true, accent: "", quality: "auto", walls: "auto", roof: true, roof_fade: true, explode: true, floor_stack: "dim", floor_thumbs: true, room_names: true,
   markers: "important", marker_size: "normal", marker_names: false, heatmap: "none", clock: "off", controls_side: "left",
   controls: true, central: true, walk: true, scenes: true, camera_wall: null, fullscreen_button: true, keep_view: false, angle_lock: false, controls_hidden: false, controls_hide_after: 0, stats: false,
   alerts: true, alert_jump: false, energy: true, flows: "auto", holograms: "auto", weather: true, household_card: true, motion_trail: false, pets: true, ghost: true,
@@ -31,7 +31,7 @@ const H3D_OPT = {
   floor_stack: ["dim", "stacked", "single"], markers: ["none", "important", "all", "room"], marker_size: ["small", "normal", "large"], heatmap: ["none", "temperature", "humidity", "co2"],
   clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
   time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
-  look: ["auto", "soft", "cinema", "bright"], bg: ["auto", "light", "slate", "dark", "native"], bright: ["dim", "soft", "normal"],
+  look: ["auto", "cozy", "soft", "cinema", "bright"], bg: ["auto", "paper", "light", "slate", "dark", "native"], bright: ["dim", "soft", "normal"],
   layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], cam: ["default", "top", "corner", "dollhouse", "front", "side"], fx: ["live", "off"],
 };
 const SV_DEF = Object.fromEntries(Object.entries(SV).map(([k, v]) => [k, v.n]));
@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.49.0";
+const VER = "1.50.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -3137,8 +3137,9 @@ class QuintDashboard extends HTMLElement {
   _qcolSet() {
     const o = this._h3d(), m = this._am;
     const rl = o.real !== false;
-    if (!o.color) { globalThis.__qcol = { on: false, real: rl, gain: 1 }; return rl ? "0r" : "0"; }
-    const look = o.look === "auto" ? (this._h3dBack(o).light ? "soft" : "cinema") : o.look, cin = look === "cinema", soft = look === "soft";
+    if (!o.color) { globalThis.__qcol = { on: false, real: rl, gain: 1, pool: o.pool !== false ? 0.5 : 0, cut: o.solid !== false }; return (rl ? "0r" : "0") + (o.pool !== false ? "p" : "") + (o.solid !== false ? "s" : ""); }
+    const bk = this._h3dBack(o), look = o.look === "auto" ? (bk.paper ? "cozy" : bk.light ? "soft" : "cinema") : o.look, cin = look === "cinema", soft = look === "soft", coz = look === "cozy";
+    const pool = o.pool !== false ? 0.5 : 0, cut = o.solid !== false;
     const TC = {   /* the cinema look: dark walnut and slate-blue tile floors, deep slate walls with lighter tops */
       living: [0x5c3b25, 0x3a4662, 0x5f7094], dining: [0x6b4630, 0x3a4662, 0x5f7094], kitchen: [0x3f5d7c, 0x384a66, 0x5d7597], hall: [0x4e3424, 0x3a4462, 0x58698e],
       bed: [0x5c3b25, 0x2f5068, 0x568aa8], kids: [0x6a4a30, 0x3a5a7c, 0x6a92bc], guest: [0x5c3b25, 0x2e5a60, 0x4f9096], bath: [0x3a6e90, 0x2f4a68, 0x5a82a8],
@@ -3154,14 +3155,21 @@ class QuintDashboard extends HTMLElement {
       storage: [0x9a8668, 0xc9bca6, 0xddd2bf], tech: [0x93918c, 0xc2beb4, 0xd8d4ca], hobby: [0xa4805a, 0xd0bfb8, 0xe6d8d2], other: [0xa87a4c, 0xd9cbb4, 0xeadfcc],
       outdoor: [0xb09a74, 0xd2c6b0, 0xe6dcc8], garden: [0x4f7e3c, 0x6f9356, 0x98b878],
     };
-    const T = soft ? TS : cin ? TC : {   /* floor, wall, wall top */
+    const TZ = {   /* the cozy look: dark warm parquet, cream, rose and sage walls with dusty mauve wall tops, light tile in kitchen and bath, like a lit dollhouse */
+      living: [0x8a5a38, 0xf0e1c8, 0xb5908a], dining: [0x96653f, 0xefdcbf, 0xb5908a], kitchen: [0xcdc5b6, 0xf5eee2, 0xbda39a], hall: [0x7d5032, 0xe9d3c3, 0xb08882],
+      bed: [0x946440, 0xe3b9ab, 0xb08882], kids: [0xa87a4c, 0xf1dfbf, 0xbfa07e], guest: [0x946440, 0xe2cdbb, 0xb08882], bath: [0xbfc9cc, 0xd8cdd0, 0xa9949a],
+      wc: [0xbfc9cc, 0xd8cdd0, 0xa9949a], office: [0x7b5436, 0xd6d9c6, 0x9d9a8c], garage: [0x8d8a85, 0xc9c0b2, 0xa89c92], laundry: [0xbac5c8, 0xdcd9d2, 0xa9a29a],
+      storage: [0x8a6a48, 0xd9c8b0, 0xaa9684], tech: [0x7d7770, 0xcfc6b8, 0xa89c92], hobby: [0x8f6244, 0xe6cfc4, 0xb08882], other: [0x8a5a38, 0xf0e1c8, 0xb5908a],
+      outdoor: [0xb59f78, 0xd8c8a8, 0xb5a088], garden: [0x5e8a44, 0x7da25e, 0xa0bd80],
+    };
+    const T = coz ? TZ : soft ? TS : cin ? TC : {   /* floor, wall, wall top */
       living: [0xc2702e, 0xe8d8b8, 0xfff4dc], dining: [0xe2b878, 0xf2ead8, 0xffffff], kitchen: [0xe2b878, 0x9a5a34, 0xd08a58], hall: [0xb8662c, 0xf0e4cc, 0xffffff],
       bed: [0xc2702e, 0xe5846a, 0xffb09a], kids: [0xd89a50, 0xe0b040, 0xffe08a], guest: [0xb88050, 0x8fb583, 0xc4e3b8], bath: [0x46505e, 0x4fa8a8, 0x9adada],
       wc: [0x46505e, 0x4fa8a8, 0x9adada], office: [0x8a4a2a, 0x6a7aa8, 0xa8b8e8], garage: [0x5a5e66, 0x8a92a0, 0xc0c8d4], laundry: [0x56707a, 0x6a9ae0, 0xa8c8ff],
       storage: [0x70604e, 0xa88ad8, 0xd8c4ff], tech: [0x4a5260, 0x6a7aa8, 0xa8b8e8], hobby: [0x8a4a5a, 0xa88ad8, 0xd8c4ff], other: [0xb8662c, 0xe8d8b8, 0xfff4dc],
       outdoor: [0xc09060, 0xd8b890, 0xf0dcb8], garden: [0x3f8a3a, 0x6aaa58, 0x9ada80],
     };
-    const ACC = soft ? [[0xe8d6cc, 0xf7ebe4], [0xdfe3d2, 0xf2f5e8], [0xdde6ea, 0xf0f6f8], [0xeadcb8, 0xf8f0d2], [0xe0dcd2, 0xf4f0e8], [0xe6d9d4, 0xf6eeea]] : cin ? [[0x2f5068, 0x568aa8], [0x2e5a60, 0x4f9096], [0x40385e, 0x6a5e98], [0x34506e, 0x5a84ac], [0x3a5a7c, 0x6a92bc], [0x4a3a58, 0x7a68a0]] : [[0xe5846a, 0xffb09a], [0x8fb583, 0xc4e3b8], [0x4fa8a8, 0x9adada], [0xe0b040, 0xffe08a], [0x6a9ae0, 0xa8c8ff], [0xa88ad8, 0xd8c4ff]];
+    const ACC = coz ? [[0xe3b9ab, 0xf4d4c8], [0xd0d8bb, 0xe6ecd3], [0xd2dde0, 0xe8f0f2], [0xf0d7a6, 0xf8e8c4], [0xe6cfc4, 0xf3e3da], [0xd9c2d0, 0xece0e8]] : soft ? [[0xe8d6cc, 0xf7ebe4], [0xdfe3d2, 0xf2f5e8], [0xdde6ea, 0xf0f6f8], [0xeadcb8, 0xf8f0d2], [0xe0dcd2, 0xf4f0e8], [0xe6d9d4, 0xf6eeea]] : cin ? [[0x2f5068, 0x568aa8], [0x2e5a60, 0x4f9096], [0x40385e, 0x6a5e98], [0x34506e, 0x5a84ac], [0x3a5a7c, 0x6a92bc], [0x4a3a58, 0x7a68a0]] : [[0xe5846a, 0xffb09a], [0x8fb583, 0xc4e3b8], [0x4fa8a8, 0x9adada], [0xe0b040, 0xffe08a], [0x6a9ae0, 0xa8c8ff], [0xa88ad8, 0xd8c4ff]];
     const hs = (t) => { let h = 7; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; };
     const pick = (r) => {
       const n = String((r && r.name) || ""), id = String((r && r.id) || "");
@@ -3171,12 +3179,12 @@ class QuintDashboard extends HTMLElement {
       return k === "other" ? [t[0], ...ACC[hs(id || n) % ACC.length]] : t;   /* rooms we cannot name get a colour of their own */
     };
     globalThis.__qcol = {
-      on: true, real: rl, gain: 1,
-      furn: soft ? { body: 0xb4a898, bodyTop: 0xd2c8ba, fabric: 0x9fb8c8, fabricTop: 0xc2d6e2, cushion: 0xe0a050, wood: 0xc08a52, woodTop: 0xdcaa72, white: 0xf4efe6, whiteTop: 0xffffff, metal: 0xb4bcc4, glass: 0x9cc8dc, plant: 0x4f9a50, plantTop: 0x74bf70, pot: 0xc9815a, accent: 0xe3a03c } : cin ? { body: 0x5a6e8a, bodyTop: 0x7c92b2, fabric: 0x24407c, fabricTop: 0x3a66aa, cushion: 0x2fb0a8, wood: 0x6a4126, woodTop: 0x8c5c3a, white: 0xd6dce6, whiteTop: 0xf2f5fa, metal: 0x8a96a8, glass: 0x4a92ba, plant: 0x1f6a34, plantTop: 0x36a04e, pot: 0x2a2e3c, accent: 0x20c8e0 } : { body: 0x2f5fb0, bodyTop: 0x4f82d8, fabric: 0xe0705a, fabricTop: 0xff9a80, cushion: 0xf2b830, wood: 0xb8672a, woodTop: 0xdc8a44, white: 0xf6f0e6, whiteTop: 0xffffff, metal: 0x9aa6b4, glass: 0x58b0d8, plant: 0x2faa4a, plantTop: 0x58d870, pot: 0xc86a34, accent: 0xffc020 },
+      on: true, real: rl, gain: 1, pool, cut,
+      furn: coz ? { body: 0xd8cdbf, bodyTop: 0xefe6da, fabric: 0xcdbba4, fabricTop: 0xe6d8c5, cushion: 0xe07f3c, wood: 0x91582f, woodTop: 0xb27744, white: 0xf7f1e7, whiteTop: 0xffffff, metal: 0xb4b2ac, glass: 0xaccdd6, plant: 0x4e8944, plantTop: 0x76b062, pot: 0xc9805a, accent: 0xe9a54a } : soft ? { body: 0xb4a898, bodyTop: 0xd2c8ba, fabric: 0x9fb8c8, fabricTop: 0xc2d6e2, cushion: 0xe0a050, wood: 0xc08a52, woodTop: 0xdcaa72, white: 0xf4efe6, whiteTop: 0xffffff, metal: 0xb4bcc4, glass: 0x9cc8dc, plant: 0x4f9a50, plantTop: 0x74bf70, pot: 0xc9815a, accent: 0xe3a03c } : cin ? { body: 0x5a6e8a, bodyTop: 0x7c92b2, fabric: 0x24407c, fabricTop: 0x3a66aa, cushion: 0x2fb0a8, wood: 0x6a4126, woodTop: 0x8c5c3a, white: 0xd6dce6, whiteTop: 0xf2f5fa, metal: 0x8a96a8, glass: 0x4a92ba, plant: 0x1f6a34, plantTop: 0x36a04e, pot: 0x2a2e3c, accent: 0x20c8e0 } : { body: 0x2f5fb0, bodyTop: 0x4f82d8, fabric: 0xe0705a, fabricTop: 0xff9a80, cushion: 0xf2b830, wood: 0xb8672a, woodTop: 0xdc8a44, white: 0xf6f0e6, whiteTop: 0xffffff, metal: 0x9aa6b4, glass: 0x58b0d8, plant: 0x2faa4a, plantTop: 0x58d870, pot: 0xc86a34, accent: 0xffc020 },
       floor: (r) => pick(r)[0],
       wall: (r, top) => pick(r)[top ? 2 : 1],
     };
-    return (soft ? "1s" : cin ? "1c" : "1b") + (rl ? "r" : "");
+    return (coz ? "1z" : soft ? "1s" : cin ? "1c" : "1b") + (rl ? "r" : "") + (pool ? "p" : "") + (cut ? "s" : "");
   }
   /* one 3D card per place (Home, page, phone); it stays alive while its page is away, so coming back is instant */
   async _mountH3(p, ctx) {
@@ -3233,7 +3241,8 @@ class QuintDashboard extends HTMLElement {
     let i = 0; while (i < K.length - 2 && e > K[i + 1][0]) i++;
     const a = K[i], b = K[i + 1], t = Math.max(0, Math.min(1, (e - a[0]) / (b[0] - a[0])));
     const mx = (p, q) => p.map((v, j) => Math.round(v + (q[j] - v) * t));
-    return { e, c: mx(a[1], b[1]), d: mx(a[2], b[2]), light: o.bg === "dark" ? false : e > 1.5 };
+    const paper = o.bg === "auto" || o.bg === "paper";   /* Auto and Paper: the house always stands on its blueprint sheet; evening only dims the sheet */
+    return { e, c: mx(a[1], b[1]), d: mx(a[2], b[2]), light: paper ? true : o.bg === "dark" ? false : e > 1.5, paper, dusk: paper ? Math.max(0, Math.min(1, (6 - e) / 26)) : 0 };
   }
   /* put the backdrop (and the soft shadow under the house) around one 3D card; true once the card has built its view */
   _h3dBackFor(el, force) {
@@ -3244,11 +3253,15 @@ class QuintDashboard extends HTMLElement {
     let css = "", key = "";
     if (o.bg !== "native") {
       const k = this._h3dBack(o), q = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+      const paper = k.paper ? this._h3dPaper() : "", da = (0.6 * k.dusk).toFixed(2);
       /* a little less light than the engine's own: deeper colours and more contrast, so the house stops looking washed out. At night the glow is kept */
       const X = { dim: [0.74, 1.14, 1.06], soft: [0.87, 1.1, 1.04], normal: [1, 1, 1] }[o.bright] || [0.87, 1.1, 1.04], w = k.light ? 1 : 0.35;
-      const ex = o.bright === "normal" ? "" : `brightness(${(1 - (1 - X[0]) * w).toFixed(3)}) contrast(${(1 + (X[1] - 1) * w).toFixed(3)}) saturate(${X[2]}) `;
-      key = `${k.c}|${k.d}|${k.light}|${o.bright}`;
-      css = `.fp3d-stage{background:radial-gradient(ellipse 80% 72% at 50% 46%,${q(k.c)} 0%,${q(k.c.map((v, j) => Math.round((v + k.d[j]) / 2)))} 58%,${q(k.d)} 100%)!important;transition:background 2.5s}`
+      const dm = k.paper ? 1 - 0.34 * k.dusk : 1;   /* evening: the house is dimmed so its lamps stand out */
+      const ex = o.bright === "normal" && !k.paper ? "" : `brightness(${((1 - (1 - X[0]) * w) * dm).toFixed(3)}) contrast(${(1 + (X[1] - 1) * w).toFixed(3)}) saturate(${(X[2] * (k.paper ? 1.08 : 1)).toFixed(2)}) `;
+      key = `${k.c}|${k.d}|${k.light}|${o.bright}|${k.paper ? "p" + da : ""}`;
+      css = (k.paper
+        ? `.fp3d-stage{background:linear-gradient(rgba(38,22,16,${da}),rgba(38,22,16,${da})),url(${paper}) center/cover no-repeat!important;transition:background 2.5s}`
+        : `.fp3d-stage{background:radial-gradient(ellipse 80% 72% at 50% 46%,${q(k.c)} 0%,${q(k.c.map((v, j) => Math.round((v + k.d[j]) / 2)))} 58%,${q(k.d)} 100%)!important;transition:background 2.5s}`)
         + `.fp3d-stage::before,.fp3d-stage::after{background:none!important;background-image:none!important;box-shadow:none!important}`
         + `.fp3d-stage:not(.fp3d-low) canvas.fp3d-canvas{filter:${ex}drop-shadow(0 4px 5px rgba(${k.light ? "50,34,20,.30" : "0,0,0,.40"})) drop-shadow(0 22px 26px rgba(${k.light ? "50,34,20,.38" : "0,0,0,.45"}))}`
         + `.fp3d-stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 48%,transparent 55%,rgba(${k.light ? "40,28,18,.30" : "0,0,0,.38"}) 100%)}`;
@@ -3258,6 +3271,56 @@ class QuintDashboard extends HTMLElement {
     if (!st) { st = document.createElement("style"); st.setAttribute("data-quint-back", "1"); root.appendChild(st); }
     st.textContent = css; el._qreal = key; el._qrealRoot = root;
     return true;
+  }
+  /* a sheet of warm drawing paper with faint pencilled floor plans and window light, painted once (the backdrop of the cozy look) */
+  _h3dPaper() {
+    if (this._paperURL !== undefined) return this._paperURL;
+    let url = "";
+    try {
+      const W = 1600, H = 1000, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      const g = cv.getContext("2d");
+      let s = 20261029; const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296), pick = (a, b) => a + rnd() * (b - a);
+      const bg = g.createRadialGradient(W * 0.5, H * 0.45, 60, W * 0.5, H * 0.5, W * 0.82);
+      bg.addColorStop(0, "#f4e6cc"); bg.addColorStop(0.6, "#ecd9b8"); bg.addColorStop(1, "#dcc59f");
+      g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      g.lineCap = "round"; g.lineJoin = "round";
+      const ink = (a) => `rgba(116,84,54,${a})`;
+      const line = (x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
+      const plan = (x, y, w, h, rot) => {
+        g.save(); g.translate(x, y); g.rotate(rot);
+        g.strokeStyle = ink(0.42); g.lineWidth = 2.6; g.strokeRect(0, 0, w, h);
+        g.strokeStyle = ink(0.3); g.lineWidth = 1.2; g.strokeRect(5, 5, w - 10, h - 10);
+        const cuts = 2 + Math.floor(rnd() * 3);
+        for (let i = 0; i < cuts; i++) {   /* partitions with a door arc */
+          g.strokeStyle = ink(0.38); g.lineWidth = 2;
+          if (rnd() < 0.5) { const px = pick(0.25, 0.75) * w, gap = pick(0.1, 0.18) * h, g0 = pick(0.1, 0.6) * h; line(px, 0, px, g0); line(px, g0 + gap, px, h); g.lineWidth = 1; g.beginPath(); g.arc(px, g0, gap, 0, Math.PI / 2); g.stroke(); line(px, g0, px + gap, g0); }
+          else { const py = pick(0.25, 0.75) * h, gap = pick(0.1, 0.18) * w, g0 = pick(0.1, 0.6) * w; line(0, py, g0, py); line(g0 + gap, py, w, py); g.lineWidth = 1; g.beginPath(); g.arc(g0, py, gap, 0, Math.PI / 2); g.stroke(); line(g0, py, g0, py + gap); }
+        }
+        g.strokeStyle = ink(0.3); g.lineWidth = 1;
+        for (let i = 0; i < 4; i++) { const fx = pick(0.1, 0.8) * w, fy = pick(0.1, 0.8) * h; if (rnd() < 0.5) g.strokeRect(fx, fy, pick(18, 46), pick(14, 30)); else { g.beginPath(); g.arc(fx, fy, pick(8, 18), 0, 7); g.stroke(); } }
+        const sx = pick(0.05, 0.6) * w, sy = pick(0.05, 0.6) * h, sw = 54, sh = 22;   /* a stair */
+        g.strokeRect(sx, sy, sw, sh); for (let i = 1; i < 8; i++) line(sx + (sw / 8) * i, sy, sx + (sw / 8) * i, sy + sh);
+        g.strokeStyle = ink(0.34);   /* a dimension line */
+        line(0, -16, w, -16); line(0, -22, 0, -10); line(w, -22, w, -10); for (let i = 0; i < 5; i++) line(w * (0.2 + 0.15 * i), -19, w * (0.2 + 0.15 * i) + 12, -19);
+        g.restore();
+      };
+      const spots = [[40, 70, 330, 240], [420, 30, 260, 300], [780, 90, 360, 230], [1180, 40, 340, 260], [30, 420, 300, 260], [380, 480, 360, 250], [840, 520, 280, 300], [1200, 470, 350, 240], [200, 760, 420, 200], [760, 790, 380, 190], [1230, 760, 300, 210]];
+      spots.forEach(([x, y, w, h]) => plan(x + pick(-30, 30), y + pick(-20, 20), w, h, pick(-0.07, 0.07)));
+      for (let i = 0; i < 7; i++) {   /* trees from above, hatched */
+        const tx = rnd() < 0.5 ? pick(20, 180) : pick(W - 220, W - 20), ty = pick(80, H - 80), r = pick(24, 52);
+        g.strokeStyle = ink(0.3); g.lineWidth = 1.2; g.beginPath(); g.arc(tx, ty, r, 0, 7); g.stroke(); g.beginPath(); g.arc(tx, ty, r * 0.45, 0, 7); g.stroke();
+        for (let k = 0; k < 10; k++) { const a = (k / 10) * 6.28; line(tx + Math.cos(a) * r * 0.45, ty + Math.sin(a) * r * 0.45, tx + Math.cos(a) * r, ty + Math.sin(a) * r); }
+      }
+      g.fillStyle = ink(0.18); g.fillRect(0, 0, 0, 0);
+      /* window light falling across the sheet, and a soft shade beside it */
+      const beam = (x, w2, a, col) => { const gr = g.createLinearGradient(x, 0, x + w2, H); gr.addColorStop(0, `rgba(${col},0)`); gr.addColorStop(0.35, `rgba(${col},${a})`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + w2, 0); g.lineTo(x + w2 - 520, H); g.lineTo(x - 520, H); g.closePath(); g.fill(); };
+      beam(80, 260, 0.34, "255,250,235"); beam(470, 140, 0.26, "255,250,235"); beam(780, 320, 0.2, "255,248,232"); beam(1250, 200, 0.22, "255,250,235");
+      beam(330, 90, 0.12, "120,88,58"); beam(1000, 120, 0.1, "120,88,58");
+      for (let i = 0; i < 9000; i++) { g.fillStyle = rnd() < 0.5 ? `rgba(120,90,60,${pick(0.012, 0.04)})` : `rgba(255,250,240,${pick(0.02, 0.05)})`; g.fillRect(pick(0, W), pick(0, H), 1.4, 1.4); }
+      url = cv.toDataURL("image/jpeg", 0.8);
+    } catch (e) { url = ""; }
+    this._paperURL = url;
+    return url;
   }
   _h3dBackAll(force) {
     Object.values(this._h3el || {}).forEach((el) => { if (el && el.isConnected && !this._h3dBackFor(el, force)) { clearTimeout(el._qrt); el._qrt = setTimeout(() => this._h3dBackFor(el, force), 700); } });
@@ -3595,12 +3658,14 @@ class QuintDashboard extends HTMLElement {
         sec("Look", "how the house is drawn",
           row("Theme", "Auto is day while the sun is up and neon after sunset", sg("theme", ["Auto", "Neon", "Blueprint", "Day"])) +
           row("Accent colour", "for the neon look and its chips", `<input type="color" value="${/^#[0-9a-f]{6}$/i.test(o.accent) ? o.accent : "#00e5ff"}" data-h3acc="1" style="width:56px;height:40px;padding:2px">${o.accent ? '<button class="sbtn" data-s="h3d|accent|">Standard</button>' : ""}`) +
-          row("Background", "a plain soft backdrop behind the house. Auto follows the real sun: warm cream by day, slate blue at night. Native is Quinteca's own starry view", sg("bg", ["Auto", "Light", "Slate", "Dark", "Native"])) +
+          row("Background", "Auto and Paper put the house on a warm sheet of drawing paper with pencilled floor plans (it darkens in the evening). Light, Slate and Dark are plain studio colours; Native is Quinteca's own starry view", sg("bg", ["Auto", "Paper", "Light", "Slate", "Dark", "Native"])) +
+          row("Solid walls", "the walls on your side are cut low, so you look into the rooms over solid walls, like a dollhouse. Off makes them see-through glass", B("solid")) +
+          row("Light only where it reaches", "a lamp lights the floor and walls around it like a pool of light, not the whole room. Off gives the engine's wide glow", B("pool")) +
           row("Realistic materials", "wood-plank and tile floors, soft wall shading and fine outlines in the light look. Off gives the plain flat colours", B("real")) +
           row("Brightness", "how bright the house is drawn. Soft is deeper and richer than the engine's own light, Dim is darker still, Normal leaves it as it is", sg("bright", ["Dim", "Soft", "Normal"])) +
           row("Picture quality", "Auto picks a light level on weak tablets", sg("quality", ["Auto", "Low", "High"])) +
           row("Colourful house", "wood and tile floors, coloured walls and furniture, still see-through. Off gives Quinteca's own colours", B("color")) +
-          (o.color ? row("Colours", "Auto: soft cream and light oak on a light backdrop, deep slate and walnut on a dark one. Soft, Cinema (deep walnut, slate blue, navy bedding) and Bright (sunny colours) fix one", sg("look", ["Auto", "Soft", "Cinema", "Bright"])) : "") +
+          (o.color ? row("Colours", "Auto: Cozy on the paper backdrop (warm parquet, cream and rose walls, solid furniture colours), Soft cream on a light studio colour, Cinema on a dark one. Soft, Cinema (deep walnut, slate blue, navy bedding) and Bright (sunny colours) fix one", sg("look", ["Auto", "Cozy", "Soft", "Cinema", "Bright"])) : "") +
           row("Roof", "show the roof on the house", B("roof")) +
           row("Roof fades when you zoom in", "off keeps the roof on the house", B("roof_fade")) +
           row("Walls", "tall walls, or cut low so you can look into the rooms", sg("walls", ["Tall", "Cut"])) +

@@ -15,3 +15,8 @@ teaser under the furniture library points to it). quint-models.js is new Quint c
 files into furniture parts in the browser). neon3d/builtin/quint.furniture.json is a furniture pack made by
 Quint and signed with Quint's own key (see PACK_PUBLIC_KEYS in packs.py); packs.py also accepts unsigned
 furniture of the user's own ("own.*" ids: furniture only, no Pro features, no code).
+
+Quint v1.50.0 patched neonplan3d-3d.js further: (1) the reach and fall-off of a lamp's light on floors and walls
+(functions W2 and F0, helper qcPw) shrink to a pool around the lamp when globalThis.__qcol.pool is set; (2) the
+wall shader (function ai) cuts the walls that face the camera low, with solid caps, instead of drawing them as glass
+when globalThis.__qcol.cut is set. Without these flags the file draws as before.
