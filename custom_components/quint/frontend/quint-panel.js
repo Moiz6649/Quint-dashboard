@@ -27,11 +27,11 @@ const H3D_DEF = {
   layout: "immersive", bar: "open", bar_hide: 0, cam: "default", fx: "live", color: true,
 };
 const H3D_OPT = {
-  home: ["off", "full", "block"], tap: ["quint", "panel", "both"], height: [280, 360, 440, 520, 640], theme: ["auto", "neon", "blueprint", "day"], quality: ["auto", "low", "high"], walls: ["auto", "cut"],
+  home: ["off", "full", "block"], tap: ["quint", "panel", "both"], height: [280, 360, 440, 520, 640], theme: ["auto", "day"], quality: ["auto", "low", "high"], walls: ["auto", "cut"],
   floor_stack: ["dim", "stacked", "single"], markers: ["none", "important", "all", "room"], marker_size: ["small", "normal", "large"], heatmap: ["none", "temperature", "humidity", "co2"],
   clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
   time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
-  look: ["auto", "cozy", "soft", "cinema", "bright"], bg: ["auto", "paper", "light", "slate", "dark", "native"], bright: ["dim", "soft", "normal"],
+  look: ["auto", "cozy", "soft"], bg: ["auto", "paper", "light", "slate", "dark", "native"], bright: ["dim", "soft", "normal"],
   layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], cam: ["default", "top", "corner", "dollhouse", "front", "side"], fx: ["live", "off"],
 };
 const SV_DEF = Object.fromEntries(Object.entries(SV).map(([k, v]) => [k, v.n]));
@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.50.0";
+const VER = "1.51.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -2990,16 +2990,17 @@ class QuintDashboard extends HTMLElement {
   /* ---------- 3D house: Quinteca 3D (carried inside Quint) as the Home page, a page of its own and the plan editor ---------- */
   /* the time of day shown on the 3D house, chosen on the house itself and kept on this device: live (the real sun), day, evening, night */
   _hour() {
-    if (this._hr === undefined) { try { this._hr = localStorage.getItem("quint_h3hr") || "live"; } catch (e) { this._hr = "live"; } }
-    return ["live", "day", "dusk", "night"].includes(this._hr) ? this._hr : "live";
+    if (this._hr === undefined) { try { this._hr = localStorage.getItem("quint_h3hr") || "day"; } catch (e) { this._hr = "day"; } }
+    return ["day", "dusk", "night"].includes(this._hr) ? this._hr : "day";
   }
   _h3d() {
     const o = { ...H3D_DEF, ...((this._c && this._c.h3d) || {}) };
     const hr = this._hour();
     if (!H3D_OPT.bg.includes(o.bg)) o.bg = "auto";
     if (!H3D_OPT.bright.includes(o.bright)) o.bright = "soft";
-    if (o.bg === "native") { if (hr === "day") o.theme = "day"; else if (hr !== "live") o.theme = "neon"; }   // the hour switch on the house: Day or Night look
-    else if (hr !== "live" || !o.theme || o.theme === "auto") o.theme = this._h3dBack(o).light ? "day" : "neon";   // a light backdrop gets the light house, a dark one the neon house
+    if (!H3D_OPT.theme.includes(o.theme)) o.theme = "auto";   // the old Neon and Blueprint themes are gone
+    if (o.bg === "native") { if (hr === "day") o.theme = "day"; else o.theme = "neon"; }   // Quinteca's own starry view keeps its night look
+    else o.theme = "day";   // the house is always drawn as the bright "Nice" house; evening only dims it
     if (!H3D_OPT.look.includes(o.look)) o.look = "auto";
     o.home = o.home === true ? "block" : o.home === false ? "off" : ["off", "block", "full"].includes(o.home) ? o.home : "full";
     return o;
@@ -3138,7 +3139,7 @@ class QuintDashboard extends HTMLElement {
     const o = this._h3d(), m = this._am;
     const rl = o.real !== false;
     if (!o.color) { globalThis.__qcol = { on: false, real: rl, gain: 1, pool: o.pool !== false ? 0.5 : 0, cut: o.solid !== false }; return (rl ? "0r" : "0") + (o.pool !== false ? "p" : "") + (o.solid !== false ? "s" : ""); }
-    const bk = this._h3dBack(o), look = o.look === "auto" ? (bk.paper ? "cozy" : bk.light ? "soft" : "cinema") : o.look, cin = look === "cinema", soft = look === "soft", coz = look === "cozy";
+    const bk = this._h3dBack(o), look = o.look === "auto" ? (bk.paper ? "cozy" : "soft") : o.look, cin = look === "cinema", soft = look === "soft", coz = look === "cozy";
     const pool = o.pool !== false ? 0.5 : 0, cut = o.solid !== false;
     const TC = {   /* the cinema look: dark walnut and slate-blue tile floors, deep slate walls with lighter tops */
       living: [0x5c3b25, 0x3a4662, 0x5f7094], dining: [0x6b4630, 0x3a4662, 0x5f7094], kitchen: [0x3f5d7c, 0x384a66, 0x5d7597], hall: [0x4e3424, 0x3a4462, 0x58698e],
@@ -3207,7 +3208,7 @@ class QuintDashboard extends HTMLElement {
     if (el.parentNode !== p) {
       while (p.firstChild) p.removeChild(p.firstChild);
       p.appendChild(el); p._pk = "";
-      if (ctx !== "edit") { const hb = document.createElement("div"); hb.className = "seg sm h3hr"; hb.innerHTML = [["live", "Now"], ["day", "Day"], ["night", "Night"]].map(([k, n]) => `<button class="${this._hour() === k ? "on" : ""}" data-sc="h3hr|${k}">${n}</button>`).join(""); p.appendChild(hb); }
+      if (ctx !== "edit") { const hb = document.createElement("div"); hb.className = "seg sm h3hr"; hb.innerHTML = [["day", "Day"], ["night", "Night"]].map(([k, n]) => `<button class="${this._hour() === k ? "on" : ""}" data-sc="h3hr|${k}">${n}</button>`).join(""); p.appendChild(hb); }
       const chip = document.createElement("button"); chip.className = "h3chip"; chip.hidden = true; chip.setAttribute("data-h3d", "open"); p.appendChild(chip); el._chip = chip;
       el._qreal = ""; setTimeout(() => this._h3dBackAll(true), 400); setTimeout(() => this._h3dBackAll(true), 1800);
     }
@@ -3656,7 +3657,7 @@ class QuintDashboard extends HTMLElement {
           row("Rooms linked to Quint", zones.length ? (lost.length ? "Not linked yet: " + E(lost.map((z) => z.name || z.id).join(", ")) + ". Give these rooms a Home Assistant area (or the same name as a Quint room) in the 3D editor." : "every room of the 3D plan opens its Quint room") : "draw your rooms in the 3D editor first", `<b>${zones.length - lost.length} of ${zones.length}</b>`) +
           row("Quint rooms", "the rooms Quint shows on the Rooms page", `<b>${rooms.length}</b>`)) +
         sec("Look", "how the house is drawn",
-          row("Theme", "Auto is day while the sun is up and neon after sunset", sg("theme", ["Auto", "Neon", "Blueprint", "Day"])) +
+          row("Theme", "Nice is the bright, cosy house. Auto gives the same", sg("theme", ["Auto", "Nice"])) +
           row("Accent colour", "for the neon look and its chips", `<input type="color" value="${/^#[0-9a-f]{6}$/i.test(o.accent) ? o.accent : "#00e5ff"}" data-h3acc="1" style="width:56px;height:40px;padding:2px">${o.accent ? '<button class="sbtn" data-s="h3d|accent|">Standard</button>' : ""}`) +
           row("Background", "Auto and Paper put the house on a warm sheet of drawing paper with pencilled floor plans (it darkens in the evening). Light, Slate and Dark are plain studio colours; Native is Quinteca's own starry view", sg("bg", ["Auto", "Paper", "Light", "Slate", "Dark", "Native"])) +
           row("Solid walls", "the walls on your side are cut low, so you look into the rooms over solid walls, like a dollhouse. Off makes them see-through glass", B("solid")) +
@@ -3665,7 +3666,7 @@ class QuintDashboard extends HTMLElement {
           row("Brightness", "how bright the house is drawn. Soft is deeper and richer than the engine's own light, Dim is darker still, Normal leaves it as it is", sg("bright", ["Dim", "Soft", "Normal"])) +
           row("Picture quality", "Auto picks a light level on weak tablets", sg("quality", ["Auto", "Low", "High"])) +
           row("Colourful house", "wood and tile floors, coloured walls and furniture, still see-through. Off gives Quinteca's own colours", B("color")) +
-          (o.color ? row("Colours", "Auto: Cozy on the paper backdrop (warm parquet, cream and rose walls, solid furniture colours), Soft cream on a light studio colour, Cinema on a dark one. Soft, Cinema (deep walnut, slate blue, navy bedding) and Bright (sunny colours) fix one", sg("look", ["Auto", "Cozy", "Soft", "Cinema", "Bright"])) : "") +
+          (o.color ? row("Colours", "Auto: Cozy on the paper backdrop (warm parquet, cream and rose walls, solid furniture colours), Soft cream on a plain studio colour. Cozy and Soft fix one", sg("look", ["Auto", "Cozy", "Soft"])) : "") +
           row("Roof", "show the roof on the house", B("roof")) +
           row("Roof fades when you zoom in", "off keeps the roof on the house", B("roof_fade")) +
           row("Walls", "tall walls, or cut low so you can look into the rooms", sg("walls", ["Tall", "Cut"])) +
