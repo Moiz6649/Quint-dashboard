@@ -14,251 +14,16 @@ const SV = {
   more:    { n: "More",     c: "#ff6fae", i: ic('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>') },
 };
 SV.house = { n: "3D house", c: "#22d3ee", i: ic('<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 12l9-5M12 12v10M12 12L3 7"/>') };
-/* the animated ground behind the 3D house (one WebGL shader): stone slabs, lawn and trees lit by the real sun, moon and weather */
-const GND_VS = "attribute vec2 a;varying vec2 vUv;void main(){vUv=a*.5+.5;gl_Position=vec4(a,0.,1.);}";
-const GND_FS = `
-#ifdef GL_FRAGMENT_PRECISION_HIGH
-precision highp float;
-#else
-precision mediump float;
-#endif
-uniform vec2 uRes;
-uniform float uT, uElev, uAz, uCloud, uRain, uWet, uSnow, uFog, uLamp, uQ;
-uniform vec2 uWind;
-uniform vec3 uBird;
-varying vec2 vUv;
-float gAsp;
-float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-vec2 hash2(vec2 p){ float n = hash(p); return vec2(n, hash(p + n + 17.3)); }
-float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y); }
-float fbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * noise(p); p = p * 2.03 + vec2(11.7, 5.3); a *= 0.5; } return s; }
-float fbm2(vec2 p){ return 0.6 * noise(p) + 0.4 * noise(p * 2.1 + 4.7); }
-float sdBox(vec2 p, vec2 b){ vec2 d = abs(p) - b; return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0); }
-float sdRound(vec2 p, vec2 b, float r){ return sdBox(p, b - r) - r; }
-float sdCap(vec2 p, vec2 a, vec2 b, float r){ vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h) - r; }
-vec2 anc(vec2 uv){ return (uv - 0.5) * vec2(gAsp, 1.0) * 18.0; }
-vec2 hs(vec2 f){ return f * vec2(gAsp, 1.0) * 18.0; }
-/* where the trees and shrubs grow: the bottom right corner and a patch at the bottom */
-float zone(vec2 p){
-  float w = 2.0 * (fbm2(p * 0.2 + 3.0) - 0.5);
-  float d1 = length((p - anc(vec2(0.99, 0.02))) * vec2(0.8, 1.0)) - 7.0;
-  float d2 = length((p - anc(vec2(0.42, -0.06))) * vec2(0.55, 1.0)) - 3.2;
-  return max(1.0 - smoothstep(-1.0, 2.5, d1 + w), 0.85 * (1.0 - smoothstep(-0.5, 2.0, d2 + w)));
-}
-/* tree crowns on a loose grid inside the zone: x = height, y/z = slope, w = leaf tone */
-vec4 trees(vec2 p){
-  vec2 cell = floor(p / 5.0);
-  vec4 best = vec4(0.0);
-  for (int j = -1; j <= 1; j++) {
-    for (int i = -1; i <= 1; i++) {
-      vec2 c = cell + vec2(float(i), float(j));
-      vec2 h = hash2(c);
-      vec2 ctr = (c + 0.2 + 0.6 * hash2(c + 7.1)) * 5.0;
-      float on = step(0.15, h.x) * step(0.45, zone(ctr));
-      float r = 1.6 + 1.5 * h.y;
-      vec2 d0 = p - ctr;
-      float d = length(d0) / r + 0.10 * (noise(p * 2.6 + c) - 0.5) + 0.05 * (noise(p * 8.0) - 0.5);
-      if (on > 0.5 && d < 1.0) {
-        float z = sqrt(1.0 - d * d);
-        float hgt = z * (2.2 + h.y);
-        if (hgt > best.x) best = vec4(hgt, d0.x / r * 0.9, d0.y / r * 0.9, hash(c + 3.3));
-      }
-    }
-  }
-  return best;
-}
-/* big glass roofs of the neighbouring buildings: x = inside (0..1), y = local x, z = local y, w = edge */
-vec4 roofs(vec2 p, out float which){
-  vec2 c1 = anc(vec2(1.0, 0.60)), h1 = hs(vec2(0.13, 0.34));
-  vec2 c2 = anc(vec2(0.58, 1.0)), h2 = hs(vec2(0.20, 0.075));
-  vec2 c3 = anc(vec2(0.0, 0.45)), h3 = hs(vec2(0.13, 0.30));
-  float d1 = sdBox(p - c1, h1), d2 = sdBox(p - c2, h2), d3 = sdBox(p - c3, h3);
-  which = 1.0; float d = d1; vec2 l = p - c1;
-  if (d2 < d) { d = d2; l = p - c2; which = 2.0; }
-  if (d3 < d) { d = d3; l = p - c3; which = 3.0; }
-  return vec4(1.0 - smoothstep(-0.02, 0.02, d), l, d);
-}
-float roofDist(vec2 p){
-  float d = sdBox(p - anc(vec2(1.0, 0.60)), hs(vec2(0.13, 0.34)));
-  d = min(d, sdBox(p - anc(vec2(0.58, 1.0)), hs(vec2(0.20, 0.075))));
-  return min(d, sdBox(p - anc(vec2(0.0, 0.45)), hs(vec2(0.13, 0.30))));
-}
-float cloudField(vec2 p, vec2 drift, float cover){
-  float th = 1.02 - cover * 0.62;
-  float c = fbm(p * 0.075 + drift * 0.55) + 0.28 * fbm(p * 0.21 - drift * 1.15 + 5.0);
-  return smoothstep(th - 0.10, th + 0.26, c);
-}
-void main(){
-  gAsp = uRes.x / uRes.y;
-  vec2 p = (vUv - 0.5) * vec2(gAsp, 1.0) * 18.0;
-  float el = uElev, az = radians(uAz);
-  float dayK = smoothstep(-6.0, 12.0, el);
-  float sunI = smoothstep(-1.5, 7.0, el);
-  vec2 sdir = vec2(sin(az), cos(az));
-  float tn = tan(radians(max(el, 4.0)));
-  float klen = clamp(2.6 / tn, 0.0, 8.0);
-  float ce = radians(max(el, 3.0));
-  vec3 L = normalize(vec3(sdir * cos(ce), sin(ce) + 0.12));
-  vec3 sunCol = mix(vec3(1.0, 0.50, 0.20), vec3(1.0, 0.95, 0.86), smoothstep(2.0, 24.0, el)) * sunI * (1.0 - 0.75 * uCloud) * 1.05;
-  vec3 amb = mix(vec3(0.030, 0.048, 0.115), mix(vec3(0.30, 0.32, 0.42), vec3(0.46, 0.53, 0.64), smoothstep(5.0, 28.0, el)), dayK);
-  amb = mix(amb, vec3(dot(amb, vec3(0.33))) * 0.95, uCloud * 0.5);
-  float moonI = smoothstep(-2.0, -14.0, el) * (1.0 - uCloud * 0.8);
-  vec3 moonCol = vec3(0.28, 0.36, 0.60) * moonI * 0.55;
-  vec2 drift = uWind * uT;
-  float cover = max(uCloud, 0.30);
-  // shadows
-  vec4 tr = trees(p);
-  float shT = 0.0;
-  if (sunI > 0.02) {
-    float a1 = trees(p + sdir * klen * 0.55).x > 0.0 ? 1.0 : 0.0;
-    float a2 = trees(p + sdir * klen).x > 0.0 ? 1.0 : 0.0;
-    shT = max(a1, a2) * 0.85;
-  }
-  vec2 hp = p + sdir * klen * 0.35;
-  vec2 hq = abs(hp * vec2(0.88, 1.0)) - vec2(4.8, 3.4);
-  float shH = (1.0 - smoothstep(-0.2, 1.8, max(hq.x, hq.y))) * 0.7;
-  float shR = (1.0 - smoothstep(-0.3, 1.2, roofDist(p + sdir * klen * 0.6))) * 0.55;
-  float cshadow = cloudField(p + sdir * 3.0, drift, cover) * smoothstep(0.05, 0.35, cover);
-  float vis = (1.0 - max(max(shT, shH), shR)) * (1.0 - 0.6 * cshadow);
-  vec3 light = amb + sunCol * vis + moonCol;
-  // ground: one solid surface of cool grey stone, no joints
-  vec3 stone = mix(vec3(0.27, 0.29, 0.33), vec3(0.36, 0.37, 0.41), fbm2(p * 0.35 + 2.0));
-  stone *= 0.93 + 0.14 * fbm2(p * 1.3) + 0.07 * (noise(p * 46.0) - 0.5) + 0.04 * (noise(p * 140.0) - 0.5);
-  stone *= 1.0 - 0.10 * smoothstep(0.62, 0.9, fbm2(p * 0.8 + 9.0));
-  float zn = zone(p);
-  float gr = fbm2(p * 1.8);
-  vec3 under = mix(vec3(0.06, 0.15, 0.05), vec3(0.17, 0.30, 0.09), gr) * (0.9 + 0.2 * noise(p * 30.0));
-  vec3 alb = mix(stone, under, smoothstep(0.30, 0.62, zn));
-  // rain: wet paving, puddles, rings
-  float wetPatch = smoothstep(0.15, 0.75, noise(p * 0.5 + 3.0)) * uWet;
-  alb *= 1.0 - 0.30 * wetPatch;
-  float hf = fbm2(p * 0.45 + 7.0);
-  float lvl = uWet * 0.58;
-  float pud = (1.0 - smoothstep(lvl - 0.05, lvl, hf)) * step(0.001, uWet) * (1.0 - smoothstep(0.2, 0.5, zn));
-  vec3 skyRefl = mix(vec3(0.02, 0.03, 0.07), mix(vec3(0.46, 0.54, 0.68), vec3(0.62, 0.66, 0.72), uCloud), dayK) + sunCol * 0.16 * smoothstep(0.0, 0.5, vis);
-  float rings = 0.0;
-  for (int k = 0; k < 2; k++) {
-    float s = 1.7 + float(k) * 0.9;
-    vec2 g = p * s + float(k) * 13.7;
-    vec2 cid = floor(g);
-    vec2 rc = cid + 0.2 + 0.6 * hash2(cid + 5.0);
-    float ph = fract(uT * 0.8 + hash(cid));
-    rings += smoothstep(0.07, 0.0, abs(length(g - rc) - ph * 0.5)) * (1.0 - ph) * step(0.45, hash(cid + 9.0));
-  }
-  rings *= uRain;
-  // snow
-  float sm = smoothstep(0.35, 0.62, clamp(uSnow * 1.6 + (fbm2(p * 0.8) - 0.5) * 0.9, 0.0, 1.0));
-  alb = mix(alb, vec3(0.90, 0.93, 0.98), sm);
-  vec3 col = alb * light;
-  // autumn leaves blowing over the paving
-  for (int k = 0; k < 2; k++) {
-    vec2 g = p * (0.55 + 0.25 * float(k)) + uWind * uT * (8.0 + 4.0 * float(k)) + float(k) * 7.7;
-    vec2 cid = floor(g), lf = fract(g) - 0.2 - 0.6 * hash2(cid);
-    float a = uT * 0.6 + hash(cid) * 6.28;
-    vec2 r = vec2(lf.x * cos(a) - lf.y * sin(a), lf.x * sin(a) + lf.y * cos(a));
-    float lv = (1.0 - smoothstep(0.03, 0.04, sdBox(r, vec2(0.034, 0.018)))) * step(0.94, hash(cid + 1.3)) * (1.0 - sm) * (1.0 - smoothstep(0.4, 0.7, zn));
-    col = mix(col, mix(vec3(0.55, 0.28, 0.07), vec3(0.62, 0.50, 0.10), hash(cid + 2.2)) * (amb + sunCol * 0.7), lv * 0.9);
-  }
-  col = mix(col, skyRefl * (0.8 + 0.4 * rings), pud * (1.0 - sm) * 0.78);
-  col += vec3(0.8, 0.85, 1.0) * rings * (pud + wetPatch * 0.2) * 0.35 * (0.2 + dayK);
-  // glass roofs of the neighbours
-  float rw; vec4 ro = roofs(p, rw);
-  if (ro.x > 0.0) {
-    vec2 l = ro.yz;
-    float gx = abs(fract(l.x / 2.6 + 0.5) - 0.5) * 2.6, gy = abs(fract(l.y / 3.2 + 0.5) - 0.5) * 3.2;
-    float frame = 0.0;
-    float edge = 1.0 - smoothstep(0.0, 0.22, -ro.w);
-    vec3 glass = mix(vec3(0.34, 0.42, 0.50), vec3(0.60, 0.70, 0.78), 0.5 + 0.5 * sin(l.x * 0.6 + l.y * 0.35 + 1.0));
-    glass = glass * (amb * 1.0 + sunCol * 0.40) + skyRefl * 0.12 + sunCol * 0.25 * pow(max(0.0, noise(l * 0.4 + 2.0) - 0.45), 2.0) * 3.0;
-    vec3 rc = mix(glass, vec3(0.62, 0.67, 0.73) * (amb * 1.1 + sunCol * 0.5 + moonCol), clamp(frame * 0.7 + edge * 0.8, 0.0, 1.0));
-    col = mix(col, rc, ro.x * 0.96);
-  }
-  // the parked car
-  vec2 cc = p - anc(vec2(gAsp > 1.0 ? 0.30 : 0.30, 0.82));
-  float shC = 1.0 - smoothstep(-0.1, 0.9, sdRound(cc + sdir * klen * 0.25 + vec2(0.0, 0.0), vec2(0.98, 2.15), 0.55));
-  col *= 1.0 - shC * (0.45 * sunI + 0.2);
-  float cb = sdRound(cc, vec2(0.95, 2.1), 0.55);
-  if (cb < 0.0) {
-    float cab = sdRound(cc - vec2(0.0, -0.1), vec2(0.78, 1.05), 0.42);
-    vec3 paint = vec3(0.045, 0.06, 0.09) + skyRefl * 0.12 * (0.6 + 0.8 * noise(cc * 1.6 + 2.0)) + sunCol * 0.18 * pow(max(0.0, 1.0 - abs(cc.x - 0.28) / 0.7), 3.0) * (0.5 + 0.5 * smoothstep(-2.0, 2.0, cc.y));
-    vec3 glass = vec3(0.025, 0.04, 0.06) + skyRefl * 0.34 * smoothstep(-0.8, 0.8, cc.x * 0.8 + cc.y * 0.35) + sunCol * 0.12;
-    vec3 cv = mix(paint, glass, 1.0 - smoothstep(-0.04, 0.04, cab));
-    cv = mix(cv, paint * 1.25, smoothstep(0.55, 0.85, abs(cc.y + 0.1)) * (1.0 - smoothstep(-0.04, 0.04, cab)) * 0.0);
-    float mir = 1.0 - smoothstep(0.0, 0.05, sdCap(vec2(abs(cc.x), cc.y), vec2(0.95, 0.85), vec2(1.12, 0.78), 0.1));
-    cv = mix(cv, paint, mir);
-    float night0 = 1.0 - smoothstep(-4.0, 6.0, el);
-    float hl = (1.0 - smoothstep(0.0, 0.14, length(vec2(abs(cc.x) - 0.62, cc.y - 1.92)))) * (0.35 + 0.65 * night0);
-    cv += vec3(1.0, 0.95, 0.8) * hl * 0.7;
-    float tl = (1.0 - smoothstep(0.0, 0.10, length(vec2(abs(cc.x) - 0.62, cc.y + 1.95)))) * 0.25;
-    cv += vec3(0.9, 0.1, 0.05) * tl;
-    col = mix(col, cv * (0.55 + 0.5 * dot(light, vec3(0.33))), 1.0 - smoothstep(-0.03, 0.03, cb));
-  }
-  // tree crowns
-  if (tr.x > 0.0) {
-    float leaf = noise(p * 5.0 + tr.w * 20.0) * 0.6 + noise(p * 14.0) * 0.4;
-    vec3 base = mix(vec3(0.05, 0.16, 0.05), vec3(0.24, 0.44, 0.10), leaf);
-    base = mix(base, vec3(0.50, 0.38, 0.08), step(0.86, tr.w) * 0.5 * leaf);
-    vec3 n3 = normalize(vec3(tr.y + (leaf - 0.5) * 0.5, tr.z + (leaf - 0.5) * 0.4, 0.75));
-    float dif = clamp(dot(n3, L), 0.0, 1.0);
-    float ao = 0.55 + 0.45 * smoothstep(0.0, 1.8, tr.x);
-    vec3 cl = amb + sunCol * (0.25 + 0.95 * dif) * (1.0 - 0.6 * cshadow) + moonCol;
-    col = base * ao * cl;
-    col = mix(col, vec3(0.9, 0.93, 0.98) * dot(cl, vec3(0.33)), uSnow * 0.45 * smoothstep(0.3, 0.7, leaf));
-  }
-  // clouds drifting over everything
-  float cd = cloudField(p, drift, cover);
-  vec3 cloudC = mix(vec3(0.20, 0.23, 0.32), vec3(0.96, 0.97, 1.0), dayK) * (0.45 + 0.55 * (amb.b + sunCol.r * 0.5)) ;
-  cloudC = mix(cloudC, vec3(0.62, 0.65, 0.70) * (0.35 + 0.65 * dayK), uRain * 0.6);
-  col = mix(col, cloudC, cd * (0.30 + 0.38 * cover) * (0.35 + 0.65 * dayK));
-  // birds crossing the sky (their shadows fall on the ground)
-  if (uBird.x >= 0.0) {
-    float bs = 0.0, bsh = 0.0;
-    float ang = uBird.y; vec2 dir = vec2(cos(ang), sin(ang)), nrm = vec2(-dir.y, dir.x);
-    for (int i = 0; i < 5; i++) {
-      float fi = float(i);
-      float row = fi < 0.5 ? 0.0 : floor((fi + 1.0) * 0.5), side = mod(fi, 2.0) < 0.5 ? 1.0 : -1.0;
-      vec2 off = -dir * row * 1.25 + nrm * side * row * 0.95;
-      vec2 start = nrm * uBird.z - dir * 24.0;
-      vec2 pos = start + dir * uBird.x * 48.0 + off + nrm * 0.3 * sin(uT * 0.8 + fi);
-      float flap = 0.55 * sin(uT * 15.0 + fi * 1.9);
-      for (int s = 0; s < 2; s++) {
-        vec2 o = p - pos - (s == 1 ? sdir * klen * 0.9 * 0.0 + vec2(0.9, -1.1) : vec2(0.0));
-        vec2 lq = vec2(dot(o, nrm), dot(o, dir));
-        float wing = min(sdCap(vec2(abs(lq.x), lq.y), vec2(0.04, 0.0), vec2(0.5 * cos(flap), -0.05 - 0.28 * sin(flap)), 0.045), sdCap(vec2(abs(lq.x), lq.y), vec2(0.5 * cos(flap), -0.05 - 0.28 * sin(flap)), vec2(0.8 * cos(flap), -0.30 - 0.5 * sin(flap)), 0.016));
-        float body = length(lq * vec2(1.0, 0.45)) - 0.075;
-        float m = 1.0 - smoothstep(0.0, 0.03, min(wing, body));
-        if (s == 0) bs = max(bs, m); else bsh = max(bsh, m);
-      }
-    }
-    float vis2 = dayK * (1.0 - uRain) * (1.0 - uFog);
-    col = mix(col, col * 0.62, bsh * 0.6 * vis2 * sunI);
-    col = mix(col, vec3(0.06, 0.07, 0.09) * (0.5 + dayK), bs * 0.9 * vis2);
-  }
-  // warm light from the lit rooms on the ground at night
-  float night = 1.0 - smoothstep(-4.0, 6.0, el);
-  vec2 pc = p * vec2(0.8, 1.0);
-  float pool = exp(-dot(pc, pc) / 42.0) * (0.75 + 0.25 * noise(p * 0.9));
-  col += vec3(1.0, 0.62, 0.30) * uLamp * night * pool * 0.5 * (0.35 + alb.r);
-  // fog and finish
-  vec3 fogC = mix(vec3(0.05, 0.06, 0.10), vec3(0.70, 0.73, 0.77), dayK);
-  col = mix(col, fogC, uFog * 0.7);
-  float vg = smoothstep(1.25, 0.35, length((vUv - 0.5) * vec2(1.05, 1.0)));
-  col *= 0.74 + 0.26 * vg;
-  col += (hash(vUv * uRes + uT) - 0.5) * 0.012;
-  gl_FragColor = vec4(pow(max(col, 0.0), vec3(0.9)), 1.0);
-}
-`;
 
 const H3D_DEF = {
   show: false, home: "full", page: true, switch: false, tap: "quint", height: 360,
-  theme: "auto", accent: "", quality: "auto", walls: "auto", roof: true, roof_fade: true, explode: true, floor_stack: "dim", floor_thumbs: true, room_names: true,
+  theme: "auto", bg: "auto", accent: "", quality: "auto", walls: "auto", roof: true, roof_fade: true, explode: true, floor_stack: "dim", floor_thumbs: true, room_names: true,
   markers: "important", marker_size: "normal", marker_names: false, heatmap: "none", clock: "off", controls_side: "left",
   controls: true, central: true, walk: true, scenes: true, camera_wall: null, fullscreen_button: true, keep_view: false, angle_lock: false, controls_hidden: false, controls_hide_after: 0, stats: false,
   alerts: true, alert_jump: false, energy: true, flows: "auto", holograms: "auto", weather: true, household_card: true, motion_trail: false, pets: true, ghost: true,
   time_travel: null, time_travel_range: "24h", voice: true, director: null, screen: "",
   idle_return: 0, idle_orbit: false, night: "off", floor: "", room: "",
-  bg: "studio", look: "cinema", sky: "live", clouds: true, stars: true, shadow: "soft", haze: true, vignette: false, sun_glow: true,
+  look: "auto",
   layout: "immersive", bar: "open", bar_hide: 0, cam: "default", fx: "live", color: true,
 };
 const H3D_OPT = {
@@ -266,14 +31,8 @@ const H3D_OPT = {
   floor_stack: ["dim", "stacked", "single"], markers: ["none", "important", "all", "room"], marker_size: ["small", "normal", "large"], heatmap: ["none", "temperature", "humidity", "co2"],
   clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
   time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
-  sky: ["off", "live", "day", "dusk", "night"], bg: ["studio", "ground", "sky"], look: ["cinema", "bright"], shadow: ["off", "soft", "strong"],
+  look: ["auto", "soft", "cinema", "bright"], bg: ["auto", "light", "slate", "dark", "native"],
   layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], cam: ["default", "top", "corner", "dollhouse", "front", "side"], fx: ["live", "off"],
-};
-// the realism presets: what they switch (the rest of the look stays as the admin set it)
-const H3D_REAL = {
-  natural: { bg: "ground", sky: "live", clouds: true, stars: true, shadow: "soft", haze: true, vignette: false, sun_glow: true, theme: "neon", quality: "high", roof: true, roof_fade: true, walls: "auto", weather: true, floor_stack: "dim", markers: "important", marker_names: false },
-  cinema: { bg: "studio", look: "cinema", sky: "live", clouds: true, stars: true, shadow: "strong", haze: true, vignette: true, sun_glow: true, theme: "neon", quality: "high", roof: true, roof_fade: false, walls: "auto", weather: true, floor_stack: "dim", markers: "none", marker_names: false, controls_hidden: true, controls_hide_after: 5 },
-  clean: { bg: "sky", sky: "off", clouds: false, stars: false, shadow: "off", haze: false, vignette: false, sun_glow: false },
 };
 const SV_DEF = Object.fromEntries(Object.entries(SV).map(([k, v]) => [k, v.n]));
 const HOME_I = ic('<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>');
@@ -340,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.46.0";
+const VER = "1.47.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -874,7 +633,6 @@ input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 
 .h3swi{position:absolute;left:50%;transform:translateX(-50%);top:16px;z-index:4}
 :host([data-dev="phone"]) .h3imm{display:none}
 /* rendered-picture house */
-.h3d>canvas.gnd{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;border-radius:inherit}.h3d>neonplan3d-card{position:relative;z-index:1}
 .app.pim{min-height:var(--vh,100vh)}.app.pim>.pbar{display:none}.app.pim>main{position:absolute;inset:0;padding:0;overflow:hidden}
 .home.h3pim{position:absolute;inset:0;padding:0;display:block;gap:0}.h3pim>.h3d.pimm{position:absolute;inset:0;border:0;border-radius:0;overflow:hidden;min-height:0}
 .pmtop{position:absolute;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));z-index:20;display:flex;gap:10px;align-items:center;pointer-events:none}.pmtop>*{pointer-events:auto}
@@ -1333,7 +1091,7 @@ class QuintDashboard extends HTMLElement {
     this._lastAct = Date.now(); this._actf = () => this._act(); this._visf = () => { if (!document.hidden) this._wake(); };
     ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.addEventListener(ev, this._actf, { passive: true, capture: true }));
     document.addEventListener("visibilitychange", this._visf);
-    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); this._h3dBarTick(); this._fxSync(); this._gndSync(); }, 1000);
+    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); this._h3dBarTick(); this._fxSync(); this._h3dBackTick(); }, 1000);
     this._iv = setInterval(() => { const r = this.shadowRoot; this._tickClock(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 1000);
   }
   disconnectedCallback() { this._hOff(); clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
@@ -1504,8 +1262,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "ah") { if (this._autoAct(v) === false) return; }
     else if (a === "h3d") {
       const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.h3d = c.h3d || {}), d = H3D_DEF[k];
-      if (k === "preset") { if (H3D_REAL[x]) Object.assign(o, H3D_REAL[x]); }
-      else if (k === "reset") { const keep = {}; ["show", "home", "page", "switch", "tap"].forEach((y) => { if (o[y] !== undefined) keep[y] = o[y]; }); c.h3d = keep; }
+      if (k === "reset") { const keep = {}; ["show", "home", "page", "switch", "tap"].forEach((y) => { if (o[y] !== undefined) keep[y] = o[y]; }); c.h3d = keep; }
       else if (k === "accent") o[k] = /^#[0-9a-f]{6}$/i.test(x) ? x : "";
       else if (k === "night") { const y = x.trim(); if (y === "off" || y === "sun" || /^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$/.test(y)) o[k] = y; else if (y === "") o[k] = "off"; }
       else if (k === "screen") o[k] = x.replace(/['"<>\\&]/g, "").trim().slice(0, 60);
@@ -2683,10 +2440,9 @@ class QuintDashboard extends HTMLElement {
   _scAct(a, v) {
     const find = (key) => { const [k, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)]; return this._myScenes().find((s) => s.sc === k && s.id === id); };
     if (a === "run") { const s = find(v); if (s) this._applyScene(s); return; }
-    if (a === "h3hr" && v === "demo") { this._gDemo = { t0: performance.now(), elev: 0 }; this.shadowRoot.querySelectorAll(".h3hr button").forEach((x) => x.classList.toggle("on", x.dataset.sc === "h3hr|demo")); return; }
-    if (a === "h3hr") { this._gDemo = null; this._hr = v; try { localStorage.setItem("quint_h3hr", v); } catch (e) {}
+    if (a === "h3hr") { this._hr = v; try { localStorage.setItem("quint_h3hr", v); } catch (e) {}
       this.shadowRoot.querySelectorAll(".h3hr button").forEach((x) => x.classList.toggle("on", x.dataset.sc === "h3hr|" + v));
-      this._last = null; this._draw(true); setTimeout(() => this._h3dRealAll(true), 150); setTimeout(() => this._h3dRealAll(true), 1200); return; }
+      this._last = null; this._draw(true); setTimeout(() => this._h3dBackAll(true), 150); setTimeout(() => this._h3dBackAll(true), 1200); return; }
     if (a === "h3v") { try { localStorage.setItem("quint_h3dv", v === "3d" ? "3d" : "tiles"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "h3") { try { if (v === "1") localStorage.removeItem("quint_h3d"); else localStorage.setItem("quint_h3d", "0"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "ntfd") {
@@ -3240,14 +2996,10 @@ class QuintDashboard extends HTMLElement {
   _h3d() {
     const o = { ...H3D_DEF, ...((this._c && this._c.h3d) || {}) };
     const hr = this._hour();
-    if (this._gDemo) o.theme = this._gDemo.elev > 4 ? "day" : "neon";
-    else if (hr !== "live") { o.sky = hr; o.theme = hr === "day" ? "day" : "neon"; }
-    const raw = (this._c && this._c.h3d) || {};
-    if (!raw.bg && raw.ground === true) o.bg = "ground";
-    if (!H3D_OPT.bg.includes(o.bg)) o.bg = "studio";
-    if (!H3D_OPT.look.includes(o.look)) o.look = "cinema";
-    o.ground = o.bg === "ground";   // the live ground is one of three backgrounds
-    if (o.bg === "studio") o.theme = raw.theme && raw.theme !== "auto" ? raw.theme : "neon";   // the dark studio is lit like the ASNO home: the hour only changes its tint
+    if (!H3D_OPT.bg.includes(o.bg)) o.bg = "auto";
+    if (o.bg === "native") { if (hr === "day") o.theme = "day"; else if (hr !== "live") o.theme = "neon"; }   // the hour switch on the house: Day or Night look
+    else if (hr !== "live" || !o.theme || o.theme === "auto") o.theme = this._h3dBack(o).light ? "day" : "neon";   // a light backdrop gets the light house, a dark one the neon house
+    if (!H3D_OPT.look.includes(o.look)) o.look = "auto";
     o.home = o.home === true ? "block" : o.home === false ? "off" : ["off", "block", "full"].includes(o.home) ? o.home : "full";
     return o;
   }
@@ -3384,7 +3136,7 @@ class QuintDashboard extends HTMLElement {
   _qcolSet() {
     const o = this._h3d(), m = this._am;
     if (!o.color) { globalThis.__qcol = { on: false }; return "0"; }
-    const cin = o.look !== "bright";
+    const look = o.look === "auto" ? (this._h3dBack(o).light ? "soft" : "cinema") : o.look, cin = look === "cinema", soft = look === "soft";
     const TC = {   /* the cinema look: dark walnut and slate-blue tile floors, deep slate walls with lighter tops */
       living: [0x5c3b25, 0x3a4662, 0x5f7094], dining: [0x6b4630, 0x3a4662, 0x5f7094], kitchen: [0x3f5d7c, 0x384a66, 0x5d7597], hall: [0x4e3424, 0x3a4462, 0x58698e],
       bed: [0x5c3b25, 0x2f5068, 0x568aa8], kids: [0x6a4a30, 0x3a5a7c, 0x6a92bc], guest: [0x5c3b25, 0x2e5a60, 0x4f9096], bath: [0x3a6e90, 0x2f4a68, 0x5a82a8],
@@ -3393,14 +3145,21 @@ class QuintDashboard extends HTMLElement {
       outdoor: [0x4a4e58, 0x3a4048, 0x5a626e], garden: [0x1f4a2c, 0x2a5a38, 0x45805a],
     };
     TC.office[2] = 0x516390;
-    const T = cin ? TC : {   /* floor, wall, wall top */
+    const TS = {   /* the soft look: light oak and pale tile, cream walls, like a scale model */
+      living: [0xc9a47a, 0xe9dfd0, 0xf8f2e8], dining: [0xcfae86, 0xece3d4, 0xfaf5ec], kitchen: [0xd5d7d8, 0xe6ddd0, 0xf6f0e6], hall: [0xc29e74, 0xe9dfd0, 0xf8f2e8],
+      bed: [0xc9a47a, 0xe8d6cc, 0xf7ebe4], kids: [0xd2b084, 0xeadcb8, 0xf8f0d2], guest: [0xc9a47a, 0xdfe3d2, 0xf2f5e8], bath: [0xc7d3d8, 0xdde6ea, 0xf0f6f8],
+      wc: [0xc7d3d8, 0xdde6ea, 0xf0f6f8], office: [0xb08a62, 0xe0dcd2, 0xf4f0e8], garage: [0xbdbcb8, 0xd8d6d0, 0xeeece6], laundry: [0xcbd5d9, 0xe0e5e6, 0xf3f6f6],
+      storage: [0xb9a68c, 0xe0d6c6, 0xf2ece0], tech: [0xb5b3ae, 0xdcd9d2, 0xefece6], hobby: [0xc4a07a, 0xe6d9d4, 0xf6eeea], other: [0xc9a47a, 0xe9dfd0, 0xf8f2e8],
+      outdoor: [0xcdb894, 0xe6dccb, 0xf6f0e4], garden: [0x6f9a56, 0x8fb070, 0xb5cf94],
+    };
+    const T = soft ? TS : cin ? TC : {   /* floor, wall, wall top */
       living: [0xc2702e, 0xe8d8b8, 0xfff4dc], dining: [0xe2b878, 0xf2ead8, 0xffffff], kitchen: [0xe2b878, 0x9a5a34, 0xd08a58], hall: [0xb8662c, 0xf0e4cc, 0xffffff],
       bed: [0xc2702e, 0xe5846a, 0xffb09a], kids: [0xd89a50, 0xe0b040, 0xffe08a], guest: [0xb88050, 0x8fb583, 0xc4e3b8], bath: [0x46505e, 0x4fa8a8, 0x9adada],
       wc: [0x46505e, 0x4fa8a8, 0x9adada], office: [0x8a4a2a, 0x6a7aa8, 0xa8b8e8], garage: [0x5a5e66, 0x8a92a0, 0xc0c8d4], laundry: [0x56707a, 0x6a9ae0, 0xa8c8ff],
       storage: [0x70604e, 0xa88ad8, 0xd8c4ff], tech: [0x4a5260, 0x6a7aa8, 0xa8b8e8], hobby: [0x8a4a5a, 0xa88ad8, 0xd8c4ff], other: [0xb8662c, 0xe8d8b8, 0xfff4dc],
       outdoor: [0xc09060, 0xd8b890, 0xf0dcb8], garden: [0x3f8a3a, 0x6aaa58, 0x9ada80],
     };
-    const ACC = cin ? [[0x2f5068, 0x568aa8], [0x2e5a60, 0x4f9096], [0x40385e, 0x6a5e98], [0x34506e, 0x5a84ac], [0x3a5a7c, 0x6a92bc], [0x4a3a58, 0x7a68a0]] : [[0xe5846a, 0xffb09a], [0x8fb583, 0xc4e3b8], [0x4fa8a8, 0x9adada], [0xe0b040, 0xffe08a], [0x6a9ae0, 0xa8c8ff], [0xa88ad8, 0xd8c4ff]];
+    const ACC = soft ? [[0xe8d6cc, 0xf7ebe4], [0xdfe3d2, 0xf2f5e8], [0xdde6ea, 0xf0f6f8], [0xeadcb8, 0xf8f0d2], [0xe0dcd2, 0xf4f0e8], [0xe6d9d4, 0xf6eeea]] : cin ? [[0x2f5068, 0x568aa8], [0x2e5a60, 0x4f9096], [0x40385e, 0x6a5e98], [0x34506e, 0x5a84ac], [0x3a5a7c, 0x6a92bc], [0x4a3a58, 0x7a68a0]] : [[0xe5846a, 0xffb09a], [0x8fb583, 0xc4e3b8], [0x4fa8a8, 0x9adada], [0xe0b040, 0xffe08a], [0x6a9ae0, 0xa8c8ff], [0xa88ad8, 0xd8c4ff]];
     const hs = (t) => { let h = 7; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; };
     const pick = (r) => {
       const n = String((r && r.name) || ""), id = String((r && r.id) || "");
@@ -3411,11 +3170,11 @@ class QuintDashboard extends HTMLElement {
     };
     globalThis.__qcol = {
       on: true,
-      furn: cin ? { body: 0x5a6e8a, bodyTop: 0x7c92b2, fabric: 0x24407c, fabricTop: 0x3a66aa, cushion: 0x2fb0a8, wood: 0x6a4126, woodTop: 0x8c5c3a, white: 0xd6dce6, whiteTop: 0xf2f5fa, metal: 0x8a96a8, glass: 0x4a92ba, plant: 0x1f6a34, plantTop: 0x36a04e, pot: 0x2a2e3c, accent: 0x20c8e0 } : { body: 0x2f5fb0, bodyTop: 0x4f82d8, fabric: 0xe0705a, fabricTop: 0xff9a80, cushion: 0xf2b830, wood: 0xb8672a, woodTop: 0xdc8a44, white: 0xf6f0e6, whiteTop: 0xffffff, metal: 0x9aa6b4, glass: 0x58b0d8, plant: 0x2faa4a, plantTop: 0x58d870, pot: 0xc86a34, accent: 0xffc020 },
+      furn: soft ? { body: 0xb4a898, bodyTop: 0xd2c8ba, fabric: 0x9fb8c8, fabricTop: 0xc2d6e2, cushion: 0xe0a050, wood: 0xc08a52, woodTop: 0xdcaa72, white: 0xf4efe6, whiteTop: 0xffffff, metal: 0xb4bcc4, glass: 0x9cc8dc, plant: 0x4f9a50, plantTop: 0x74bf70, pot: 0xc9815a, accent: 0xe3a03c } : cin ? { body: 0x5a6e8a, bodyTop: 0x7c92b2, fabric: 0x24407c, fabricTop: 0x3a66aa, cushion: 0x2fb0a8, wood: 0x6a4126, woodTop: 0x8c5c3a, white: 0xd6dce6, whiteTop: 0xf2f5fa, metal: 0x8a96a8, glass: 0x4a92ba, plant: 0x1f6a34, plantTop: 0x36a04e, pot: 0x2a2e3c, accent: 0x20c8e0 } : { body: 0x2f5fb0, bodyTop: 0x4f82d8, fabric: 0xe0705a, fabricTop: 0xff9a80, cushion: 0xf2b830, wood: 0xb8672a, woodTop: 0xdc8a44, white: 0xf6f0e6, whiteTop: 0xffffff, metal: 0x9aa6b4, glass: 0x58b0d8, plant: 0x2faa4a, plantTop: 0x58d870, pot: 0xc86a34, accent: 0xffc020 },
       floor: (r) => pick(r)[0],
       wall: (r, top) => pick(r)[top ? 2 : 1],
     };
-    return cin ? "1c" : "1b";
+    return soft ? "1s" : cin ? "1c" : "1b";
   }
   /* one 3D card per place (Home, page, phone); it stays alive while its page is away, so coming back is instant */
   async _mountH3(p, ctx) {
@@ -3438,10 +3197,11 @@ class QuintDashboard extends HTMLElement {
     if (el.parentNode !== p) {
       while (p.firstChild) p.removeChild(p.firstChild);
       p.appendChild(el); p._pk = "";
-      el._qreal = ""; setTimeout(() => this._h3dRealAll(true), 400); setTimeout(() => this._h3dRealAll(true), 1800);
-      if (ctx !== "edit") { const hb = document.createElement("div"); hb.className = "seg sm h3hr"; hb.innerHTML = [["live", "Now"], ["day", "Day"], ["dusk", "Evening"], ["night", "Night"], ["demo", "▶ 24 h"]].map(([k, n]) => `<button class="${this._hour() === k && !this._gDemo ? "on" : ""}" data-sc="h3hr|${k}">${n}</button>`).join(""); p.appendChild(hb); }
+      if (ctx !== "edit") { const hb = document.createElement("div"); hb.className = "seg sm h3hr"; hb.innerHTML = [["live", "Now"], ["day", "Day"], ["night", "Night"]].map(([k, n]) => `<button class="${this._hour() === k ? "on" : ""}" data-sc="h3hr|${k}">${n}</button>`).join(""); p.appendChild(hb); }
       const chip = document.createElement("button"); chip.className = "h3chip"; chip.hidden = true; chip.setAttribute("data-h3d", "open"); p.appendChild(chip); el._chip = chip;
+      el._qreal = ""; setTimeout(() => this._h3dBackAll(true), 400); setTimeout(() => this._h3dBackAll(true), 1800);
     }
+    this._h3dBackAll(false);
   }
   _h3Wire(el) {
     el.addEventListener("room-tap", (e) => {
@@ -3458,172 +3218,46 @@ class QuintDashboard extends HTMLElement {
     if (open && q && tap === "both") { chip.hidden = false; chip.dataset.room = q.id; chip.textContent = "Open " + q.name + " ›"; }
     else { chip.hidden = true; delete chip.dataset.room; }
   }
-  /* ---------- realism: a live sky behind the house, a soft ground shadow, haze and a vignette (drawn around the 3D view, so they work with every theme and cost almost nothing) ---------- */
-  _h3dDq(root, sel) { const f = root.querySelector(sel); if (f) return f; for (const e of root.querySelectorAll("*")) { if (e.shadowRoot) { const r = this._h3dDq(e.shadowRoot, sel); if (r) return r; } } return null; }
-  /* where the sun is (degrees above the horizon, compass direction) and how cloudy it is, from Home Assistant; "day", "dusk" and "night" are fixed looks for the admin to try */
-  _h3dSkyState(o) {
-    const S = (this._h && this._h.states) || {}, sun = S["sun.sun"], wid = Object.keys(S).find((i) => i.startsWith("weather.")), w = wid ? S[wid].state : "";
-    let elev = 35, az = 180;
-    if (o.sky === "day") { elev = 45; az = 170; } else if (o.sky === "dusk") { elev = 1; az = 262; } else if (o.sky === "night") { elev = -35; az = 0; }
-    else if (sun && sun.attributes && Number.isFinite(+sun.attributes.elevation)) { elev = +sun.attributes.elevation; az = Number.isFinite(+sun.attributes.azimuth) ? +sun.attributes.azimuth : 180; }
-    else if (sun) { elev = sun.state === "below_horizon" ? -20 : 35; }
-    else { const h = new Date().getHours() + new Date().getMinutes() / 60; elev = Math.sin(((h - 6) / 12) * Math.PI) * 55; az = 90 + ((h - 6) / 12) * 180; }
-    const WXC = { sunny: 0, "clear-night": 0, windy: 0.25, "windy-variant": 0.5, partlycloudy: 0.45, cloudy: 0.8, fog: 0.9, rainy: 0.9, pouring: 1, "lightning-rainy": 1, lightning: 0.95, snowy: 0.9, "snowy-rainy": 0.95, hail: 1, exceptional: 0.6 };
-    const cloud = o.sky === "live" && WXC[w] !== undefined ? WXC[w] : o.sky === "live" ? 0.15 : 0.12, rain = ["rainy", "pouring", "lightning-rainy", "hail"].includes(w) && o.sky === "live", snow = ["snowy", "snowy-rainy"].includes(w) && o.sky === "live";
-    return { elev: Math.max(-90, Math.min(90, elev)), az: ((az % 360) + 360) % 360, cloud, rain, snow, fog: w === "fog" && o.sky === "live" };
-  }
-  _h3dSkyCss(o) {
-    const st = this._h3dSkyState(o), e = st.elev;
-    const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t)), css = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a === undefined ? 1 : a})`;
-    // [sun height, top of the sky, middle, near the ground]
-    const K = [[-14, "#04060d", "#070c1c", "#0d1630"], [-6, "#0b1230", "#1b2250", "#3a3c6e"], [-1, "#1c2a5e", "#4d4a86", "#d9784f"], [5, "#2c4f93", "#7d86b8", "#f0b27a"], [16, "#2b63ad", "#6fa0d4", "#bcd8ee"], [40, "#1f58a6", "#5b97d6", "#a9cdee"]];
+  /* the backdrop behind the house: a plain soft studio colour, like a photographer's paper. Warm cream by day, slate blue at night, in between at dusk; it follows the real sun unless the hour switch or the setting says otherwise */
+  _h3dBack(o) {
+    const S = (this._h && this._h.states) || {}, sun = S["sun.sun"], hr = this._hour();
+    let e;
+    if (o.bg === "light") e = 40; else if (o.bg === "slate") e = -30; else if (o.bg === "dark") e = -60;
+    else if (hr === "day") e = 40; else if (hr === "night" || hr === "dusk") e = hr === "dusk" ? 2 : -30;
+    else if (sun && sun.attributes && Number.isFinite(+sun.attributes.elevation)) e = +sun.attributes.elevation;
+    else if (sun) e = sun.state === "below_horizon" ? -20 : 35;
+    else { const h = new Date().getHours() + new Date().getMinutes() / 60; e = Math.sin(((h - 6) / 12) * Math.PI) * 55; }
+    const K = [[-60, [38, 34, 33], [18, 16, 16]], [-14, [66, 73, 104], [32, 36, 58]], [-3, [112, 98, 128], [58, 52, 84]], [5, [243, 224, 202], [214, 188, 164]], [18, [242, 238, 228], [222, 214, 200]]];
     let i = 0; while (i < K.length - 2 && e > K[i + 1][0]) i++;
-    const a = K[i], b = K[Math.min(i + 1, K.length - 1)], t = e <= K[0][0] ? 0 : e >= K[K.length - 1][0] ? 1 : Math.max(0, Math.min(1, (e - a[0]) / (b[0] - a[0] || 1)));
-    let c = [1, 2, 3].map((j) => mix(hex(a[j]), hex(b[j]), t));
-    const grey = e > -6 ? [112, 122, 136] : [24, 28, 38], dim = st.cloud * 0.62;   // clouds take the colour out of the sky
-    c = c.map((x) => mix(x, grey, dim));
-    const day = Math.max(0, Math.min(1, (e + 6) / 14)), night = 1 - day;
-    const L = [];
-    if (o.bg === "studio") {   // a dark studio like the ASNO home: a deep violet-navy void with soft glows; the hour only shifts its tint
-      const w = Math.max(0, Math.min(1, (e + 8) / 22)), n = 1 - w, mx = (A, B) => mix(A, B, w), ca = mx([9, 7, 18], [20, 28, 52]), cb = mx([5, 4, 11], [10, 14, 30]);
-      const warm = mx([40, 28, 70], [60, 96, 150]), cool = mx([14, 40, 70], [30, 110, 150]);
-      const sl = [`radial-gradient(ellipse 60% 46% at 50% 54%, ${css(ca, 1)} 0, transparent 100%)`, `radial-gradient(ellipse 46% 40% at 12% 94%, ${css(cool, 0.5)} 0, transparent 100%)`, `radial-gradient(ellipse 44% 38% at 90% 10%, ${css(warm, 0.55)} 0, transparent 100%)`, `radial-gradient(ellipse 36% 30% at 86% 92%, ${css(mix([70, 36, 80], [90, 60, 40], w), 0.28)} 0, transparent 100%)`];
-      if (o.stars !== false && n > 0.4) [[9, 14], [22, 33], [34, 10], [47, 22], [61, 8], [74, 26], [88, 12], [93, 40], [14, 62], [81, 70]].forEach(([x, y], q) => sl.push(`radial-gradient(1px 1px at ${x}% ${y}%, rgba(190,200,255,${(0.18 + (q % 3) * 0.1) * n}) 0, transparent 100%)`));
-      sl.push(`linear-gradient(180deg, ${css(cb)} 0%, ${css(mix(cb, ca, 0.5))} 100%)`);
-      return { bg: sl.join(", "), key: `st${Math.round(e / 3)}|${o.stars}` };
-    }
-    if (o.ground !== false && this._gndOk !== false) return { bg: "none", key: "g" };   // the animated ground is drawn on its own canvas behind the house
-    const gx = Math.max(6, Math.min(94, 12 + ((st.az - 70) / 220) * 76));
-    if (o.sun_glow !== false && e > -4 && st.cloud < 0.95) {                 // the sun
-      const gy = Math.max(6, Math.min(96, 82 - e * 1.15)), k = (1 - st.cloud * 0.85) * Math.min(1, (e + 4) / 6), warm = e < 10 ? [255, 176, 96] : [255, 236, 190];
-      L.push(`radial-gradient(circle at ${gx.toFixed(1)}% ${gy.toFixed(1)}%, ${css([255, 250, 232], 0.95 * k)} 0, ${css(warm, 0.55 * k)} 2.4%, ${css(warm, 0.2 * k)} 11%, transparent 30%)`);
-    } else if (o.sun_glow !== false && e < -8 && st.cloud < 0.9) {            // the moon, opposite the sun
-      const mx = 100 - gx, my = Math.max(12, 42 + e * 0.1), k = (1 - st.cloud) * Math.min(1, (-e - 6) / 8);
-      L.push(`radial-gradient(circle at ${mx.toFixed(1)}% ${my.toFixed(1)}%, ${css([245, 247, 255], 0.95 * k)} 0, ${css([220, 230, 255], 0.5 * k)} 1.4%, ${css([180, 200, 255], 0.14 * k)} 5%, transparent 12%)`);
-    }
-    if (o.stars !== false && night > 0.25 && st.cloud < 0.85) {                // stars
-      const P = [[8, 12], [17, 30], [26, 9], [33, 22], [41, 6], [48, 27], [57, 11], [63, 33], [71, 8], [78, 24], [86, 13], [93, 31], [12, 46], [37, 40], [52, 44], [68, 48], [83, 42], [22, 58], [90, 55], [5, 28], [45, 16], [75, 36]];
-      P.forEach(([x, y], n) => L.push(`radial-gradient(${n % 3 ? 1 : 1.6}px ${n % 3 ? 1 : 1.6}px at ${x}% ${y}%, rgba(255,255,255,${(0.35 + (n % 4) * 0.12) * night * (1 - st.cloud)}) 0, transparent 100%)`));
-    }
-    if (o.clouds !== false && st.cloud > 0.12) {                               // soft cloud banks
-      const cc = e > -2 ? [255, 255, 255] : [150, 160, 190], al = (e > -2 ? 0.2 : 0.1) * st.cloud;
-      [[18, 22, 34, 9], [52, 14, 40, 8], [82, 26, 30, 9], [34, 42, 36, 7], [70, 46, 38, 7], [10, 55, 28, 6]].forEach(([x, y, w, h]) => L.push(`radial-gradient(ellipse ${w}% ${h}% at ${x}% ${y}%, ${css(cc, al)} 0, transparent 100%)`));
-    }
-    if (st.rain) L.push(`repeating-linear-gradient(105deg, rgba(190,210,235,${0.05 + st.cloud * 0.05}) 0 1px, transparent 1px 9px)`);
-    if (st.snow) L.push(`radial-gradient(2px 2px at 20% 30%, #fff8 0, transparent 100%), radial-gradient(2px 2px at 60% 20%, #fff8 0, transparent 100%), radial-gradient(2px 2px at 80% 60%, #fff8 0, transparent 100%), radial-gradient(2px 2px at 35% 70%, #fff8 0, transparent 100%)`);
-    if (o.haze !== false) L.push(`linear-gradient(0deg, ${css(mix(c[2], [255, 255, 255], 0.12), 0.5)} 0, transparent 38%)`);
-    L.push(`linear-gradient(180deg, ${css(c[0])} 0%, ${css(c[1])} 52%, ${css(c[2])} 100%)`);
-    return { bg: L.join(", "), key: `${Math.round(e * 2)}|${Math.round(st.az / 4)}|${st.cloud}|${st.rain}|${st.snow}|${o.sky}|${o.clouds}|${o.stars}|${o.haze}|${o.sun_glow}` };
+    const a = K[i], b = K[i + 1], t = Math.max(0, Math.min(1, (e - a[0]) / (b[0] - a[0])));
+    const mx = (p, q) => p.map((v, j) => Math.round(v + (q[j] - v) * t));
+    return { e, c: mx(a[1], b[1]), d: mx(a[2], b[2]), light: o.bg === "dark" ? false : e > 1.5 };
   }
-  /* put the realism around one 3D card; true when it could be done (the card builds its view a moment after it is placed) */
-  _h3dReal(el, force) {
+  /* put the backdrop (and the soft shadow under the house) around one 3D card; true once the card has built its view */
+  _h3dBackFor(el, force) {
     if (!el || !el.shadowRoot) return false;
     const stage = this._h3dDq(el.shadowRoot, ".fp3d-stage");
     if (!stage) return false;
     const root = stage.getRootNode(), o = this._h3d();
-    let css = "";
-    let key = "";
-    if (o.bg === "studio" || (o.sky && o.sky !== "off") || (o.ground !== false && this._gndOk !== false)) { const s = this._h3dSkyCss(o); key += s.key; css += s.key === "g" ? `.fp3d-stage{background:none!important}` : `.fp3d-stage{background:${s.bg}!important;transition:background 3s}`; }
-    if (o.shadow === "soft" || o.shadow === "strong") { key += "|sh" + o.shadow; css += `.fp3d-stage:not(.fp3d-low) canvas.fp3d-canvas{filter:drop-shadow(0 ${o.shadow === "strong" ? 26 : 16}px ${o.shadow === "strong" ? 28 : 20}px rgba(0,0,0,${o.shadow === "strong" ? 0.62 : 0.42}))}`; }
-    if (o.vignette) { key += "|vg"; css += `.fp3d-stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 46%,transparent 52%,rgba(0,0,0,.5) 100%)}`; }
+    let css = "", key = "";
+    if (o.bg !== "native") {
+      const k = this._h3dBack(o), q = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+      key = `${k.c}|${k.d}|${k.light}`;
+      css = `.fp3d-stage{background:radial-gradient(ellipse 80% 72% at 50% 46%,${q(k.c)} 0%,${q(k.c.map((v, j) => Math.round((v + k.d[j]) / 2)))} 58%,${q(k.d)} 100%)!important;transition:background 2.5s}`
+        + `.fp3d-stage::before,.fp3d-stage::after{background:none!important;background-image:none!important;box-shadow:none!important}`
+        + `.fp3d-stage:not(.fp3d-low) canvas.fp3d-canvas{filter:drop-shadow(0 14px 18px rgba(${k.light ? "70,50,30,.34" : "0,0,0,.42"}))}`;
+    }
     if (!force && el._qreal === key && el._qrealRoot === root) return true;
-    let s = root.querySelector("style[data-quint-real]");
-    if (!s) { s = document.createElement("style"); s.setAttribute("data-quint-real", "1"); root.appendChild(s); }
-    s.textContent = css; el._qreal = key; el._qrealRoot = root;
+    let st = root.querySelector("style[data-quint-back]");
+    if (!st) { st = document.createElement("style"); st.setAttribute("data-quint-back", "1"); root.appendChild(st); }
+    st.textContent = css; el._qreal = key; el._qrealRoot = root;
     return true;
   }
-  /* ---------- the live ground: one WebGL canvas behind each 3D house ---------- */
-  _gndSync() {
-    const R = this.shadowRoot; if (!R || !this._h) return;
-    const o = this._h3d(), want = o.ground !== false && this._gndOk !== false;
-    R.querySelectorAll('[data-lv^="house:"]').forEach((h) => {
-      if (h.dataset.lv === "house:edit") return;
-      const cv = h.querySelector(":scope > canvas.gnd");
-      if (want && !cv && h.querySelector("neonplan3d-card")) { const n = document.createElement("canvas"); n.className = "gnd"; h.insertBefore(n, h.firstChild); }
-      else if (!want && cv) { cv.remove(); }
-    });
-    const have = !!R.querySelector("canvas.gnd");
-    if (have && !this._gndRaf) this._gndRaf = requestAnimationFrame((t) => this._gndFrame(t));
+  _h3dBackAll(force) {
+    Object.values(this._h3el || {}).forEach((el) => { if (el && el.isConnected && !this._h3dBackFor(el, force)) { clearTimeout(el._qrt); el._qrt = setTimeout(() => this._h3dBackFor(el, force), 700); } });
   }
-  _gndInit(cv) {
-    let gl = null; try { gl = cv.getContext("webgl", { antialias: false, alpha: false, powerPreference: "low-power" }); } catch (e) {}
-    if (!gl) return null;
-    const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
-    try {
-      const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, GND_VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, GND_FS)); gl.linkProgram(pr);
-      if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
-      const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-      gl.useProgram(pr); const loc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-      const U = {}; ["uRes", "uT", "uElev", "uAz", "uCloud", "uRain", "uWet", "uSnow", "uFog", "uLamp", "uWind", "uBird"].forEach((n) => (U[n] = gl.getUniformLocation(pr, n)));
-      return { gl, U };
-    } catch (e) { this._gndErr = (e && e.message) || String(e); return null; }
-  }
-  /* the real sun and weather, eased so a change (a new hour, rain starting) fades in instead of jumping */
-  _gndState(dt, now) {
-    const G = (this._gs = this._gs || { elev: null, az: 180, cloud: 0, rain: 0, wet: null, snow: 0, fog: 0, lamp: 0, wx: 0, wy: 0, t: 0 });
-    const o = this._h3d(), st = this._h3dSkyState({ ...o, sky: this._gDemo ? "live" : o.sky === "off" ? "live" : o.sky });
-    let te = st.elev, ta = st.az;
-    if (this._gDemo) {
-      const k = ((now - this._gDemo.t0) / 1000) / 30;
-      if (k >= 1) { this._gDemo = null; this._last = null; this._draw(true); }
-      else { const hr = k * 24; te = Math.sin(((hr - 6) / 12) * Math.PI) * 58; ta = 90 + ((hr - 6) / 12) * 180; const had = this._gDemo.elev > 4; this._gDemo.elev = te; if ((te > 4) !== had) { this._last = null; this._draw(true); } }
-    }
-    const P = this._fxParams(this._fxCond()), ease = (cur, tar, sp) => cur + (tar - cur) * Math.min(1, dt * sp);
-    if (G.elev === null) { G.elev = te; G.az = ta; }
-    const fast = this._gDemo ? 6 : 1.4;
-    G.elev = ease(G.elev, te, fast);
-    let da = ((ta - G.az + 540) % 360) - 180; G.az = (G.az + da * Math.min(1, dt * fast) + 360) % 360;
-    G.cloud = ease(G.cloud, Math.max(P.cloud, st.cloud > 0.2 ? st.cloud * 0.8 : 0), 0.5); G.rain = ease(G.rain, P.rain, 0.6); G.fog = ease(G.fog, P.fog, 0.4);
-    const boost = this._fxForce ? 25 : 1;
-    if (G.wet === null) G.wet = P.rain > 0 ? 0.55 : 0;
-    G.wet = P.rain > 0 ? Math.min(1, G.wet + (dt * P.rain * boost) / 420) : Math.max(0, G.wet - (dt * boost) / 900);
-    G.snow = P.snow > 0 ? Math.min(1, G.snow + (dt * P.snow * boost) / 300) : Math.max(0, G.snow - (dt * boost) / 700);
-    if (now - (G.lt || 0) > 2000) { G.lt = now; const S = (this._h && this._h.states) || {}; let n = 0; for (const k in S) if (k.startsWith("light.") && S[k].state === "on") n++; G.ltar = Math.min(1, n / 5); }
-    G.lamp = ease(G.lamp, G.ltar || 0, 1.2);
-    // a small flock crosses now and then on calm days: a pass takes about 22 seconds
-    const calm = G.elev > 8 && G.cloud < 0.75 && G.rain < 0.15 && G.fog < 0.3;
-    if (G.bp === undefined) { G.bp = -1; G.ba = 0.4; G.bo = 0; G.bn = now + 4000; }
-    if (G.bp >= 0) { G.bp += dt / 22; if (G.bp > 1) { G.bp = -1; G.bn = now + (this._gDemo ? 7000 : 40000 + Math.random() * 50000); } }
-    else if (calm && now > G.bn) { G.bp = 0; G.ba = (Math.random() < 0.5 ? 0.35 : Math.PI - 0.35) + (Math.random() - 0.5) * 0.5; G.bo = (Math.random() - 0.5) * 10; }
-    // wind: the cloud shadows drift the way the wind blows
-    const wid = Object.keys((this._h && this._h.states) || {}).find((i) => i.startsWith("weather.")), wa = wid ? this._h.states[wid].attributes || {} : {};
-    const br = ((Number.isFinite(+wa.wind_bearing) ? +wa.wind_bearing : 250) * Math.PI) / 180, sp = 0.05 + Math.min(40, Number.isFinite(+wa.wind_speed) ? +wa.wind_speed : 8) / 600 + P.wind * 0.04;
-    G.wx = -Math.sin(br) * sp; G.wy = -Math.cos(br) * sp;
-    return G;
-  }
-  _gndFrame(t) {
-    this._gndRaf = 0;
-    if (!this.isConnected) return;
-    const R = this.shadowRoot, cvs = [...R.querySelectorAll("canvas.gnd")];
-    if (!cvs.length) return;
-    let still = false; try { still = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) {}
-    const gap = still ? 1000 : this._gDemo ? 33 : 50;
-    if (!document.hidden && t - (this._gndL || 0) > gap) {
-      const dt = Math.min(0.2, (t - (this._gndL || t - 50)) / 1000); this._gndL = t;
-      let G; try { G = this._gndState(dt, t); } catch (e) { G = null; }
-      if (G) { G.t += dt; cvs.forEach((cv) => this._gndDraw(cv, G)); }
-    }
-    if (this._gndOk === false) { R.querySelectorAll("canvas.gnd").forEach((c) => c.remove()); this._h3dRealAll(true); return; }
-    this._gndRaf = requestAnimationFrame((n) => this._gndFrame(n));
-  }
-  _gndDraw(cv, G) {
-    const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
-    if (!cv._g) {
-      cv._g = this._gndInit(cv);
-      if (!cv._g) { this._gndOk = false; return; }
-      cv.addEventListener("webglcontextlost", (e) => { e.preventDefault(); cv._g = null; cv._lost = true; });
-    }
-    const q = Math.min(this._h3d().quality === "low" ? 0.4 : 0.8, 1000 / Math.max(w, h)), W = Math.max(160, Math.round(w * q)), H = Math.max(120, Math.round(h * q));
-    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-    const { gl, U } = cv._g; gl.viewport(0, 0, W, H);
-    gl.uniform2f(U.uRes, W, H); gl.uniform1f(U.uT, G.t); gl.uniform1f(U.uElev, G.elev); gl.uniform1f(U.uAz, G.az); gl.uniform1f(U.uCloud, G.cloud);
-    gl.uniform1f(U.uRain, G.rain); gl.uniform1f(U.uWet, G.wet); gl.uniform1f(U.uSnow, G.snow); gl.uniform1f(U.uFog, G.fog); gl.uniform1f(U.uLamp, G.lamp);
-    gl.uniform2f(U.uWind, G.wx, G.wy); gl.uniform3f(U.uBird, G.bp, G.ba, G.bo); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  }
-  _h3dRealAll(force) {
-    Object.values(this._h3el || {}).forEach((el) => { if (el && el.isConnected && !this._h3dReal(el, force)) { clearTimeout(el._qrt); el._qrt = setTimeout(() => this._h3dReal(el, force), 900); } });
-  }
-  _h3dRealTick() { const t = Date.now(); if (t - (this._h3rt || 0) > 60000) { this._h3rt = t; this._h3dRealAll(false); } }
+  _h3dBackTick() { const t = Date.now(); if (t - (this._h3bt || 0) > 30000) { this._h3bt = t; this._h3dBackAll(false); } }
+  _h3dDq(root, sel) { const f = root.querySelector(sel); if (f) return f; for (const e of root.querySelectorAll("*")) { if (e.shadowRoot) { const r = this._h3dDq(e.shadowRoot, sel); if (r) return r; } } return null; }
   /* ---------- auto house: the floors and rooms of the dashboard become a plan with walls, doors, windows and furniture ---------- */
   _autoLoad() {
     if (this._amP) return this._amP;
@@ -3952,20 +3586,13 @@ class QuintDashboard extends HTMLElement {
           row("3D editor and Quinteca settings", "draw floors, rooms, walls, doors, windows, furniture and roof, place and link lamps, blinds, cameras and every other device, packs, voice, locating, backup and the rest of Quinteca 3D", `<button class="sbtn pri2" data-h3d="editor" ${inst ? "" : "disabled"}>Open the 3D editor</button>`) +
           row("Rooms linked to Quint", zones.length ? (lost.length ? "Not linked yet: " + E(lost.map((z) => z.name || z.id).join(", ")) + ". Give these rooms a Home Assistant area (or the same name as a Quint room) in the 3D editor." : "every room of the 3D plan opens its Quint room") : "draw your rooms in the 3D editor first", `<b>${zones.length - lost.length} of ${zones.length}</b>`) +
           row("Quint rooms", "the rooms Quint shows on the Rooms page", `<b>${rooms.length}</b>`)) +
-        sec("Realism", "a living picture around the house: the real sun, moon, stars and weather behind it, and a soft shadow under it",
-          row("Quick look", "Natural: sky, soft shadow and haze with the sharp Neon house. Cinema: darker, deeper shadow, vignette and a clean view. Plain: all of this off", `<div class="seg sm" style="flex-wrap:wrap"><button data-s="h3d|preset|natural">Natural</button><button data-s="h3d|preset|cinema">Cinema</button><button data-s="h3d|preset|clean">Plain</button></div>`) +
-          row("Background", "Studio: a dark, calm space around the house (like a showroom), its tint follows the hour. Live ground: paving, lawn and trees lit by the real sun and moon, with cloud shadows, wet stone, rain, snow, birds and warm window light at night. Sky: the real sky behind the house", sg("bg", ["Studio", "Live ground", "Sky"])) +
-          row("Sky and hour", "Live follows the real sun and your weather entity. Day, Dusk and Night show a fixed time, to try it", sg("sky", ["Off", "Live", "Day", "Dusk", "Night"])) +
-          (o.bg === "sky" && o.sky && o.sky !== "off" ? row("Sun and moon", "a glow where the sun or moon really is (east left, west right)", B("sun_glow")) + row("Clouds and rain", "clouds, rain and snow when the weather says so", B("clouds")) + row("Stars", "at night, when it is clear", B("stars")) + row("Haze at the horizon", "a soft mist near the ground", B("haze")) : "") +
-          row("Shadow under the house", "a soft shadow on the ground (off on weak tablets: the card then uses its low quality)", sg("shadow", ["Off", "Soft", "Strong"])) +
-          row("Vignette", "the corners fade to dark, like a photograph", B("vignette")) +
-          `<div class="lbl" style="padding:8px 4px">The house itself is drawn by the 3D engine in its own style (Neon, Blueprint or Day in “Look”); the sky shows best with the Neon look. High quality gives sharper edges and light.</div>`) +
         sec("Look", "how the house is drawn",
           row("Theme", "Auto is day while the sun is up and neon after sunset", sg("theme", ["Auto", "Neon", "Blueprint", "Day"])) +
           row("Accent colour", "for the neon look and its chips", `<input type="color" value="${/^#[0-9a-f]{6}$/i.test(o.accent) ? o.accent : "#00e5ff"}" data-h3acc="1" style="width:56px;height:40px;padding:2px">${o.accent ? '<button class="sbtn" data-s="h3d|accent|">Standard</button>' : ""}`) +
+          row("Background", "a plain soft backdrop behind the house. Auto follows the real sun: warm cream by day, slate blue at night. Native is Quinteca's own starry view", sg("bg", ["Auto", "Light", "Slate", "Dark", "Native"])) +
           row("Picture quality", "Auto picks a light level on weak tablets", sg("quality", ["Auto", "Low", "High"])) +
           row("Colourful house", "wood and tile floors, coloured walls and furniture, still see-through. Off gives Quinteca's own colours", B("color")) +
-          (o.color ? row("Colours", "Cinema: deep walnut and slate-blue rooms with navy bedding and grey-blue sofas. Bright: sunny warm colours", sg("look", ["Cinema", "Bright"])) : "") +
+          (o.color ? row("Colours", "Auto: soft cream and light oak on a light backdrop, deep slate and walnut on a dark one. Soft, Cinema (deep walnut, slate blue, navy bedding) and Bright (sunny colours) fix one", sg("look", ["Auto", "Soft", "Cinema", "Bright"])) : "") +
           row("Roof", "show the roof on the house", B("roof")) +
           row("Roof fades when you zoom in", "off keeps the roof on the house", B("roof_fade")) +
           row("Walls", "tall walls, or cut low so you can look into the rooms", sg("walls", ["Tall", "Cut"])) +
@@ -4269,7 +3896,7 @@ class QuintDashboard extends HTMLElement {
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
     const html = `<div class="bgl"><i></i></div><div class="app${p === "h3edit" ? " ed" : ""}${p === "home" && this._h3dImm() ? " imm" : ""}${p === "home" && this._h3dPImm() ? " pim" : ""}">${phone ? pbar : `<button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button>`}<main class="${changed ? "anim" : ""}">${body}</main>${phone ? "" : `<nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav>`}</div>${more}${this._dialog()}${this._scDialog()}${this._persDialog()}${this._ntfPanel()}${this._camView()}`;
-    if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); Object.values(this._h3el || {}).forEach((e) => (e.hass = this._h)); if (this._h3panel) this._h3panel.hass = this._h; if (this._h3dNeedsFit()) this._mountLv(); this._h3dRealTick(); return; }
+    if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); Object.values(this._h3el || {}).forEach((e) => (e.hass = this._h)); if (this._h3panel) this._h3panel.hass = this._h; if (this._h3dNeedsFit()) this._mountLv(); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
     tpl.innerHTML = html.replaceAll("@@T@@", this._time()).replaceAll("@@C@@", this._clockHtml());
