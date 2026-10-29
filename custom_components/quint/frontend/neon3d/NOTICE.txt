@@ -4,3 +4,7 @@ copyright notice stays in LICENSE.
 
 Quint v1.43.0 patched neonplan3d-3d.js so floors, walls and furniture can take colours from
 globalThis.__qcol (set by the Quint panel). Without it the file draws exactly as before.
+
+Quint v1.48.0 also patched the themed material shader (function Qe) so, when globalThis.__qcol.real is set,
+the light look draws terracotta roof tiles, wood-plank and tile floors, soft wall shading and fine outlines.
+Without it the file draws as before.
