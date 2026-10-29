@@ -31,6 +31,43 @@ FRONTEND = Path(__file__).parent / "frontend" / "neon3d"
 MAIN_BUNDLE = "neonplan3d.js"
 
 
+BUILTIN = Path(__file__).parent / "neon3d" / "builtin"
+
+
+def _read_builtin() -> list[str]:
+    """The furniture packs that come with Quint (signed with Quint's key), as file texts."""
+    try:
+        return [f.read_text(encoding="utf-8") for f in sorted(BUILTIN.glob("*.json"))]
+    except OSError:
+        return []
+
+
+async def _install_builtin(hass: HomeAssistant, data: Any) -> None:
+    """Install Quint's own furniture packs: once per release, so a pack an admin removed stays removed until
+    a newer release of it ships. Never stops the start."""
+    from homeassistant.helpers.storage import Store
+
+    from .neon3d.packs import PackError, parts_of, verify_pack
+
+    store = Store[dict[str, Any]](hass, 1, "quint_builtin_packs")
+    seen: dict[str, int] = dict((await store.async_load()) or {})
+    changed = False
+    for text in await hass.async_add_executor_job(_read_builtin):
+        try:
+            payload = verify_pack(text)
+        except PackError as err:
+            _LOGGER.warning("A furniture pack that comes with Quint was not accepted: %s", err)
+            continue
+        release = int(payload.get("release") or 1)
+        if seen.get(payload["id"], 0) >= release:
+            continue
+        await data.async_add_pack(payload, parts_of(text))
+        seen[payload["id"]] = release
+        changed = True
+    if changed:
+        await store.async_save(seen)
+
+
 def _bundle_hash() -> str:
     try:
         return hashlib.sha256((FRONTEND / MAIN_BUNDLE).read_bytes()).hexdigest()[:10]
@@ -66,6 +103,10 @@ async def async_setup_neon(hass: HomeAssistant, entry: ConfigEntry) -> dict[str,
         data = FloorplanData(hass)
         await data.async_load()
         hass.data[NEON_DOMAIN] = data
+        try:
+            await _install_builtin(hass, data)
+        except Exception:  # noqa: BLE001 - furniture is a bonus; the house must start
+            _LOGGER.exception("Quint's furniture pack could not be installed")
 
         # with a shop key, bought packs are checked for updates once a day (never needed for what is installed)
         async def _check(_now) -> None:

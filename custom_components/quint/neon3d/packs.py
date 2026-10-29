@@ -32,10 +32,18 @@ PACK_PUBLIC_KEYS: dict[str, str] = {
     "867371cc70e6": "uP74xZzFJ2yysjdIZVq5q9G/yn5hVX4HJ6wHv7pqqwo=",
     # Mastershort Möbel-Studio (signs customers' own furniture on api.mastershort.de; limited, see STUDIO_KEYS)
     "bdac241ae58b": "+oU/fcdvK7sfvpmz/aq63Y1QIymqK5+pKYGrGksrco8=",
+    # Quint (signs the furniture that comes with Quint; limited, see QUINT_KEYS)
+    "20d56b39284a": "gAhIk/QTw1sYAYvoDAe8jDWtqc9dHK2vR9gN580Apns=",
 }
 # keys that may only sign furniture of their own: "studio.*" packs without Pro features (a leaked studio key
 # cannot unlock anything)
 STUDIO_KEYS = {"bdac241ae58b"}
+# Quint's own key: "quint.*" furniture packs only, no Pro features and no code
+QUINT_KEYS = {"20d56b39284a"}
+# Furniture a user imports from a file without a publisher's signature (Quint): pack ids "own.*", furniture only
+# (no Pro features, no module code), so nothing that has to be trusted can arrive this way
+OWN_KEY = "own"
+OWN_PREFIX = "own."
 
 _ID = vol.All(str, vol.Match(r"^[a-z0-9][a-z0-9_.-]{0,39}$"))
 _TEXT = vol.All(str, vol.Length(min=1, max=80))
@@ -294,6 +302,16 @@ def verify_pack(text: str, keys: dict[str, str] | None = None, instance: str | N
         or not isinstance(signature.get("sig"), str)
     ):
         raise PackError("unsigned")
+    if signature["key"] == OWN_KEY:
+        # unsigned furniture of the user's own: checked like any pack, but it can only be furniture
+        payload = validate_payload(data["payload"])
+        if not str(payload["id"]).startswith(OWN_PREFIX) or payload["features"] or payload.get("module"):
+            raise PackError(
+                "invalid_content", f"own furniture needs a pack id starting with {OWN_PREFIX} and no features or code"
+            )
+        if not payload["items"]:
+            raise PackError("invalid_content", "a pack needs items")
+        return payload
     public = keys.get(signature["key"])
     if public is None:
         raise PackError("unknown_publisher")
@@ -308,6 +326,12 @@ def verify_pack(text: str, keys: dict[str, str] | None = None, instance: str | N
         not str(payload["id"]).startswith("studio.") or payload["features"] or payload.get("module")
     ):
         raise PackError("bad_signature", "the studio key signs studio furniture only")
+    if signature["key"] in QUINT_KEYS and (
+        not str(payload["id"]).startswith("quint.") or payload["features"] or payload.get("module")
+    ):
+        raise PackError("bad_signature", "the Quint key signs Quint furniture only")
+    if str(payload["id"]).startswith(OWN_PREFIX):
+        raise PackError("bad_signature", "own. ids are reserved for unsigned furniture")
     if instance is not None and payload["instance"] is not None and payload["instance"] != instance:
         raise PackError("wrong_instance", "the pack is bound to another installation")
     return payload

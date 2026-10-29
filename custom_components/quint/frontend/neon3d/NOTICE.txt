@@ -8,3 +8,10 @@ globalThis.__qcol (set by the Quint panel). Without it the file draws exactly as
 Quint v1.48.0 also patched the themed material shader (function Qe) so, when globalThis.__qcol.real is set,
 the light look draws terracotta roof tiles, wood-plank and tile floors, soft wall shading and fine outlines.
 Without it the file draws as before.
+
+Quint v1.49.0 changed neonplan3d.js (the "Extensions" tab and the shop gift pop-up were removed) and
+neonplan3d-editor.js (the page behind "Import" now only imports furniture packs, modules and 3D models; the
+teaser under the furniture library points to it). quint-models.js is new Quint code (converts GLB/GLTF/OBJ/STL
+files into furniture parts in the browser). neon3d/builtin/quint.furniture.json is a furniture pack made by
+Quint and signed with Quint's own key (see PACK_PUBLIC_KEYS in packs.py); packs.py also accepts unsigned
+furniture of the user's own ("own.*" ids: furniture only, no Pro features, no code).

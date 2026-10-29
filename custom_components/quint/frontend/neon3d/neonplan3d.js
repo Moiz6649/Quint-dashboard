@@ -3499,9 +3499,6 @@ background:#0b1120f2;color:#e6f7ff;border:1px solid #37e0ff66;border-radius:12px
           ${this.isAdmin?b`<div class="fp3d-seg" role="tablist">
                 <button role="tab" aria-pressed=${this._mode==="view"} @click=${()=>this.setMode("view")}>${this.t("view")}</button>
                 <button role="tab" aria-pressed=${this._mode==="editor"} @click=${()=>this.setMode("editor")}>${this.t("editor")}</button>
-                <button role="tab" class="fp3d-tab-ext" aria-pressed=${this._mode==="extensions"} @click=${()=>this.setMode("extensions")}>
-                  ✦ ${this.t("ext_tab")}${this._readyPacks?b`<span class="fp3d-badge" title=${this.t("ext_badge_ready_hint")}>⬇ ${this.t("ext_badge_ready",{n:this._readyPacks})}</span>`:this._newOffers?b`<span class="fp3d-badge" title=${this.t("offers_dot")}>${this.t("ext_badge_new",{n:this._newOffers})}</span>`:k}
-                </button>
               </div>`:k}
           <span class="fp3d-grow"></span>
           ${this._mode==="view"&&e?.floors.some(t=>t.rooms.length)?b`<button
@@ -3619,7 +3616,7 @@ background:#0b1120f2;color:#e6f7ff;border:1px solid #37e0ff66;border-radius:12px
         ${e?this._mode==="editor"&&this.isAdmin?this.renderEditor(e):this._mode==="extensions"&&this.isAdmin?this.renderExtensions():this.renderView(e):k}
         ${this.renderGift()}
       </div>
-    `}renderGift(){let e="fun_gifts_2026";if(!this.isAdmin||this._giftLater||this._shopConnected===null||!this.data.packsLoaded||Cr.includes("fun_halloween")||B("fun_halloween")&&B("fun_pets"))return k;try{if(localStorage.getItem(`neonplan3d.news.${e}`)==="never")return k}catch{}let n=()=>{try{localStorage.setItem(`neonplan3d.news.${e}`,"never")}catch{}this._giftLater=!0},t=this._shopConnected;return b`<div class="fp3d-gift-veil" @click=${i=>i.target===i.currentTarget&&(this._giftLater=!0)}>
+    `}renderGift(){return k;let e="fun_gifts_2026";if(!this.isAdmin||this._giftLater||this._shopConnected===null||!this.data.packsLoaded||Cr.includes("fun_halloween")||B("fun_halloween")&&B("fun_pets"))return k;try{if(localStorage.getItem(`neonplan3d.news.${e}`)==="never")return k}catch{}let n=()=>{try{localStorage.setItem(`neonplan3d.news.${e}`,"never")}catch{}this._giftLater=!0},t=this._shopConnected;return b`<div class="fp3d-gift-veil" @click=${i=>i.target===i.currentTarget&&(this._giftLater=!0)}>
       <div class="fp3d-gift" role="dialog" aria-label=${this.t(t?"gift_title":"gift_title_free")}>
         <div class="fp3d-gift-pic">🎃 👻 🐱 🐶</div>
         <h3>${this.t(t?"gift_title":"gift_title_free")}</h3>

@@ -477,7 +477,110 @@ var si=globalThis,ri=si.ShadowRoot&&(si.ShadyCSS===void 0||si.ShadyCSS.nativeSha
         border-radius: 8px;
         cursor: pointer;
       }
-    `]};customElements.get("fp3d-library")||customElements.define("fp3d-library",qs);function Ht(a,e){if(!kt(e))return nt(a,`furn_${e}`);let t=fe(e);return t?ot(t,a?.language??navigator.language):nt(a,"pack_missing_item")}var Xs=class extends Re{static properties={hass:{attribute:!1},packs:{attribute:!1},building:{attribute:!1},_packMsg:{state:!0},_moduleMsg:{state:!0},_review:{state:!0},_license:{state:!0},_licenseKey:{state:!0},_licenseBusy:{state:!0},_licenseMsg:{state:!0},_open:{state:!0},_nlState:{state:!0}};licenseLoading=!1;freshUpdates=null;constructor(){super(),this._packMsg=null,this._moduleMsg=null,this._review=null,this._license=null,this._licenseKey="",this._licenseBusy=null,this._licenseMsg=null;let e=[];try{e=JSON.parse(localStorage.getItem("neonplan3d.ext.open")??"[]")}catch{}this._open=new Set(e);let t=null;try{t=localStorage.getItem("neonplan3d.ext.newsletter")}catch{}this._nlState=t==="hidden"||t==="opened"?t:"show"}setNewsletter(e){this._nlState=e;try{localStorage.setItem("neonplan3d.ext.newsletter",e)}catch{}}renderNewsletter(){let e=this._license?.active?this._license.newsletter:null;return!e||this._nlState==="hidden"?v:m`<section class="fp3d-ext-card fp3d-offers">
+    `]};customElements.get("fp3d-library")||customElements.define("fp3d-library",qs);function Ht(a,e){if(!kt(e))return nt(a,`furn_${e}`);let t=fe(e);return t?ot(t,a?.language??navigator.language):nt(a,"pack_missing_item")}var QIMP={en:{
+imp_title:"Import",
+imp_intro:"Add furniture packs, your own 3D models and modules to Quinteca 3D. Imported furniture then shows up in the Furniture library of the editor.",
+packs_title:"Furniture",
+pack_btn:"Import furniture …",
+pack_hint:"Furniture packs come as .fp3dpack or .json files. A pack signed by its publisher is checked and installed as it is; an unsigned pack (for example one you built yourself) is kept as your own furniture under the id own.… – only furniture, no code and no Pro features.",
+mod_btn:"Import a module …",
+mod_hint:"Modules are .fp3dpack files with code, signed by their publisher. After the import an admin has to read and approve the code before it runs.",
+mdl_title:"3D models",
+mdl_intro:"Choose a 3D model (.glb, .gltf, .obj or .stl – with an .obj you can add its .mtl). Quinteca rebuilds it from up to 56 coloured blocks and adds it to your furniture library. Everything happens in your browser; the file is not uploaded.",
+mdl_pick:"Choose 3D model …",
+mdl_name:"Name",
+mdl_height:"Height (m)",
+mdl_detail:"Detail",
+mdl_detail_1:"Low",
+mdl_detail_2:"Medium",
+mdl_detail_3:"High",
+mdl_up:"Top of the model",
+mdl_up_y:"Y axis (usual)",
+mdl_up_z:"Z axis (CAD, STL)",
+mdl_turn:"Front",
+mdl_turn_0:"as in the file",
+mdl_turn_90:"turned 90°",
+mdl_turn_180:"turned 180°",
+mdl_turn_270:"turned 270°",
+mdl_group:"Category",
+mdl_info:"{w} × {d} × {h} m · {n} blocks · {c} colours",
+mdl_busy:"Building …",
+mdl_add:"Add to library",
+mdl_cancel:"Cancel",
+mdl_saved:"“{name}” is in your furniture library now (category and room filters work as for any piece).",
+mdl_list:"Your imported models",
+mdl_remove:"Remove",
+mdl_remove_confirm:"Remove this model from your library? Pieces already placed in the plan stay as plain boxes.",
+mdl_hint:"The model is an approximation made of boxes, not the original mesh. Textures are sampled for the colours; compressed (Draco) models are not supported.",
+mdl_pack_name:"My 3D models",
+mdl_pack_desc:"3D models imported into Quinteca 3D.",
+mdl_err_unsupported_type:"Please choose a .glb, .gltf, .obj or .stl file.",
+mdl_err_not_a_model:"That file could not be read as a 3D model.",
+mdl_err_too_large:"The file is too large (80 MB at most).",
+mdl_err_compressed:"This model uses mesh compression (Draco/Meshopt). Export it again without compression.",
+mdl_err_external_buffer:"This .gltf needs the separate file {detail}. Select it together with the .gltf, or use a .glb.",
+mdl_err_unsupported:"Not supported: {detail}",
+mdl_err_empty:"The model has no surface to build from.",
+mdl_err_too_complex:"The model is too complex to rebuild from blocks. Try lower detail.",
+mdl_err_other:"Import failed: {detail}",
+mdl_full:"The library for your own models is full (200 pieces).",
+teaser_title:"Import furniture, 3D models and modules",
+teaser_text:"Add your own furniture packs, convert a 3D model into furniture or install a module.",
+teaser_btn:"Import …",
+grp_deco:"Decoration",grp_seating:"Seating",grp_sofa:"Sofa",grp_table:"Table",grp_storage:"Storage",grp_bed:"Bed",grp_kitchen:"Kitchen",grp_appliance:"Appliance",grp_lamp:"Lamp",grp_plant:"Plant",grp_outdoor:"Outdoor",grp_household:"Household",grp_media:"Media",grp_office:"Office",grp_kids:"Kids",grp_sport:"Sport",grp_pets:"Pets"
+},de:{
+imp_title:"Import",
+imp_intro:"Füge Möbel-Packs, eigene 3D-Modelle und Module zu Quinteca 3D hinzu. Importierte Möbel erscheinen danach in der Möbel-Bibliothek des Editors.",
+packs_title:"Möbel",
+pack_btn:"Möbel importieren …",
+pack_hint:"Möbel-Packs sind .fp3dpack- oder .json-Dateien. Ein vom Herausgeber signiertes Pack wird geprüft und so installiert; ein unsigniertes (z. B. selbst gebaut) bleibt als eigene Möbel unter der Kennung own.… – nur Möbel, kein Code und keine Pro-Funktionen.",
+mod_btn:"Modul importieren …",
+mod_hint:"Module sind .fp3dpack-Dateien mit Code, vom Herausgeber signiert. Nach dem Import muss ein Admin den Code lesen und freigeben, bevor er läuft.",
+mdl_title:"3D-Modelle",
+mdl_intro:"Wähle ein 3D-Modell (.glb, .gltf, .obj oder .stl – bei .obj kannst du die .mtl dazunehmen). Quinteca baut es aus bis zu 56 farbigen Blöcken nach und legt es in deine Möbel-Bibliothek. Alles passiert im Browser; die Datei wird nicht hochgeladen.",
+mdl_pick:"3D-Modell wählen …",
+mdl_name:"Name",
+mdl_height:"Höhe (m)",
+mdl_detail:"Detail",
+mdl_detail_1:"Niedrig",
+mdl_detail_2:"Mittel",
+mdl_detail_3:"Hoch",
+mdl_up:"Oben am Modell",
+mdl_up_y:"Y-Achse (üblich)",
+mdl_up_z:"Z-Achse (CAD, STL)",
+mdl_turn:"Vorderseite",
+mdl_turn_0:"wie in der Datei",
+mdl_turn_90:"90° gedreht",
+mdl_turn_180:"180° gedreht",
+mdl_turn_270:"270° gedreht",
+mdl_group:"Kategorie",
+mdl_info:"{w} × {d} × {h} m · {n} Blöcke · {c} Farben",
+mdl_busy:"Wird gebaut …",
+mdl_add:"Zur Bibliothek hinzufügen",
+mdl_cancel:"Abbrechen",
+mdl_saved:"„{name}“ ist jetzt in deiner Möbel-Bibliothek (Kategorie und Raumfilter funktionieren wie bei jedem Stück).",
+mdl_list:"Deine importierten Modelle",
+mdl_remove:"Entfernen",
+mdl_remove_confirm:"Dieses Modell aus deiner Bibliothek entfernen? Schon im Plan platzierte Stücke bleiben als einfache Quader.",
+mdl_hint:"Das Modell ist eine Näherung aus Quadern, nicht das Original-Netz. Texturen werden für die Farben abgetastet; komprimierte (Draco-)Modelle werden nicht unterstützt.",
+mdl_pack_name:"Meine 3D-Modelle",
+mdl_pack_desc:"In Quinteca 3D importierte 3D-Modelle.",
+mdl_err_unsupported_type:"Bitte eine .glb-, .gltf-, .obj- oder .stl-Datei wählen.",
+mdl_err_not_a_model:"Diese Datei ließ sich nicht als 3D-Modell lesen.",
+mdl_err_too_large:"Die Datei ist zu groß (höchstens 80 MB).",
+mdl_err_compressed:"Dieses Modell nutzt Netz-Kompression (Draco/Meshopt). Exportiere es noch einmal ohne Kompression.",
+mdl_err_external_buffer:"Diese .gltf braucht die separate Datei {detail}. Wähle sie zusammen mit der .gltf aus oder nimm eine .glb.",
+mdl_err_unsupported:"Nicht unterstützt: {detail}",
+mdl_err_empty:"Das Modell hat keine Oberfläche zum Nachbauen.",
+mdl_err_too_complex:"Das Modell ist zu komplex, um es aus Blöcken nachzubauen. Versuche weniger Detail.",
+mdl_err_other:"Import fehlgeschlagen: {detail}",
+mdl_full:"Die Bibliothek für eigene Modelle ist voll (200 Stück).",
+teaser_title:"Möbel, 3D-Modelle und Module importieren",
+teaser_text:"Füge eigene Möbel-Packs hinzu, wandle ein 3D-Modell in ein Möbelstück um oder installiere ein Modul.",
+teaser_btn:"Importieren …",
+grp_deco:"Deko",grp_seating:"Sitzmöbel",grp_sofa:"Sofa",grp_table:"Tisch",grp_storage:"Schränke & Regale",grp_bed:"Bett",grp_kitchen:"Küche",grp_appliance:"Gerät",grp_lamp:"Lampe",grp_plant:"Pflanze",grp_outdoor:"Garten",grp_household:"Haushalt",grp_media:"Medien",grp_office:"Büro",grp_kids:"Kinder",grp_sport:"Sport",grp_pets:"Tiere"
+}};function Qmx(h,k,p){let l=String(h?.language??(typeof navigator<"u"?navigator.language:"en")??"en").toLowerCase().startsWith("de")?"de":"en",s=QIMP[l][k]??QIMP.en[k]??k;if(p)for(let x in p)s=s.split("{"+x+"}").join(String(p[x]));return s}
+var Xs=class extends Re{static properties={hass:{attribute:!1},packs:{attribute:!1},building:{attribute:!1},_packMsg:{state:!0},_moduleMsg:{state:!0},_review:{state:!0},_license:{state:!0},_licenseKey:{state:!0},_licenseBusy:{state:!0},_licenseMsg:{state:!0},_open:{state:!0},_nlState:{state:!0},_model:{state:!0},_modelMsg:{state:!0}};licenseLoading=!1;freshUpdates=null;constructor(){super(),this._model=null,this._modelMsg=null,this._packMsg=null,this._moduleMsg=null,this._review=null,this._license=null,this._licenseKey="",this._licenseBusy=null,this._licenseMsg=null;let e=[];try{e=JSON.parse(localStorage.getItem("neonplan3d.ext.open")??"[]")}catch{}this._open=new Set(e);let t=null;try{t=localStorage.getItem("neonplan3d.ext.newsletter")}catch{}this._nlState=t==="hidden"||t==="opened"?t:"show"}setNewsletter(e){this._nlState=e;try{localStorage.setItem("neonplan3d.ext.newsletter",e)}catch{}}renderNewsletter(){let e=this._license?.active?this._license.newsletter:null;return!e||this._nlState==="hidden"?v:m`<section class="fp3d-ext-card fp3d-offers">
       <h3>${this.t("nl_title")}</h3>
       ${this._nlState==="opened"?m`<p class="fp3d-sub">${this.t("nl_after",{button:this.t("license_refresh")})}</p>`:m`<p class="fp3d-sub">${this.t("nl_text")}</p>`}
       <div class="fp3d-actions">
@@ -493,37 +596,45 @@ var si=globalThis,ri=si.ShadowRoot&&(si.ShadyCSS===void 0||si.ShadyCSS.nativeSha
         ${n?v:m`<span class="fp3d-sub">–</span>`}
       </span>
       <span class="fp3d-sum-caret">${i?"\u25BE":"\u25B8"} ${this.t(i?"ext_hide_list":"ext_show_list")}</span>
-    </button>`}get isAdmin(){return this.hass?.user?.is_admin??!1}t(e,t){return nt(this.hass,e,t)}render(){let e=hs(this.packs??[]);return m`<div class="fp3d-ext">
+    </button>`}get isAdmin(){return this.hass?.user?.is_admin??!1}t(e,t){return nt(this.hass,e,t)}render(){let h=this.hass;return m`<div class="fp3d-ext">
       <header class="fp3d-ext-head">
-        <h2>${this.t("ext_title")}</h2>
-        <p class="fp3d-sub">${this.t("ext_intro")}</p>
-        <div class="fp3d-ext-actions">
-          <a class="fp3d-btn fp3d-primary" href=${Qe(this.hass?.language)} target="_blank" rel="noopener">${this.t("ext_shop")}</a>
-          <a class="fp3d-btn" href="https://github.com/Mastershort/neonplan3d/issues/new/choose" target="_blank" rel="noopener">🐞 ${this.t("help_issue")}</a>
-          <a class="fp3d-btn" href="https://github.com/Mastershort/neonplan3d/discussions/categories/ideas" target="_blank" rel="noopener">💡 ${this.t("help_idea")}</a>
-          <a class="fp3d-btn" href="https://discord.gg/SSdVVFsev7" target="_blank" rel="noopener">💬 ${this.t("help_discord")}</a>
-          <a class="fp3d-btn" href=${qt(this.hass?.language,"extensions")} target="_blank" rel="noopener">📖 ${this.t("manual")}</a>
-        </div>
+        <h2>${Qmx(h,"imp_title")}</h2>
+        <p class="fp3d-sub">${Qmx(h,"imp_intro")}</p>
       </header>
-      ${this.renderUpdates()} ${this.renderSupporter()} ${this.renderNewsletter()} ${this.renderOffers()} ${this.renderShop()}
-      <section class="fp3d-ext-card">
-        <h3>${this.t("ext_pro")}</h3>
-        <div class="fp3d-ext-pro">
-          ${rs.filter(t=>lt(t)).map(t=>m`<div class="fp3d-ext-feature ${e.has(t)?"fp3d-ext-on":""} ${et(t)?"fp3d-ext-beta":""}">
-              <b>${e.has(t)?"\u2713":"\u{1F512}"} ${this.t(`pro_name_${t}`)}</b>
-              ${et(t)?m`<span class="fp3d-beta-tag">🧪 ${this.t(e.has(t)?"beta_yours":"beta_supporters")}</span>`:v}
-              <span class="fp3d-sub">${this.t(`pro_feature_${t}`)}</span>
-              ${et(t)?m`<span class="fp3d-sub">${this.t(e.has(t)?"beta_yours_hint":"beta_supporters_hint")}</span>`:v}
-              <span class="fp3d-ext-links">
-                ${e.has(t)?m`<span class="fp3d-ext-state">${this.t("ext_active")}</span>
-                      ${et(t)?m`<a class="fp3d-ext-link" href=${Ui} target="_blank" rel="noopener">💬 ${this.t("beta_feedback")}</a>`:v}`:et(t)?this.renderBetaLocked(t):m`<a class="fp3d-ext-link" href=${Qe(this.hass?.language)} target="_blank" rel="noopener">${this.t("ext_get")}</a>`}
-                <a class="fp3d-ext-link" href=${qt(this.hass?.language,t)} target="_blank" rel="noopener">${this.t("manual_more")}</a>
-              </span>
-            </div>`)}
+      ${this.renderPacks()} ${this.renderModels()} ${this.renderModules()}
+    </div>`}async qm(){return this._qm??=await import(new URL("./quint-models.js?v=1.49.0",import.meta.url).href)}modelError(t){let c=t?.code,h=this.hass,k="mdl_err_"+c;return c&&Qmx(h,k)!==k?Qmx(h,k,{detail:t?.message??""}):Qmx(h,"mdl_err_other",{detail:t?.message??String(t)})}async pickModel(e){let n=e.target,f=[...n.files??[]];if(n.value="",!f.length)return;this._modelMsg=null,this._model={busy:!0,name:"",height:1,detail:2,up:"y",turn:0,group:"deco",model:null,result:null,error:null};try{let q=await this.qm(),d=await q.loadModel(f),g=q.guessSize(d);this._model={...this._model,model:d,name:d.name.slice(0,60),height:Math.round(Math.min(10,Math.max(.05,g.h))*100)/100,up:d.up},await this.rebuildModel()}catch(t){this._model=null,this._modelMsg={ok:!1,text:this.modelError(t)}}}async modelOpt(e){let s=this._model;if(!s?.model)return;if(e.up&&e.up!==s.up){let g=(await this.qm()).guessSize(s.model,e.up,0);e.height=Math.round(Math.min(10,Math.max(.05,g.h))*100)/100}this._model={...s,...e},await this.rebuildModel()}async rebuildModel(){let s=this._model;if(!s?.model)return;let k=this._mtok=(this._mtok??0)+1;this._model={...s,busy:!0,error:null};try{let q=await this.qm(),r=await q.buildParts(s.model,{height:s.height,detail:s.detail,up:s.up,turn:s.turn});if(k!==this._mtok||!this._model)return;this._model={...this._model,busy:!1,result:r}}catch(t){if(k!==this._mtok||!this._model)return;this._model={...this._model,busy:!1,result:null,error:this.modelError(t)}}}_drawModel(){let s=this._model;if(!s?.result||!this._qm)return;let c=this.renderRoot?.querySelector(".fp3d-mdl-cv");c&&this._qm.drawParts(c,s.result.parts,s.result.size)}ownItems(){let o=(this.packs??[]).find(p=>p.id==="own.models");return{own:o,items:((o?.source??o)?.items??[]).filter(x=>x&&x.id)}}async writeOwn(e,t){let h=this.hass,{own:o}=this.ownItems();if(!e.length)o&&await Hr(h,"own.models");else{let n={format:"fp3dpack",version:1,id:"own.models",name:Qmx(h,"mdl_pack_name"),publisher:"Quint",release:Math.min(99999,(o?.release??0)+1),description:Qmx(h,"mdl_pack_desc"),items:e};await bi(h,JSON.stringify({payload:n,signature:{key:"own",sig:""}}))}this.dispatchEvent(new CustomEvent("packs-changed",{bubbles:!0,composed:!0}))}async saveModel(){let s=this._model;if(!s?.result||!this.hass||s.busy)return;let h=this.hass,{items:o}=this.ownItems();if(o.length>=200){this._modelMsg={ok:!1,text:Qmx(h,"mdl_full")};return}let n=(s.name||"").trim().slice(0,60)||"Model",b="m_"+(n.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,24)||"model"),i=b,c=2;for(;o.some(x=>x.id===i);)i=`${b}_${c++}`;let d={id:i,name:{en:n},size:s.result.size,parts:s.result.parts,group:s.group,tags:["3d","model","import"]};try{await this.writeOwn([...o,d]),this._model=null,this._modelMsg={ok:!0,text:Qmx(h,"mdl_saved",{name:n})}}catch(t){this._modelMsg={ok:!1,text:Qmx(h,"mdl_err_other",{detail:t?.message??String(t)})}}}async removeModel(e){let h=this.hass;if(!h||!confirm(Qmx(h,"mdl_remove_confirm")))return;let{items:o}=this.ownItems();try{await this.writeOwn(o.filter(x=>x.id!==e)),this._modelMsg=null}catch(t){this._modelMsg={ok:!1,text:Qmx(h,"mdl_err_other",{detail:t?.message??String(t)})}}}renderModelEdit(){let h=this.hass,s=this._model,r=s.result,sel=(k,o,f)=>m`<select @change=${f}>${o.map(([a,l])=>m`<option value=${a} ?selected=${String(s[k])===String(a)}>${l}</option>`)}</select>`;return m`<div class="fp3d-mdl">
+      <div class="fp3d-mdl-pic">
+        <canvas class="fp3d-mdl-cv" width="320" height="220"></canvas>
+        <span class="fp3d-sub">${s.busy?Qmx(h,"mdl_busy"):r?Qmx(h,"mdl_info",{w:r.size[0],d:r.size[1],h:r.size[2],n:r.parts.length,c:r.colors}):v}</span>
+        ${s.error?m`<span class="fp3d-sub fp3d-pack-error">${s.error}</span>`:v}
+      </div>
+      <div class="fp3d-mdl-form">
+        <label>${Qmx(h,"mdl_name")}<input type="text" maxlength="60" .value=${s.name} @input=${e=>this._model={...this._model,name:e.target.value}} /></label>
+        <label>${Qmx(h,"mdl_height")}<input type="number" min="0.05" max="10" step="0.05" .value=${String(s.height)} @change=${e=>{let n=parseFloat(e.target.value);Number.isFinite(n)&&this.modelOpt({height:Math.min(10,Math.max(.05,n))})}} /></label>
+        <label>${Qmx(h,"mdl_detail")}${sel("detail",[[1,Qmx(h,"mdl_detail_1")],[2,Qmx(h,"mdl_detail_2")],[3,Qmx(h,"mdl_detail_3")]],e=>this.modelOpt({detail:+e.target.value}))}</label>
+        <label>${Qmx(h,"mdl_up")}${sel("up",[["y",Qmx(h,"mdl_up_y")],["z",Qmx(h,"mdl_up_z")]],e=>this.modelOpt({up:e.target.value}))}</label>
+        <label>${Qmx(h,"mdl_turn")}${sel("turn",[[0,Qmx(h,"mdl_turn_0")],[90,Qmx(h,"mdl_turn_90")],[180,Qmx(h,"mdl_turn_180")],[270,Qmx(h,"mdl_turn_270")]],e=>this.modelOpt({turn:+e.target.value}))}</label>
+        <label>${Qmx(h,"mdl_group")}${sel("group",["deco","seating","sofa","table","storage","bed","kitchen","appliance","lamp","plant","outdoor","household","media","office","kids","sport","pets"].map(g=>[g,Qmx(h,"grp_"+g)]),e=>this._model={...this._model,group:e.target.value})}</label>
+        <div class="fp3d-actions">
+          <button class="fp3d-btn fp3d-primary" ?disabled=${!r||s.busy} @click=${()=>{this.saveModel()}}>${Qmx(h,"mdl_add")}</button>
+          <button class="fp3d-btn" @click=${()=>{this._mtok=(this._mtok??0)+1,this._model=null}}>${Qmx(h,"mdl_cancel")}</button>
         </div>
-      </section>
-      ${this.renderFun(e)} ${this.renderPacks()} ${this.renderModules()}
-    </div>`}renderBetaLocked(e){let t=this._license?.active?this._license:null;return t?.packs.find(i=>[e,`pro_${e}`].includes(i.id)||i.id.endsWith(`.pro_${e}`))?m`<span class="fp3d-sub">⬇ ${this.t("beta_ready")}</span>`:t?.supporter?m`<span class="fp3d-sub">${this.t("beta_supporter_missing")}</span><a class="fp3d-ext-link" href=${Ui} target="_blank" rel="noopener">💬 Discord</a>`:m`<a class="fp3d-ext-link" href=${jn(this.hass?.language)} target="_blank" rel="noopener">💙 ${this.t("beta_become")}</a>`}editBuilding(e){if(!this.building)return;let t=structuredClone(this.building);e(t),this.dispatchEvent(new CustomEvent("building-edit",{detail:t,bubbles:!0,composed:!0}))}renderFun(e){let t=as.filter(c=>e.has(c)||lt(c));if(!t.length)return v;let n=this.building?.settings.pets??null,i=n?.list??[],o=n?.on!==!1,s=(this.building?.floors??[]).filter(c=>c.rooms.length).sort((c,d)=>c.elevation-d.elevation),r=c=>this.editBuilding(d=>{let h={on:d.settings.pets?.on!==!1,list:[...d.settings.pets?.list??[]]};c(h),d.settings.pets=h}),l=(c,d)=>r(h=>h.list=h.list.map(p=>p.id===c?{...p,...d}:p));return m`<section class="fp3d-ext-card">
+      </div>
+    </div>`}renderModels(){let h=this.hass,{items:o}=this.ownItems(),lang=h?.language??"en";return m`<section class="fp3d-ext-card">
+      <h3>${Qmx(h,"mdl_title")}</h3>
+      <p class="fp3d-sub">${Qmx(h,"mdl_intro")}</p>
+      ${this._model?this.renderModelEdit():v}
+      <label class="fp3d-btn fp3d-primary fp3d-pack-import">
+        ${Qmx(h,"mdl_pick")}
+        <input type="file" accept=".glb,.gltf,.obj,.mtl,.bin,.stl" multiple hidden @change=${e=>{this.pickModel(e)}} />
+      </label>
+      ${this._modelMsg?m`<p class="fp3d-sub ${this._modelMsg.ok?"fp3d-notice":"fp3d-pack-error"}">${this._modelMsg.text}</p>`:v}
+      ${o.length?m`<h4>${Qmx(h,"mdl_list")}</h4>${o.map(x=>m`<div class="fp3d-pack">
+              <div><b>${ot(x,lang)}</b><span class="fp3d-sub">${(x.size??[]).join(" × ")} m · ${(x.parts??[]).length}</span></div>
+              <button class="fp3d-btn fp3d-danger" @click=${()=>{this.removeModel(x.id)}}>${Qmx(h,"mdl_remove")}</button>
+            </div>`)}`:v}
+      <p class="fp3d-sub">${Qmx(h,"mdl_hint")}</p>
+    </section>`}renderBetaLocked(e){let t=this._license?.active?this._license:null;return t?.packs.find(i=>[e,`pro_${e}`].includes(i.id)||i.id.endsWith(`.pro_${e}`))?m`<span class="fp3d-sub">⬇ ${this.t("beta_ready")}</span>`:t?.supporter?m`<span class="fp3d-sub">${this.t("beta_supporter_missing")}</span><a class="fp3d-ext-link" href=${Ui} target="_blank" rel="noopener">💬 Discord</a>`:m`<a class="fp3d-ext-link" href=${jn(this.hass?.language)} target="_blank" rel="noopener">💙 ${this.t("beta_become")}</a>`}editBuilding(e){if(!this.building)return;let t=structuredClone(this.building);e(t),this.dispatchEvent(new CustomEvent("building-edit",{detail:t,bubbles:!0,composed:!0}))}renderFun(e){let t=as.filter(c=>e.has(c)||lt(c));if(!t.length)return v;let n=this.building?.settings.pets??null,i=n?.list??[],o=n?.on!==!1,s=(this.building?.floors??[]).filter(c=>c.rooms.length).sort((c,d)=>c.elevation-d.elevation),r=c=>this.editBuilding(d=>{let h={on:d.settings.pets?.on!==!1,list:[...d.settings.pets?.list??[]]};c(h),d.settings.pets=h}),l=(c,d)=>r(h=>h.list=h.list.map(p=>p.id===c?{...p,...d}:p));return m`<section class="fp3d-ext-card">
       <h3>🎈 ${this.t("fun_title")}</h3>
       <p class="fp3d-sub">${this.t("fun_intro")}</p>
       ${t.map(c=>c==="fun_halloween"?this.renderHalloween(e.has(c)):e.has(c)?m`<div class="fp3d-ext-feature fp3d-ext-on">
@@ -568,7 +679,7 @@ var si=globalThis,ri=si.ShadowRoot&&(si.ShadyCSS===void 0||si.ShadyCSS.nativeSha
             ${this.t("halloween_ghost")}</label
           >`:v}
       <span class="fp3d-sub">${this.t("halloween_deco_hint")}</span>
-    </div>`:this.renderFunLocked("\u{1F383}",this.t("fun_name_halloween"),this.t("fun_feature_halloween"))}updated(e){if(e.has("_license")&&this._license?.active){let t=(this._license.packs??[]).filter(n=>n.installed===null||n.installed<n.release).length;this.dispatchEvent(new CustomEvent("packs-ready",{detail:t,bubbles:!0,composed:!0}))}}async loadLicense(){if(!(!this.hass||this.licenseLoading)){this.licenseLoading=!0;try{this._license=await $o(this.hass)}catch{this._license=null}finally{this.licenseLoading=!1}}}async shopCall(e,t,n){this._licenseBusy=e,this._licenseMsg=null;try{this._license=await t(),n&&(this._licenseMsg={ok:!0,text:n})}catch(i){let{code:o,message:s}=i??{},r=`license_error_${o}`,l=this.t(r);this._licenseMsg={ok:!1,text:l===r?this.t("license_error_other",{detail:s??String(i)}):l}}finally{this._licenseBusy=null}}async installFromShop(e){if(!this.hass)return;let t=this.hass;await this.shopCall(e.id,async()=>{let n=await Ur(t,e.id),i=this.t("pack_imported",{name:n.name,publisher:n.publisher,n:n.items});return this._packMsg={ok:!0,text:n.approval?`${i} ${this.t("module_imported_waits")}`:i},this.dispatchEvent(new CustomEvent("packs-changed",{bubbles:!0,composed:!0})),$o(t)})}renderUpdates(){let e=this._license;return e?.active?(this.freshUpdates||(this.freshUpdates=Vr(e.updates??[]),Br(e.updates??[])),this.freshUpdates.length?m`<section class="fp3d-ext-card fp3d-updates">
+    </div>`:this.renderFunLocked("\u{1F383}",this.t("fun_name_halloween"),this.t("fun_feature_halloween"))}updated(e){if(this._drawModel(),e.has("_license")&&this._license?.active){let t=(this._license.packs??[]).filter(n=>n.installed===null||n.installed<n.release).length;this.dispatchEvent(new CustomEvent("packs-ready",{detail:t,bubbles:!0,composed:!0}))}}async loadLicense(){if(!(!this.hass||this.licenseLoading)){this.licenseLoading=!0;try{this._license=await $o(this.hass)}catch{this._license=null}finally{this.licenseLoading=!1}}}async shopCall(e,t,n){this._licenseBusy=e,this._licenseMsg=null;try{this._license=await t(),n&&(this._licenseMsg={ok:!0,text:n})}catch(i){let{code:o,message:s}=i??{},r=`license_error_${o}`,l=this.t(r);this._licenseMsg={ok:!1,text:l===r?this.t("license_error_other",{detail:s??String(i)}):l}}finally{this._licenseBusy=null}}async installFromShop(e){if(!this.hass)return;let t=this.hass;await this.shopCall(e.id,async()=>{let n=await Ur(t,e.id),i=this.t("pack_imported",{name:n.name,publisher:n.publisher,n:n.items});return this._packMsg={ok:!0,text:n.approval?`${i} ${this.t("module_imported_waits")}`:i},this.dispatchEvent(new CustomEvent("packs-changed",{bubbles:!0,composed:!0})),$o(t)})}renderUpdates(){let e=this._license;return e?.active?(this.freshUpdates||(this.freshUpdates=Vr(e.updates??[]),Br(e.updates??[])),this.freshUpdates.length?m`<section class="fp3d-ext-card fp3d-updates">
       ${this.freshUpdates.map(t=>m`<p>✨ ${t.added>0?this.t("pack_updated_added",{name:we(t,this.hass?.language??"de"),release:t.release,n:t.added}):this.t("pack_updated",{name:we(t,this.hass?.language??"de"),release:t.release})}</p>`)}
     </section>`:v):v}renderSupporter(){let e=this._license?.active?this._license.supporter:null;return e?m`<section class="fp3d-ext-card fp3d-offers">
       <h3>💙 ${this.t("supporter_title")}</h3>
@@ -658,7 +769,7 @@ var si=globalThis,ri=si.ShadowRoot&&(si.ShadyCSS===void 0||si.ShadyCSS.nativeSha
       ${this._licenseMsg?m`<p class="fp3d-sub ${this._licenseMsg.ok?"fp3d-notice":"fp3d-pack-error"}">${this._licenseMsg.text}</p>`:v}
       <p class="fp3d-sub">${this.t("license_hint")} <a href=${e.shop_url} target="_blank" rel="noopener">${this.t("license_shop")}</a></p>
     </div>`}renderPacks(){let e=(this.packs??[]).filter(n=>!n.module&&!n.features?.length),t=e.reduce((n,i)=>n+i.items.length,0);return m`<section class="fp3d-ext-card">
-      <h3>${this.t("packs")}</h3>
+      <h3>${Qmx(this.hass,"packs_title")}</h3>
       ${this.summaryBar("packs",[{n:e.length,label:this.t("ext_sum_packs",{items:t}),tone:"ok"}])}
       ${(this._open.has("packs")?e:[]).map(n=>m`<div class="fp3d-pack">
           <div>
@@ -671,11 +782,11 @@ var si=globalThis,ri=si.ShadowRoot&&(si.ShadyCSS===void 0||si.ShadyCSS.nativeSha
         </div>`)}
 
       <label class="fp3d-btn fp3d-primary fp3d-pack-import">
-        ${this.t("pack_import")}
+        ${Qmx(this.hass,"pack_btn")}
         <input type="file" accept=".fp3dpack,.json,application/json" multiple hidden @change=${n=>this.importPackFile(n)} />
       </label>
       ${this._packMsg?m`<p class="fp3d-sub ${this._packMsg.ok?"fp3d-notice":"fp3d-pack-error"}">${this._packMsg.text}</p>`:v}
-      <p class="fp3d-sub">${this.t("packs_hint")}</p>
+      <p class="fp3d-sub">${Qmx(this.hass,"pack_hint")}</p>
     </section>`}renderModules(){let e=(this.packs??[]).filter(i=>i.module||i.features?.length),t=e.filter(i=>!i.module).length,n=e.filter(i=>Pn(i));return m`<section class="fp3d-ext-card">
       <h3>${this.t("settings_modules")}</h3>
       ${this.summaryBar("modules",[{n:e.length-t,label:this.t("ext_sum_modules"),tone:"ok"},{n:t,label:this.t("ext_sum_feature_packs"),tone:"missing"}])}
@@ -698,12 +809,12 @@ var si=globalThis,ri=si.ShadowRoot&&(si.ShadyCSS===void 0||si.ShadyCSS.nativeSha
             </div>`):v:m`<p class="fp3d-sub">${this.t("modules_none")}</p>`}
       ${this.renderReview()}
       <label class="fp3d-btn fp3d-primary fp3d-pack-import">
-        ${this.t("module_import")}
+        ${Qmx(this.hass,"mod_btn")}
         <input type="file" accept=".fp3dpack,.json,application/json" multiple hidden @change=${i=>this.importPackFile(i,!0)} />
       </label>
       ${this._moduleMsg?m`<p class="fp3d-sub ${this._moduleMsg.ok?"fp3d-notice":"fp3d-pack-error"}">${this._moduleMsg.text}</p>`:v}
-      <p class="fp3d-sub">${this.t("module_import_hint")} ${this.t("modules_pro_note")}</p>
-    </section>`}async importPackFile(e,t=!1){let n=e.target,i=[...n.files??[]];if(n.value="",!i.length||!this.hass)return;let o=[],s=[];for(let c of i)try{let d=await bi(this.hass,await c.text()),h=this.t("pack_imported",{name:d.name,publisher:d.publisher,n:d.items});o.push(d.approval?`${h} ${this.t("module_imported_waits")}`:h)}catch(d){let{code:h,message:p}=d??{},u=`pack_error_${h}`,f=this.t(u,{detail:p??String(d)});s.push(`${c.name}: ${f===u?this.t("pack_error_other",{detail:p??String(d)}):f}`)}o.length&&this.dispatchEvent(new CustomEvent("packs-changed",{bubbles:!0,composed:!0}));let r=i.length>1?[this.t("packs_imported_n",{n:o.length,total:i.length})]:[],l={ok:s.length===0,text:[...r,...o,...s].join(" \xB7 ")};t?this._moduleMsg=l:this._packMsg=l}async openReview(e){if(this.hass){this._open=new Set([...this._open,"modules"]),this._review={pack:e,data:null,error:null,busy:!0},this.updateComplete.then(()=>this.renderRoot.querySelector(".fp3d-review")?.scrollIntoView({block:"nearest",behavior:"smooth"}));try{let t=await Dr(this.hass,e.id,e.module?.approved===!0&&!!e.pending);this._review={pack:e,data:t,error:null,busy:!1}}catch(t){let{code:n,message:i}=t??{};this._review={pack:e,data:null,error:n==="unauthorized"?this.t("module_review_admin"):i??String(t),busy:!1}}}}async approveReview(){let e=this._review;if(!(!this.hass||!e?.data)){this._review={...e,busy:!0};try{await Lr(this.hass,e.pack.id,e.data.sha),this._review=null,this._moduleMsg={ok:!0,text:this.t("module_approved",{name:we(e.pack,this.hass.language??"de")})},this.dispatchEvent(new CustomEvent("packs-changed",{bubbles:!0,composed:!0}))}catch(t){let{code:n,message:i}=t??{};this._review={...e,busy:!1,error:n==="unauthorized"?this.t("module_review_admin"):i??String(t)}}}}renderReview(){let e=this._review;if(!e)return v;let t=e.data;return m`<div class="fp3d-review" role="dialog" aria-modal="true">
+      <p class="fp3d-sub">${Qmx(this.hass,"mod_hint")}</p>
+    </section>`}ownWrap(e){try{let t=JSON.parse(e);if(!t||typeof t!="object"||t.signature)return e;let n=t.payload&&typeof t.payload=="object"?t.payload:t;if(n.format!=="fp3dpack"||typeof n.id!="string")return e;let i=n.id.toLowerCase().replace(/^own\./,"").replace(/[^a-z0-9_.-]+/g,"_").replace(/^[_.-]+/,"").slice(0,35)||"pack";return JSON.stringify({payload:{...n,id:"own."+i},signature:{key:"own",sig:""}})}catch{return e}}async importPackFile(e,t=!1){let n=e.target,i=[...n.files??[]];if(n.value="",!i.length||!this.hass)return;let o=[],s=[];for(let c of i)try{let d=await bi(this.hass,t?await c.text():this.ownWrap(await c.text())),h=this.t("pack_imported",{name:d.name,publisher:d.publisher,n:d.items});o.push(d.approval?`${h} ${this.t("module_imported_waits")}`:h)}catch(d){let{code:h,message:p}=d??{},u=`pack_error_${h}`,f=this.t(u,{detail:p??String(d)});s.push(`${c.name}: ${f===u?this.t("pack_error_other",{detail:p??String(d)}):f}`)}o.length&&this.dispatchEvent(new CustomEvent("packs-changed",{bubbles:!0,composed:!0}));let r=i.length>1?[this.t("packs_imported_n",{n:o.length,total:i.length})]:[],l={ok:s.length===0,text:[...r,...o,...s].join(" \xB7 ")};t?this._moduleMsg=l:this._packMsg=l}async openReview(e){if(this.hass){this._open=new Set([...this._open,"modules"]),this._review={pack:e,data:null,error:null,busy:!0},this.updateComplete.then(()=>this.renderRoot.querySelector(".fp3d-review")?.scrollIntoView({block:"nearest",behavior:"smooth"}));try{let t=await Dr(this.hass,e.id,e.module?.approved===!0&&!!e.pending);this._review={pack:e,data:t,error:null,busy:!1}}catch(t){let{code:n,message:i}=t??{};this._review={pack:e,data:null,error:n==="unauthorized"?this.t("module_review_admin"):i??String(t),busy:!1}}}}async approveReview(){let e=this._review;if(!(!this.hass||!e?.data)){this._review={...e,busy:!0};try{await Lr(this.hass,e.pack.id,e.data.sha),this._review=null,this._moduleMsg={ok:!0,text:this.t("module_approved",{name:we(e.pack,this.hass.language??"de")})},this.dispatchEvent(new CustomEvent("packs-changed",{bubbles:!0,composed:!0}))}catch(t){let{code:n,message:i}=t??{};this._review={...e,busy:!1,error:n==="unauthorized"?this.t("module_review_admin"):i??String(t)}}}}renderReview(){let e=this._review;if(!e)return v;let t=e.data;return m`<div class="fp3d-review" role="dialog" aria-modal="true">
       <h4>${this.t("module_review_title",{name:we(e.pack,this.hass?.language??"de")})}</h4>
       ${t?m`<p class="fp3d-sub">${this.t("module_review_meta",{publisher:t.publisher,release:t.release,kb:Math.max(1,Math.round(t.code.length/1024)),sha:t.sha})}</p>
             <p class="fp3d-sub">${this.t("module_review_note")}</p>
@@ -714,6 +825,52 @@ var si=globalThis,ri=si.ShadowRoot&&(si.ShadyCSS===void 0||si.ShadyCSS.nativeSha
         <button class="fp3d-btn fp3d-primary" ?disabled=${!t||e.busy} @click=${()=>{this.approveReview()}}>${this.t("module_approve")}</button>
       </div>
     </div>`}async deletePack(e){!this.hass||!confirm(this.t("pack_remove_confirm",{name:we(e,this.hass?.language??"de")}))||(await Hr(this.hass,e.id),this._packMsg=null,this.dispatchEvent(new CustomEvent("packs-changed",{bubbles:!0,composed:!0})))}static styles=[Lt,oo,Ve`
+      .fp3d-mdl {
+        display: grid;
+        grid-template-columns: minmax(200px, 320px) 1fr;
+        gap: 14px;
+        margin: 10px 0;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--fp3d-line, rgba(120, 190, 255, 0.22));
+        background: rgba(4, 8, 18, 0.35);
+      }
+      .fp3d-mdl-pic {
+        display: grid;
+        gap: 6px;
+        align-content: start;
+      }
+      .fp3d-mdl-cv {
+        width: 100%;
+        max-width: 320px;
+        aspect-ratio: 320 / 220;
+        border-radius: 10px;
+        background: rgba(120, 190, 255, 0.07);
+      }
+      .fp3d-mdl-form {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+      .fp3d-mdl-form label {
+        display: grid;
+        gap: 3px;
+        font-size: 0.9em;
+      }
+      .fp3d-mdl-form input,
+      .fp3d-mdl-form select {
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid var(--fp3d-line, rgba(120, 190, 255, 0.22));
+        background: rgba(4, 8, 18, 0.5);
+        color: inherit;
+        font: inherit;
+      }
+      @media (max-width: 640px) {
+        .fp3d-mdl {
+          grid-template-columns: 1fr;
+        }
+      }
       .fp3d-sum {
         display: grid;
         gap: 6px;
@@ -3414,9 +3571,9 @@ var si=globalThis,ri=si.ShadowRoot&&(si.ShadyCSS===void 0||si.ShadyCSS.nativeSha
       ></fp3d-library>
     </section>
     <div class="fp3d-ext-teaser">
-      <b>${this.t("ext_teaser_title")}</b>
-      <span class="fp3d-sub">${this.t("ext_teaser_text")}</span>
-      <button class="fp3d-btn fp3d-primary" @click=${()=>this.dispatchEvent(new CustomEvent("open-extensions",{bubbles:!0,composed:!0}))}>${this.t("ext_open")}</button>
+      <b>${Qmx(this.hass,"teaser_title")}</b>
+      <span class="fp3d-sub">${Qmx(this.hass,"teaser_text")}</span>
+      <button class="fp3d-btn fp3d-primary" @click=${()=>this.dispatchEvent(new CustomEvent("open-extensions",{bubbles:!0,composed:!0}))}>${Qmx(this.hass,"teaser_btn")}</button>
     </div>`}async showPreview(e,t){let n=t.getBoundingClientRect(),i={left:Math.max(8,n.left-196),top:Math.max(8,Math.min(window.innerHeight-200,n.top+n.height/2-95))};this._preview={type:e,url:null,...i};try{let o=await ni(),[s,r,l]=Te(e),c=o.furniturePreview({type:e,w:s,d:r,h:l,variant:null,lamp:Hn[e]??null},180,this.packs??[]);this._preview?.type===e&&(this._preview={type:e,url:c,...i})}catch{this._preview=null}}renderPreview(){let e=this._preview;return e?m`<div class="fp3d-preview" style="left:${e.left}px;top:${e.top}px" aria-hidden="true">
       ${e.url?m`<img src=${e.url} alt="" />`:m`<span class="fp3d-preview-wait"></span>`}
       <b>${Ht(this.hass,e.type)}</b>
