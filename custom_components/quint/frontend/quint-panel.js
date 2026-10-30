@@ -27,7 +27,7 @@ const H3D_DEF = {
   layout: "immersive", bar: "open", bar_hide: 0, cam: "default", fx: "live", color: true,
 };
 const H3D_OPT = {
-  home: ["off", "full", "block"], tap: ["quint", "panel", "both"], height: [280, 360, 440, 520, 640], theme: ["auto", "day"], quality: ["auto", "low", "high"], walls: ["auto", "cut"],
+  home: ["off", "full", "block"], tap: ["quint", "panel", "both"], height: [280, 360, 440, 520, 640], theme: ["auto", "day"], quality: ["auto", "low", "high", "ultra"], walls: ["auto", "cut"],
   floor_stack: ["dim", "stacked", "single"], markers: ["none", "important", "all", "room"], marker_size: ["small", "normal", "large"], heatmap: ["none", "temperature", "humidity", "co2"],
   clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
   time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.56.0";
+const VER = "1.57.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -3015,9 +3015,9 @@ class QuintDashboard extends HTMLElement {
   /* the engine reads the moment from here (its world changes colour with the sun); rev changes when it should look again */
   _h3dSkyPush() {
     const q = globalThis.__qcol; if (!q) return;
-    const k = this._h3dSky(), key = Math.round(k.e * 2) + "|" + k.cover.toFixed(1);
+    const k = this._h3dSky(), key = Math.round(k.e * 2) + "|" + k.cover.toFixed(1) + "|" + Math.round(k.h * 4);
     if (key !== this._skyKey) { this._skyKey = key; this._skyRev = (this._skyRev || 0) + 1; }
-    q.sky = { e: k.e, cover: k.cover, rev: this._skyRev || 0 };
+    q.sky = { e: k.e, h: k.h, cover: k.cover, rev: this._skyRev || 0 };
   }
   _skyLoad() {
     if (this._skyP) return this._skyP;
@@ -3651,7 +3651,7 @@ class QuintDashboard extends HTMLElement {
           row("Light only where it reaches", "a lamp lights the floor and walls around it like a pool of light, not the whole room. Off gives the engine's wide glow", B("pool")) +
           row("Realistic materials", "wood-plank and tile floors, soft wall shading and fine outlines in the light look. Off gives the plain flat colours", B("real")) +
           row("Brightness", "how bright the house is drawn. Soft is deeper and richer than the engine's own light, Dim is darker still, Normal leaves it as it is", sg("bright", ["Dim", "Soft", "Normal"])) +
-          row("Picture quality", "Auto picks a light level on weak tablets", sg("quality", ["Auto", "Low", "High"])) +
+          row("Picture quality", "Auto picks a light level on weak tablets. High is sharp. Ultra HD draws the house at up to three times the screen resolution and shrinks it, so edges, lawn and trees are very crisp (needs a good graphics chip)", sg("quality", ["Auto", "Low", "High", "Ultra HD"])) +
           row("Colourful house", "wood and tile floors, coloured walls and furniture, still see-through. Off gives Quinteca's own colours", B("color")) +
           (o.color ? row("Colours", "Auto: Cozy with the natural view (warm parquet, cream and rose walls, solid furniture colours), Soft cream on a plain studio colour. Cozy and Soft fix one", sg("look", ["Auto", "Cozy", "Soft"])) : "") +
           row("Roof", "show the roof on the house", B("roof")) +

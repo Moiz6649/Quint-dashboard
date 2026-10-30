@@ -43,3 +43,5 @@ around the plot (a soft, patchy lawn texture that fades into the horizon) and th
 The Live background option, the Land and road switch and the Moving sky switch were removed from Quint.
 
 Quint v1.56.0: a "Lawn and house plot" switch in Quint shows or hides the whole world of the engine (lawn, terrace, path, fence and garden), so the house stands alone on the chosen background.
+
+Quint v1.57.0: a new picture quality "ultra" in neonplan3d-3d.js (makeRenderer draws at 2 to 3 times the screen resolution, then the browser shrinks it, which is a supersampling anti-aliasing). The world got a fine grass texture on the lawn and soft shadows of the house and trees that follow the sun height and the hour.
