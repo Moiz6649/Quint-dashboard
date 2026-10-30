@@ -41,3 +41,5 @@ in the plan editor any more. The live sky lost its clouds and birds.
 Quint v1.55.0: the world of neonplan3d-3d.js no longer moves (no swaying trees, no fireflies) and got a smoother meadow
 around the plot (a soft, patchy lawn texture that fades into the horizon) and the white picket fence back around the lawn.
 The Live background option, the Land and road switch and the Moving sky switch were removed from Quint.
+
+Quint v1.56.0: a "Lawn and house plot" switch in Quint shows or hides the whole world of the engine (lawn, terrace, path, fence and garden), so the house stands alone on the chosen background.

@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.55.0";
+const VER = "1.56.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -3170,7 +3170,7 @@ class QuintDashboard extends HTMLElement {
   _qcolSet() {
     const o = this._h3d(), m = this._am;
     const rl = o.real !== false;
-    const wl = o.bg !== "native", wg = wl && o.garden !== false, wk = (wl ? "L" : "") + (wg ? "G" : "");   /* the land and garden of the engine */
+    const wl = o.land !== false && o.bg !== "native", wg = wl && o.garden !== false, wk = (wl ? "L" : "") + (wg ? "G" : "");   /* the land and garden of the engine */
     if (!o.color) { globalThis.__qcol = { on: false, real: rl, gain: 1, pool: o.pool !== false ? 0.5 : 0, cut: o.solid !== false, world: { land: wl, garden: wg }, fx: "off" }; this._h3dSkyPush(); return (rl ? "0r" : "0") + (o.pool !== false ? "p" : "") + (o.solid !== false ? "s" : "") + wk; }
     const bk = this._h3dBack(o), look = o.look === "auto" ? (bk.live ? "cozy" : "soft") : o.look, cin = look === "cinema", soft = look === "soft", coz = look === "cozy";
     const pool = o.pool !== false ? 0.5 : 0, cut = o.solid !== false;
@@ -3645,6 +3645,7 @@ class QuintDashboard extends HTMLElement {
         sec("Look", "how the house is drawn",
           row("Theme", "Nice is the bright, cosy house. Auto gives the same", sg("theme", ["Auto", "Nice"])) +
           row("Background", "Auto: a calm natural view behind the house, a soft sky that follows the real time of day (morning, day, evening, night) over a green lawn. Light, Slate and Dark are plain colours; Native is Quinteca's own starry view", sg("bg", ["Auto", "Light", "Slate", "Dark", "Native"])) +
+          row("Lawn and house plot", "the green lawn, stone terrace and path the house stands on. Off shows the house alone on the background you chose", B("land")) +
           row("Garden", "real trees, clipped hedges, potted shrubs, flower beds, lamps and a bench. Hide it for a bare lawn", B("garden")) +
           row("Solid walls", "the walls on your side are cut low, so you look into the rooms over solid walls, like a dollhouse. Off makes them see-through glass", B("solid")) +
           row("Light only where it reaches", "a lamp lights the floor and walls around it like a pool of light, not the whole room. Off gives the engine's wide glow", B("pool")) +
