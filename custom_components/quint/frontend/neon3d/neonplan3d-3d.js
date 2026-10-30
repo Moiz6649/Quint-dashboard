@@ -4553,7 +4553,7 @@ function qcWBuild(E){
   let L={p:[],c:[]};
   /* the lawn, mown in stripes */
   let sx=1.7,ns=Math.max(2,Math.ceil((uR-uL)/sx));
-  for(let i=0;i<ns;i++){let a=uL+i*sx,b2=Math.min(uR,a+sx);qcWBox(L,F,a,b2,vB,vF,gy-.1,gy,col(i%2?0x7fb34e:0x88bb57),true)}
+  for(let i=0;i<ns;i++){let a=uL+i*sx,b2=Math.min(uR,a+sx);qcWBox(L,F,a,b2,vB,vF,gy-.1,gy,col(i%2?0x7cae50:0x83b555),true)}
   /* the stone terrace around the house: grey flagstones with joints */
   let inR=(u,v,m)=>rects.some(q2=>u>q2[0]-m&&u<q2[1]+m&&v>q2[2]-m&&v<q2[3]+m);
   let cs=.92,gu0=Math.floor((F.u0-M)/cs)*cs,gv0=Math.floor((F.v0-M)/cs)*cs,tiles=0;
@@ -4577,8 +4577,13 @@ function qcWBuild(E){
   qcWBox(L,F,doorU-.55,doorU+.55,.1,.6,gy+.075,gy+.09,col(0x8a5a3c),true);   /* the mat */
   group.add(qcWMesh(L,mat,"land"));
   /* the field around the plot: a very large lawn that fades away at its edge, so the house stands in the landscape */
-  let ftc=document.createElement("canvas");ftc.width=ftc.height=128;let fg2=ftc.getContext("2d"),fgr=fg2.createRadialGradient(64,64,0,64,64,64);
-  fgr.addColorStop(0,"rgba(255,255,255,1)");fgr.addColorStop(.55,"rgba(255,255,255,1)");fgr.addColorStop(1,"rgba(255,255,255,0)");fg2.fillStyle=fgr;fg2.fillRect(0,0,128,128);
+  let ftc=document.createElement("canvas");ftc.width=ftc.height=512;let fg2=ftc.getContext("2d"),fr=qcWRng(77);
+  fg2.fillStyle="#e4e8dc";fg2.fillRect(0,0,512,512);
+  /* soft, large patches of lighter and darker grass, like a real meadow seen from far away */
+  for(let i=0;i<260;i++){let x=fr()*512,y=fr()*512,rad=18+fr()*70,lt=fr()<.5,gg=fg2.createRadialGradient(x,y,0,x,y,rad);let c=lt?"255,255,246":"168,186,150",al=.05+fr()*.09;gg.addColorStop(0,"rgba("+c+","+al+")");gg.addColorStop(1,"rgba("+c+",0)");fg2.fillStyle=gg;fg2.fillRect(x-rad,y-rad,rad*2,rad*2)}
+  /* it fades into the haze of the horizon */
+  fg2.globalCompositeOperation="destination-in";
+  let fgr=fg2.createRadialGradient(256,256,0,256,256,256);fgr.addColorStop(0,"rgba(0,0,0,1)");fgr.addColorStop(.5,"rgba(0,0,0,1)");fgr.addColorStop(.78,"rgba(0,0,0,.55)");fgr.addColorStop(1,"rgba(0,0,0,0)");fg2.fillStyle=fgr;fg2.fillRect(0,0,512,512);
   let ftex=new mi(ftc);ftex.colorSpace=De;
   let fbase=new Q(0x80b258),fmat=new $t({map:ftex,color:fbase.clone(),transparent:true,depthWrite:false,fog:false});mats.push(fmat);
   let field=new Ct(new gi(1,1),fmat);field.raycast=()=>{};field.rotation.x=-Math.PI/2;field.scale.set(320,320,1);field.renderOrder=-2;
@@ -4610,13 +4615,21 @@ function qcWBuild(E){
     for(let s of[-.55,.55])qcWBox(G,F,bu-.15,bu+.15,bv+s-.04,bv+s+.04,gy+.03,gy+.43,col(0x5c5c60),true);
     /* hedge-like shrubs along the back of the lawn */
     for(let u=uL+1.6;u<uR-1.4;u+=.95){if(Math.abs(u-(F.u0+F.u1)/2)<3.2&&false)continue;let p=qcWP(F,u,vB+.7,gy+.4);qcWFol(G,p[0],p[1],p[2],.58,.5,.58,col(pick([0x4d9442,0x56a04a,0x468b3d])),(u*13)|0,2,.14)}
+    /* a low white picket fence around the lawn, open at the path */
+    {let fence=col(0xf6f0e4),post=col(0xe2d9c6),fy=gy,fv=vF-.8;
+      let fenceRun=(u0,u1,v0,v1)=>{let L2=Math.hypot(u1-u0,v1-v0);if(L2<.3)return;let n=Math.max(1,Math.round(L2/.34)),uu=(u1-u0)/L2,vv=(v1-v0)/L2;
+        for(let i=0;i<=n;i++){let u=u0+uu*L2*i/n,v=v0+vv*L2*i/n,hgt=.78+((i*7)%3)*.02;qcWBox(G,F,u-.04,u+.04,v-.012,v+.012,fy,fy+hgt,fence,true)}
+        for(let k of[.22,.52]){let steps=Math.max(1,Math.round(L2/1.2));for(let i=0;i<steps;i++){let ua=u0+uu*L2*i/steps,ub=u0+uu*L2*(i+1)/steps,va=v0+vv*L2*i/steps,vb=v0+vv*L2*(i+1)/steps;qcWBox(G,F,Math.min(ua,ub)-.02,Math.max(ua,ub)+.02,Math.min(va,vb)-.02,Math.max(va,vb)+.02,fy+k-.025,fy+k+.025,post,true)}}};
+      let g0=doorU-pw/2-.6,g1=doorU+pw/2+.6;
+      fenceRun(uL+.7,g0,fv,fv);fenceRun(g1,uR-.7,fv,fv);fenceRun(uL+.7,uL+.7,vB+.9,fv);fenceRun(uR-.7,uR-.7,vB+.9,fv);
+      for(let u of[g0,g1])qcWBox(G,F,u-.1,u+.1,fv-.1,fv+.1,fy,fy+1.05,col(0xe9e0cd),true)}
     gm.add(qcWMesh(G,mat,"garden-static"));
     /* real trees: oaks, round-crowned trees and conifers around the lawn, swaying a little */
     let spots=[[uL+1.8,vB+2,"oak",7.2,2.5],[uR-2,vB+2.2,"round",6.2,2.2],[uL+1.6,(vB+vT)/2+.5,"conifer",7.4,1.7],[uR-1.7,(vB+vT)/2,"oak",6.6,2.3],[uL+2,vF-2,"round",5.8,2.1],[uR-1.8,vF-1.8,"conifer",6.8,1.6],[F.u0-M-1.6,(F.v0+vf)/2-1,"round",5.0,1.9]];
     spots.forEach(([u,v,kind,h,crd],i)=>{
       let T={p:[],c:[]};qcWTree(T,kind,h,crd,i*17+5,col);
       let m=qcWMesh(T,mat,"tree"),p=qcWP(F,u,v,gy);m.position.set(p[0],p[1],p[2]);m.rotation.y=r()*6;m.userData.ph=r()*6.28;m.userData.amp=.006+r()*.006;
-      gm.add(m);anim.push(m);
+      gm.add(m);
       for(let [sc,op] of[[2.4,.1],[1.5,.16]]){let sh=new Ct(new qcWDisc(28),new $t({color:0x000000,transparent:true,opacity:op,depthWrite:false,fog:false}));sh.raycast=()=>{};sh.rotation.x=-Math.PI/2;sh.position.set(p[0]-.5,gy+.045,p[2]+.4);sh.scale.set(crd*sc,crd*sc*.85,1);sh.renderOrder=-1;mats.push(sh.material);gm.add(sh)}
     });
     lampPos.push([doorU-pw/2-.7,vT+2.6],[doorU+pw/2+.7,vT+2.6],[doorU-pw/2-.7,vT+5],[doorU+pw/2+.7,vT+5]);
@@ -4633,14 +4646,14 @@ function qcWBuild(E){
   let pools=[];
   for(let b2 of bulbs){let pm=new $t({map:E.haloTexture,color:0xffc070,transparent:true,blending:Pe,depthWrite:false,opacity:0,fog:false});let pl=new Ct(new gi(1,1),pm);pl.raycast=()=>{};pl.rotation.x=-Math.PI/2;pl.position.set(b2[0],gy+.075,b2[2]);pl.scale.set(4.6,4.6,1);pl.renderOrder=1;mats.push(pm);group.add(pl);pools.push(pl)}
   /* --- fireflies in the garden at night --- */
-  if(wd.garden&&!E.lowQuality){
+  if(false){
     let n=26,pp=[],ph=[];for(let i=0;i<n;i++){let u=uL+1.5+r()*(uR-uL-3),v=vB+1.5+r()*(vF-vB-3),p=qcWP(F,u,v,gy+.4+r()*1.4);pp.push(...p);ph.push([u,v,r()*6.28,.4+r()*.8,gy+.4+r()*1.4])}
     let fg=new Wt;fg.setAttribute("position",new Ut(pp,3));
     let fp=new jr(fg,new cr({map:E.haloTexture,color:0xd8ff80,size:.5,sizeAttenuation:true,transparent:true,blending:Pe,depthWrite:false,opacity:0,fog:false}));fp.raycast=()=>{};fp.frustumCulled=false;mats.push(fp.material);group.add(fp);flies={pts:fp,ph};
   }
   E.scene.add(group);
   let ext=[[uL,vB],[uR,vB],[uL,vF],[uR,vF]].map(([u,v])=>{let p=qcWP(F,u,v,gy);return[p[0],p[2]]});
-  E.qcw={sig,F,group,mats,mat,field,fbase,tex:ftex,anim,pools,halo,bulbPts,flies,gm,gy,ext,rev:-1,last:0,timer:0,t:0,bounds:{uL,uR,vB,vF},anyAnim:!E.lowQuality&&q.fx!=="off"};
+  E.qcw={sig,F,group,mats,mat,field,fbase,tex:ftex,anim,pools,halo,bulbPts,flies,gm,gy,ext,rev:-1,last:0,timer:0,t:0,bounds:{uL,uR,vB,vF},anyAnim:false};
   qcWTint(E);
 }
 class qcWDisc extends Wt{constructor(n){super();let p=[0,0,0];for(let i=0;i<=n;i++){let a=i/n*6.2832;p.push(Math.cos(a)*.5,Math.sin(a)*.5,0)}let idx=[];for(let i=1;i<=n;i++)idx.push(0,i,i+1);this.setAttribute("position",new Ut(p,3));this.setIndex(idx)}}

@@ -37,3 +37,7 @@ Quint v1.54.0: the world of neonplan3d-3d.js was redrawn after a photo reference
 a dark porch and a stone path to the main door, clipped hedges, potted shrubs, flower beds, lamps and smooth, dense trees
 (oak, round crown, conifer). The road, the cars, the 3D clouds and the picket fence were removed, and the world is not drawn
 in the plan editor any more. The live sky lost its clouds and birds.
+
+Quint v1.55.0: the world of neonplan3d-3d.js no longer moves (no swaying trees, no fireflies) and got a smoother meadow
+around the plot (a soft, patchy lawn texture that fades into the horizon) and the white picket fence back around the lawn.
+The Live background option, the Land and road switch and the Moving sky switch were removed from Quint.
