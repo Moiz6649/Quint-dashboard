@@ -69,8 +69,14 @@ async def _install_builtin(hass: HomeAssistant, data: Any) -> None:
 
 
 def _bundle_hash() -> str:
+    """A fingerprint of every script of the 3D house. The main script hands its address (with this fingerprint)
+    on to the scripts it loads, so a changed engine or editor is never served from the browser's old copy."""
     try:
-        return hashlib.sha256((FRONTEND / MAIN_BUNDLE).read_bytes()).hexdigest()[:10]
+        h = hashlib.sha256()
+        for f in sorted(FRONTEND.glob("*.js")):
+            h.update(f.name.encode())
+            h.update(f.read_bytes())
+        return h.hexdigest()[:10]
     except OSError:
         return "0"
 
