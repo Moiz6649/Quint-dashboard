@@ -17,7 +17,7 @@ SV.house = { n: "3D house", c: "#22d3ee", i: ic('<path d="M12 2l9 5v10l-9 5-9-5V
 
 const H3D_DEF = {
   show: false, home: "full", page: true, switch: false, tap: "quint", height: 360,
-  theme: "auto", bg: "auto", bright: "soft", real: true, pool: true, solid: true, accent: "", quality: "auto", walls: "auto", roof: true, roof_fade: true, explode: true, floor_stack: "dim", floor_thumbs: true, room_names: true,
+  theme: "auto", bg: "auto", bright: "soft", real: true, pool: true, solid: true, land: true, garden: true, motion: true, quality: "auto", walls: "auto", roof: true, roof_fade: true, explode: true, floor_stack: "dim", floor_thumbs: true, room_names: true,
   markers: "important", marker_size: "normal", marker_names: false, heatmap: "none", clock: "off", controls_side: "left",
   controls: true, central: true, walk: true, scenes: true, camera_wall: null, fullscreen_button: true, keep_view: false, angle_lock: false, controls_hidden: false, controls_hide_after: 0, stats: false,
   alerts: true, alert_jump: false, energy: true, flows: "auto", holograms: "auto", weather: true, household_card: true, motion_trail: false, pets: true, ghost: true,
@@ -31,7 +31,7 @@ const H3D_OPT = {
   floor_stack: ["dim", "stacked", "single"], markers: ["none", "important", "all", "room"], marker_size: ["small", "normal", "large"], heatmap: ["none", "temperature", "humidity", "co2"],
   clock: ["off", "tl", "tr", "bl", "br"], controls_side: ["left", "right"], controls_hide_after: [0, 5, 15, 30], flows: ["auto", "on", "off"], holograms: ["auto", "on", "off"],
   time_travel_range: ["24h", "7d"], idle_return: [0, 30, 60, 120, 300], night: ["off", "sun"],
-  look: ["auto", "cozy", "soft"], bg: ["auto", "paper", "light", "slate", "dark", "native"], bright: ["dim", "soft", "normal"],
+  look: ["auto", "cozy", "soft"], bg: ["auto", "live", "light", "slate", "dark", "native"], bright: ["dim", "soft", "normal"],
   layout: ["immersive", "classic"], bar: ["open", "closed"], bar_hide: [0, 10, 30, 60], cam: ["default", "top", "corner", "dollhouse", "front", "side"], fx: ["live", "off"],
 };
 const SV_DEF = Object.fromEntries(Object.entries(SV).map(([k, v]) => [k, v.n]));
@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.52.0";
+const VER = "1.53.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -1263,7 +1263,6 @@ class QuintDashboard extends HTMLElement {
     else if (a === "h3d") {
       const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.h3d = c.h3d || {}), d = H3D_DEF[k];
       if (k === "reset") { const keep = {}; ["show", "home", "page", "switch", "tap"].forEach((y) => { if (o[y] !== undefined) keep[y] = o[y]; }); c.h3d = keep; }
-      else if (k === "accent") o[k] = /^#[0-9a-f]{6}$/i.test(x) ? x : "";
       else if (k === "night") { const y = x.trim(); if (y === "off" || y === "sun" || /^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$/.test(y)) o[k] = y; else if (y === "") o[k] = "off"; }
       else if (k === "screen") o[k] = x.replace(/['"<>\\&]/g, "").trim().slice(0, 60);
       else if (k === "floor" || k === "room") o[k] = /^[A-Za-z0-9_.-]{0,64}$/.test(x) ? x : "";
@@ -1612,7 +1611,6 @@ class QuintDashboard extends HTMLElement {
     if (adm && d.tzd) { this._c.tszd = { ...(this._c.tszd || {}), [d.tzd]: Math.max(50, Math.min(150, Math.round(+t.value))) }; this._applyTs(); this._save(); this._draw(true); return; }
     if (adm && d.h3txt) { this._sact("h3d", d.h3txt + "|" + t.value); return; }
     if (adm && d.h3sel) { this._sact("h3d", d.h3sel + "|" + t.value); return; }
-    if (adm && d.h3acc !== undefined) { if (/^#[0-9a-f]{6}$/i.test(t.value)) (this._c.h3d = this._c.h3d || {}).accent = t.value; this._save(); this._draw(true); return; }
     if (adm && d.bg) { this._save(); return; }
     if (adm && d.wn !== undefined) { const w = (this._c.wall = this._c.wall || {}); w.n = Math.max(1, Math.min(32, +t.value || 4)); this._save(); this._draw(true); return; }
     if (adm && d.cred !== undefined) { this._c.credit = t.value.trim().slice(0, 30); this._save(); this._draw(true); return; }
@@ -2990,16 +2988,51 @@ class QuintDashboard extends HTMLElement {
   /* ---------- 3D house: Quinteca 3D (carried inside Quint) as the Home page, a page of its own and the plan editor ---------- */
   /* the time of day shown on the 3D house, chosen on the house itself and kept on this device: live (the real sun), day, evening, night */
   _hour() {
-    /* the Day/Night buttons are gone: the house is always the day house (only a test can set _hr) */
-    return ["day", "dusk", "night"].includes(this._hr) ? this._hr : "day";
+    /* the Day/Night buttons are gone: the house follows the real sun (a test can still set _hr) */
+    return ["day", "dusk", "night"].includes(this._hr) ? this._hr : "live";
+  }
+  /* the hour of the day as a number (the real clock; a test can set _hh or _hr) */
+  _hourF() {
+    if (typeof this._hh === "number") return this._hh;
+    if (this._hr === "day") return 12; if (this._hr === "dusk") return 18.7; if (this._hr === "night") return 23.5;
+    const d = new Date(); return d.getHours() + d.getMinutes() / 60;
+  }
+  /* the height of the sun in degrees: the real sun of Home Assistant, else the clock (a test can set _ee or _hr) */
+  _sunEl() {
+    if (typeof this._ee === "number") return this._ee;
+    if (this._hr === "night") return -30; if (this._hr === "dusk") return 2; if (this._hr === "day") return 40;
+    const S = (this._h && this._h.states) || {}, sun = S["sun.sun"];
+    if (sun && sun.attributes && Number.isFinite(+sun.attributes.elevation)) return +sun.attributes.elevation;
+    if (sun) return sun.state === "below_horizon" ? -20 : 35;
+    return Math.sin(((this._hourF() - 6) / 12) * Math.PI) * 55;
+  }
+  /* what the live sky and the 3D garden need to know about the moment: sun height, hour, clouds, rain, snow, fog */
+  _h3dSky() {
+    const o = this._h3d(); let P = { rain: 0, snow: 0, fog: 0, cloud: 0, wind: 0 };
+    try { P = this._fxParams(this._fxCond()); } catch (e) {}
+    return { e: this._sunEl(), h: this._hourF(), cover: Math.max(0.2, Math.min(1, P.cloud)), rain: P.rain, snow: P.snow, fog: P.fog, wind: P.wind, anim: o.motion !== false, test: !!this._tst };
+  }
+  /* the engine reads the moment from here (its world changes colour with the sun); rev changes when it should look again */
+  _h3dSkyPush() {
+    const q = globalThis.__qcol; if (!q) return;
+    const k = this._h3dSky(), key = Math.round(k.e * 2) + "|" + k.cover.toFixed(1);
+    if (key !== this._skyKey) { this._skyKey = key; this._skyRev = (this._skyRev || 0) + 1; }
+    q.sky = { e: k.e, cover: k.cover, rev: this._skyRev || 0 };
+  }
+  _skyLoad() {
+    if (this._skyP) return this._skyP;
+    let u = "./quint-sky.js";
+    try { const b = new URL(import.meta.url), n = new URL("quint-sky.js", b); n.search = b.search; u = n.href; } catch (e) {}
+    this._skyP = import(/* @vite-ignore */ u).catch((e) => { this._skyP = null; throw e; });
+    return this._skyP;
   }
   _h3d() {
     const o = { ...H3D_DEF, ...((this._c && this._c.h3d) || {}) };
-    const hr = this._hour();
+    if (o.bg === "paper") o.bg = "live";   // the old drawing-paper backdrop became the live sky
     if (!H3D_OPT.bg.includes(o.bg)) o.bg = "auto";
     if (!H3D_OPT.bright.includes(o.bright)) o.bright = "soft";
     if (!H3D_OPT.theme.includes(o.theme)) o.theme = "auto";   // the old Neon and Blueprint themes are gone
-    if (o.bg === "native") { if (hr === "day") o.theme = "day"; else o.theme = "neon"; }   // Quinteca's own starry view keeps its night look
+    if (o.bg === "native") { if (this._sunEl() > 1.5) o.theme = "day"; else o.theme = "neon"; }   // Quinteca's own starry view keeps its night look
     else o.theme = "day";   // the house is always drawn as the bright "Nice" house; evening only dims it
     if (!H3D_OPT.look.includes(o.look)) o.look = "auto";
     o.home = o.home === true ? "block" : o.home === false ? "off" : ["off", "block", "full"].includes(o.home) ? o.home : "full";
@@ -3090,7 +3123,6 @@ class QuintDashboard extends HTMLElement {
     if (o.flows === "on" || o.flows === "off") cfg.flows = o.flows === "on";
     if (o.holograms === "on" || o.holograms === "off") cfg.holograms = o.holograms === "on";
     if (cfg.time_travel && o.time_travel_range === "7d") cfg.time_travel_range = "7d";
-    if (/^#[0-9a-f]{6}$/i.test(o.accent || "")) cfg.accent = o.accent;
     if (+o.idle_return > 0) { cfg.idle_return = +o.idle_return; if (o.idle_orbit) cfg.idle_orbit = true; }
     if (o.night && o.night !== "off" && (o.night === "sun" || /^\d{2}:\d{2}-\d{2}:\d{2}$/.test(o.night))) cfg.night = o.night;
     if (+o.controls_hide_after > 0) cfg.controls_hide_after = +o.controls_hide_after;
@@ -3138,8 +3170,9 @@ class QuintDashboard extends HTMLElement {
   _qcolSet() {
     const o = this._h3d(), m = this._am;
     const rl = o.real !== false;
-    if (!o.color) { globalThis.__qcol = { on: false, real: rl, gain: 1, pool: o.pool !== false ? 0.5 : 0, cut: o.solid !== false }; return (rl ? "0r" : "0") + (o.pool !== false ? "p" : "") + (o.solid !== false ? "s" : ""); }
-    const bk = this._h3dBack(o), look = o.look === "auto" ? (bk.paper ? "cozy" : "soft") : o.look, cin = look === "cinema", soft = look === "soft", coz = look === "cozy";
+    const wl = o.land !== false && o.bg !== "native", wg = wl && o.garden !== false, wk = (wl ? "L" : "") + (wg ? "G" : "");   /* the land, road and garden of the engine */
+    if (!o.color) { globalThis.__qcol = { on: false, real: rl, gain: 1, pool: o.pool !== false ? 0.5 : 0, cut: o.solid !== false, world: { land: wl, garden: wg }, fx: o.motion === false ? "off" : "live" }; this._h3dSkyPush(); return (rl ? "0r" : "0") + (o.pool !== false ? "p" : "") + (o.solid !== false ? "s" : "") + wk; }
+    const bk = this._h3dBack(o), look = o.look === "auto" ? (bk.live ? "cozy" : "soft") : o.look, cin = look === "cinema", soft = look === "soft", coz = look === "cozy";
     const pool = o.pool !== false ? 0.5 : 0, cut = o.solid !== false;
     const TC = {   /* the cinema look: dark walnut and slate-blue tile floors, deep slate walls with lighter tops */
       living: [0x5c3b25, 0x3a4662, 0x5f7094], dining: [0x6b4630, 0x3a4662, 0x5f7094], kitchen: [0x3f5d7c, 0x384a66, 0x5d7597], hall: [0x4e3424, 0x3a4462, 0x58698e],
@@ -3180,12 +3213,13 @@ class QuintDashboard extends HTMLElement {
       return k === "other" ? [t[0], ...ACC[hs(id || n) % ACC.length]] : t;   /* rooms we cannot name get a colour of their own */
     };
     globalThis.__qcol = {
-      on: true, real: rl, gain: 1, pool, cut,
+      on: true, real: rl, gain: 1, pool, cut, world: { land: wl, garden: wg }, fx: o.motion === false ? "off" : "live",
       furn: coz ? { body: 0xd8cdbf, bodyTop: 0xefe6da, fabric: 0xcdbba4, fabricTop: 0xe6d8c5, cushion: 0xe07f3c, wood: 0x91582f, woodTop: 0xb27744, white: 0xf7f1e7, whiteTop: 0xffffff, metal: 0xb4b2ac, glass: 0xaccdd6, plant: 0x4e8944, plantTop: 0x76b062, pot: 0xc9805a, accent: 0xe9a54a } : soft ? { body: 0xb4a898, bodyTop: 0xd2c8ba, fabric: 0x9fb8c8, fabricTop: 0xc2d6e2, cushion: 0xe0a050, wood: 0xc08a52, woodTop: 0xdcaa72, white: 0xf4efe6, whiteTop: 0xffffff, metal: 0xb4bcc4, glass: 0x9cc8dc, plant: 0x4f9a50, plantTop: 0x74bf70, pot: 0xc9815a, accent: 0xe3a03c } : cin ? { body: 0x5a6e8a, bodyTop: 0x7c92b2, fabric: 0x24407c, fabricTop: 0x3a66aa, cushion: 0x2fb0a8, wood: 0x6a4126, woodTop: 0x8c5c3a, white: 0xd6dce6, whiteTop: 0xf2f5fa, metal: 0x8a96a8, glass: 0x4a92ba, plant: 0x1f6a34, plantTop: 0x36a04e, pot: 0x2a2e3c, accent: 0x20c8e0 } : { body: 0x2f5fb0, bodyTop: 0x4f82d8, fabric: 0xe0705a, fabricTop: 0xff9a80, cushion: 0xf2b830, wood: 0xb8672a, woodTop: 0xdc8a44, white: 0xf6f0e6, whiteTop: 0xffffff, metal: 0x9aa6b4, glass: 0x58b0d8, plant: 0x2faa4a, plantTop: 0x58d870, pot: 0xc86a34, accent: 0xffc020 },
       floor: (r) => pick(r)[0],
       wall: (r, top) => pick(r)[top ? 2 : 1],
     };
-    return (coz ? "1z" : soft ? "1s" : cin ? "1c" : "1b") + (rl ? "r" : "") + (pool ? "p" : "") + (cut ? "s" : "");
+    this._h3dSkyPush();
+    return (coz ? "1z" : soft ? "1s" : cin ? "1c" : "1b") + (rl ? "r" : "") + (pool ? "p" : "") + (cut ? "s" : "") + wk;
   }
   /* one 3D card per place (Home, page, phone); it stays alive while its page is away, so coming back is instant */
   async _mountH3(p, ctx) {
@@ -3228,21 +3262,16 @@ class QuintDashboard extends HTMLElement {
     if (open && q && tap === "both") { chip.hidden = false; chip.dataset.room = q.id; chip.textContent = "Open " + q.name + " ›"; }
     else { chip.hidden = true; delete chip.dataset.room; }
   }
-  /* the backdrop behind the house: a plain soft studio colour, like a photographer's paper. Warm cream by day, slate blue at night, in between at dusk; it follows the real sun unless the hour switch or the setting says otherwise */
+  /* the backdrop behind the house. Auto and Live: a living sky (see quint-sky.js) that follows the real sun; Light, Slate and Dark: a plain soft studio colour */
   _h3dBack(o) {
-    const S = (this._h && this._h.states) || {}, sun = S["sun.sun"], hr = this._hour();
-    let e;
+    const live = o.bg === "auto" || o.bg === "live";
+    let e = this._sunEl();
     if (o.bg === "light") e = 40; else if (o.bg === "slate") e = -30; else if (o.bg === "dark") e = -60;
-    else if (hr === "day") e = 40; else if (hr === "night" || hr === "dusk") e = hr === "dusk" ? 2 : -30;
-    else if (sun && sun.attributes && Number.isFinite(+sun.attributes.elevation)) e = +sun.attributes.elevation;
-    else if (sun) e = sun.state === "below_horizon" ? -20 : 35;
-    else { const h = new Date().getHours() + new Date().getMinutes() / 60; e = Math.sin(((h - 6) / 12) * Math.PI) * 55; }
     const K = [[-60, [38, 34, 33], [18, 16, 16]], [-14, [66, 73, 104], [32, 36, 58]], [-3, [112, 98, 128], [58, 52, 84]], [5, [226, 200, 172], [170, 142, 116]], [18, [219, 211, 198], [168, 158, 142]]];
     let i = 0; while (i < K.length - 2 && e > K[i + 1][0]) i++;
     const a = K[i], b = K[i + 1], t = Math.max(0, Math.min(1, (e - a[0]) / (b[0] - a[0])));
     const mx = (p, q) => p.map((v, j) => Math.round(v + (q[j] - v) * t));
-    const paper = o.bg === "auto" || o.bg === "paper";   /* Auto and Paper: the house always stands on its blueprint sheet; evening only dims the sheet */
-    return { e, c: mx(a[1], b[1]), d: mx(a[2], b[2]), light: paper ? true : o.bg === "dark" ? false : e > 1.5, paper, dusk: paper ? Math.max(0, Math.min(1, (6 - e) / 26)) : 0 };
+    return { e, c: mx(a[1], b[1]), d: mx(a[2], b[2]), light: live ? e > -4 : o.bg === "dark" ? false : e > 1.5, live, dusk: live ? Math.max(0, Math.min(1, (6 - e) / 26)) : 0 };
   }
   /* put the backdrop (and the soft shadow under the house) around one 3D card; true once the card has built its view */
   _h3dBackFor(el, force) {
@@ -3251,81 +3280,39 @@ class QuintDashboard extends HTMLElement {
     if (!stage) return false;
     const root = stage.getRootNode(), o = this._h3d();
     let css = "", key = "";
+    const eng = stage.querySelector("canvas.fp3d-canvas");
+    let cv = stage.querySelector("canvas[data-quint-sky]");
     if (o.bg !== "native") {
       const k = this._h3dBack(o), q = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
-      const paper = k.paper ? this._h3dPaper() : "", da = (0.6 * k.dusk).toFixed(2);
+      if (k.live) {
+        if (!eng) return false;   /* the house is not built yet: try again */
+        if (!cv) {
+          cv = document.createElement("canvas"); cv.setAttribute("data-quint-sky", "1");
+          cv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none";
+          stage.insertBefore(cv, eng);
+        } else if (cv.nextElementSibling !== eng && (eng.compareDocumentPosition(cv) & 4)) stage.insertBefore(cv, eng);   /* the engine made a new canvas: the sky goes behind it again */
+        if (!cv._qs && !cv._qsLoad) { cv._qsLoad = true; this._skyLoad().then((m) => { if (cv.isConnected) cv._qs = m.mount(cv, () => this._h3dSky()); }).catch(() => { cv._qsLoad = false; }); }
+      } else if (cv) { if (cv._qs) cv._qs.stop(); cv.remove(); cv = null; }
       /* a little less light than the engine's own: deeper colours and more contrast, so the house stops looking washed out. At night the glow is kept */
       const X = { dim: [0.74, 1.14, 1.06], soft: [0.87, 1.1, 1.04], normal: [1, 1, 1] }[o.bright] || [0.87, 1.1, 1.04], w = k.light ? 1 : 0.35;
-      const dm = k.paper ? 1 - 0.34 * k.dusk : 1;   /* evening: the house is dimmed so its lamps stand out */
-      const ex = o.bright === "normal" && !k.paper ? "" : `brightness(${((1 - (1 - X[0]) * w) * dm).toFixed(3)}) contrast(${(1 + (X[1] - 1) * w).toFixed(3)}) saturate(${(X[2] * (k.paper ? 1.08 : 1)).toFixed(2)}) `;
-      key = `${k.c}|${k.d}|${k.light}|${o.bright}|${k.paper ? "p" + da : ""}`;
-      css = (k.paper
-        ? `.fp3d-stage{background:linear-gradient(rgba(38,22,16,${da}),rgba(38,22,16,${da})),url(${paper}) center/cover no-repeat!important;transition:background 2.5s}`
-        : `.fp3d-stage{background:radial-gradient(ellipse 80% 72% at 50% 46%,${q(k.c)} 0%,${q(k.c.map((v, j) => Math.round((v + k.d[j]) / 2)))} 58%,${q(k.d)} 100%)!important;transition:background 2.5s}`)
+      const dm = k.live ? 1 - 0.34 * k.dusk : 1;   /* evening: the house is dimmed so its lamps stand out */
+      const ex = o.bright === "normal" && !k.live ? "" : `brightness(${((1 - (1 - X[0]) * w) * dm).toFixed(3)}) contrast(${(1 + (X[1] - 1) * w).toFixed(3)}) saturate(${(X[2] * (k.live ? 1.08 : 1)).toFixed(2)}) `;
+      key = `${k.c}|${k.d}|${k.light}|${o.bright}|${k.live ? "L" + k.dusk.toFixed(2) : ""}`;
+      css = `.fp3d-stage{background:radial-gradient(ellipse 80% 72% at 50% 46%,${q(k.c)} 0%,${q(k.c.map((v, j) => Math.round((v + k.d[j]) / 2)))} 58%,${q(k.d)} 100%)!important;transition:background 2.5s}`
         + `.fp3d-stage::before,.fp3d-stage::after{background:none!important;background-image:none!important;box-shadow:none!important}`
         + `.fp3d-stage:not(.fp3d-low) canvas.fp3d-canvas{filter:${ex}drop-shadow(0 4px 5px rgba(${k.light ? "50,34,20,.30" : "0,0,0,.40"})) drop-shadow(0 22px 26px rgba(${k.light ? "50,34,20,.38" : "0,0,0,.45"}))}`
-        + `.fp3d-stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 48%,transparent 55%,rgba(${k.light ? "40,28,18,.30" : "0,0,0,.38"}) 100%)}`;
-    }
+        + (k.live ? "" : `.fp3d-stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 48%,transparent 55%,rgba(${k.light ? "40,28,18,.30" : "0,0,0,.38"}) 100%)}`);
+    } else if (cv) { if (cv._qs) cv._qs.stop(); cv.remove(); }
     if (!force && el._qreal === key && el._qrealRoot === root) return true;
     let st = root.querySelector("style[data-quint-back]");
     if (!st) { st = document.createElement("style"); st.setAttribute("data-quint-back", "1"); root.appendChild(st); }
     st.textContent = css; el._qreal = key; el._qrealRoot = root;
     return true;
   }
-  /* a sheet of warm drawing paper with faint pencilled floor plans and window light, painted once (the backdrop of the cozy look) */
-  _h3dPaper() {
-    if (this._paperURL !== undefined) return this._paperURL;
-    let url = "";
-    try {
-      const W = 1600, H = 1000, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-      const g = cv.getContext("2d");
-      let s = 20261029; const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296), pick = (a, b) => a + rnd() * (b - a);
-      const bg = g.createRadialGradient(W * 0.5, H * 0.45, 60, W * 0.5, H * 0.5, W * 0.82);
-      bg.addColorStop(0, "#f4e6cc"); bg.addColorStop(0.6, "#ecd9b8"); bg.addColorStop(1, "#dcc59f");
-      g.fillStyle = bg; g.fillRect(0, 0, W, H);
-      g.lineCap = "round"; g.lineJoin = "round";
-      const ink = (a) => `rgba(116,84,54,${a})`;
-      const line = (x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
-      const plan = (x, y, w, h, rot) => {
-        g.save(); g.translate(x, y); g.rotate(rot);
-        g.strokeStyle = ink(0.42); g.lineWidth = 2.6; g.strokeRect(0, 0, w, h);
-        g.strokeStyle = ink(0.3); g.lineWidth = 1.2; g.strokeRect(5, 5, w - 10, h - 10);
-        const cuts = 2 + Math.floor(rnd() * 3);
-        for (let i = 0; i < cuts; i++) {   /* partitions with a door arc */
-          g.strokeStyle = ink(0.38); g.lineWidth = 2;
-          if (rnd() < 0.5) { const px = pick(0.25, 0.75) * w, gap = pick(0.1, 0.18) * h, g0 = pick(0.1, 0.6) * h; line(px, 0, px, g0); line(px, g0 + gap, px, h); g.lineWidth = 1; g.beginPath(); g.arc(px, g0, gap, 0, Math.PI / 2); g.stroke(); line(px, g0, px + gap, g0); }
-          else { const py = pick(0.25, 0.75) * h, gap = pick(0.1, 0.18) * w, g0 = pick(0.1, 0.6) * w; line(0, py, g0, py); line(g0 + gap, py, w, py); g.lineWidth = 1; g.beginPath(); g.arc(g0, py, gap, 0, Math.PI / 2); g.stroke(); line(g0, py, g0, py + gap); }
-        }
-        g.strokeStyle = ink(0.3); g.lineWidth = 1;
-        for (let i = 0; i < 4; i++) { const fx = pick(0.1, 0.8) * w, fy = pick(0.1, 0.8) * h; if (rnd() < 0.5) g.strokeRect(fx, fy, pick(18, 46), pick(14, 30)); else { g.beginPath(); g.arc(fx, fy, pick(8, 18), 0, 7); g.stroke(); } }
-        const sx = pick(0.05, 0.6) * w, sy = pick(0.05, 0.6) * h, sw = 54, sh = 22;   /* a stair */
-        g.strokeRect(sx, sy, sw, sh); for (let i = 1; i < 8; i++) line(sx + (sw / 8) * i, sy, sx + (sw / 8) * i, sy + sh);
-        g.strokeStyle = ink(0.34);   /* a dimension line */
-        line(0, -16, w, -16); line(0, -22, 0, -10); line(w, -22, w, -10); for (let i = 0; i < 5; i++) line(w * (0.2 + 0.15 * i), -19, w * (0.2 + 0.15 * i) + 12, -19);
-        g.restore();
-      };
-      const spots = [[40, 70, 330, 240], [420, 30, 260, 300], [780, 90, 360, 230], [1180, 40, 340, 260], [30, 420, 300, 260], [380, 480, 360, 250], [840, 520, 280, 300], [1200, 470, 350, 240], [200, 760, 420, 200], [760, 790, 380, 190], [1230, 760, 300, 210]];
-      spots.forEach(([x, y, w, h]) => plan(x + pick(-30, 30), y + pick(-20, 20), w, h, pick(-0.07, 0.07)));
-      for (let i = 0; i < 7; i++) {   /* trees from above, hatched */
-        const tx = rnd() < 0.5 ? pick(20, 180) : pick(W - 220, W - 20), ty = pick(80, H - 80), r = pick(24, 52);
-        g.strokeStyle = ink(0.3); g.lineWidth = 1.2; g.beginPath(); g.arc(tx, ty, r, 0, 7); g.stroke(); g.beginPath(); g.arc(tx, ty, r * 0.45, 0, 7); g.stroke();
-        for (let k = 0; k < 10; k++) { const a = (k / 10) * 6.28; line(tx + Math.cos(a) * r * 0.45, ty + Math.sin(a) * r * 0.45, tx + Math.cos(a) * r, ty + Math.sin(a) * r); }
-      }
-      g.fillStyle = ink(0.18); g.fillRect(0, 0, 0, 0);
-      /* window light falling across the sheet, and a soft shade beside it */
-      const beam = (x, w2, a, col) => { const gr = g.createLinearGradient(x, 0, x + w2, H); gr.addColorStop(0, `rgba(${col},0)`); gr.addColorStop(0.35, `rgba(${col},${a})`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + w2, 0); g.lineTo(x + w2 - 520, H); g.lineTo(x - 520, H); g.closePath(); g.fill(); };
-      beam(80, 260, 0.34, "255,250,235"); beam(470, 140, 0.26, "255,250,235"); beam(780, 320, 0.2, "255,248,232"); beam(1250, 200, 0.22, "255,250,235");
-      beam(330, 90, 0.12, "120,88,58"); beam(1000, 120, 0.1, "120,88,58");
-      for (let i = 0; i < 9000; i++) { g.fillStyle = rnd() < 0.5 ? `rgba(120,90,60,${pick(0.012, 0.04)})` : `rgba(255,250,240,${pick(0.02, 0.05)})`; g.fillRect(pick(0, W), pick(0, H), 1.4, 1.4); }
-      url = cv.toDataURL("image/jpeg", 0.8);
-    } catch (e) { url = ""; }
-    this._paperURL = url;
-    return url;
-  }
   _h3dBackAll(force) {
     Object.values(this._h3el || {}).forEach((el) => { if (el && el.isConnected && !this._h3dBackFor(el, force)) { clearTimeout(el._qrt); el._qrt = setTimeout(() => this._h3dBackFor(el, force), 700); } });
   }
-  _h3dBackTick() { const t = Date.now(); if (t - (this._h3bt || 0) > 30000) { this._h3bt = t; this._h3dBackAll(false); } }
+  _h3dBackTick() { const t = Date.now(); if (t - (this._h3bt || 0) > 30000) { this._h3bt = t; this._h3dSkyPush(); this._h3dBackAll(false); } }
   _h3dDq(root, sel) { const f = root.querySelector(sel); if (f) return f; for (const e of root.querySelectorAll("*")) { if (e.shadowRoot) { const r = this._h3dDq(e.shadowRoot, sel); if (r) return r; } } return null; }
   /* ---------- auto house: the floors and rooms of the dashboard become a plan with walls, doors, windows and furniture ---------- */
   _autoLoad() {
@@ -3657,15 +3644,17 @@ class QuintDashboard extends HTMLElement {
           row("Quint rooms", "the rooms Quint shows on the Rooms page", `<b>${rooms.length}</b>`)) +
         sec("Look", "how the house is drawn",
           row("Theme", "Nice is the bright, cosy house. Auto gives the same", sg("theme", ["Auto", "Nice"])) +
-          row("Accent colour", "for the neon look and its chips", `<input type="color" value="${/^#[0-9a-f]{6}$/i.test(o.accent) ? o.accent : "#00e5ff"}" data-h3acc="1" style="width:56px;height:40px;padding:2px">${o.accent ? '<button class="sbtn" data-s="h3d|accent|">Standard</button>' : ""}`) +
-          row("Background", "Auto and Paper put the house on a warm sheet of drawing paper with pencilled floor plans (it darkens in the evening). Light, Slate and Dark are plain studio colours; Native is Quinteca's own starry view", sg("bg", ["Auto", "Paper", "Light", "Slate", "Dark", "Native"])) +
+          row("Background", "Auto and Live: a living sky behind the house that follows the real time: sunrise, day, sunset and a starry night, clouds that keep drifting and birds in the morning. Light, Slate and Dark are plain colours; Native is Quinteca's own starry view", sg("bg", ["Auto", "Live", "Light", "Slate", "Dark", "Native"])) +
+          row("Land and road", "the house stands on its own plot of land, with a road in front and a driveway to the main door", B("land")) +
+          row("Front garden", "lawn, fence, flower beds, trees, shrubs, lamps and a bench in front of the house. Hide it for a bare plot", B("garden")) +
+          row("Moving sky and garden", "drifting clouds, birds, swaying trees, cars on the road and fireflies at night. Off keeps everything still", B("motion")) +
           row("Solid walls", "the walls on your side are cut low, so you look into the rooms over solid walls, like a dollhouse. Off makes them see-through glass", B("solid")) +
           row("Light only where it reaches", "a lamp lights the floor and walls around it like a pool of light, not the whole room. Off gives the engine's wide glow", B("pool")) +
           row("Realistic materials", "wood-plank and tile floors, soft wall shading and fine outlines in the light look. Off gives the plain flat colours", B("real")) +
           row("Brightness", "how bright the house is drawn. Soft is deeper and richer than the engine's own light, Dim is darker still, Normal leaves it as it is", sg("bright", ["Dim", "Soft", "Normal"])) +
           row("Picture quality", "Auto picks a light level on weak tablets", sg("quality", ["Auto", "Low", "High"])) +
           row("Colourful house", "wood and tile floors, coloured walls and furniture, still see-through. Off gives Quinteca's own colours", B("color")) +
-          (o.color ? row("Colours", "Auto: Cozy on the paper backdrop (warm parquet, cream and rose walls, solid furniture colours), Soft cream on a plain studio colour. Cozy and Soft fix one", sg("look", ["Auto", "Cozy", "Soft"])) : "") +
+          (o.color ? row("Colours", "Auto: Cozy with the live sky (warm parquet, cream and rose walls, solid furniture colours), Soft cream on a plain studio colour. Cozy and Soft fix one", sg("look", ["Auto", "Cozy", "Soft"])) : "") +
           row("Roof", "show the roof on the house", B("roof")) +
           row("Roof fades when you zoom in", "off keeps the roof on the house", B("roof_fade")) +
           row("Walls", "tall walls, or cut low so you can look into the rooms", sg("walls", ["Tall", "Cut"])) +

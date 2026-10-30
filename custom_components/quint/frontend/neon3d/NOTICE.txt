@@ -20,3 +20,10 @@ Quint v1.50.0 patched neonplan3d-3d.js further: (1) the reach and fall-off of a 
 (functions W2 and F0, helper qcPw) shrink to a pool around the lamp when globalThis.__qcol.pool is set; (2) the
 wall shader (function ai) cuts the walls that face the camera low, with solid caps, instead of drawing them as glass
 when globalThis.__qcol.cut is set. Without these flags the file draws as before.
+
+Quint v1.53.0 added a "world" to neonplan3d-3d.js (functions qcWFrame, qcWBuild, qcWStep, qcWTint, qcWFit, qcWDrop,
+hooked into placeGround, fit, render and dispose): when globalThis.__qcol.world is set, the house stands on a plot
+of land with a road in front, a driveway to the main door (found from the plan's exterior doors), a front garden
+(fence, hedge, flower beds, trees, lamps, mailbox, bench), cars on the road, clouds with shadows, lamps that light at
+night and fireflies. It changes its colours with globalThis.__qcol.sky (the sun's height, set by Quint). Without
+the flag the file draws as before. quint-sky.js is new Quint code (the animated sky behind the house).
