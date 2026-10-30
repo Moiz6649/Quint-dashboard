@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.58.0";
+const VER = "1.58.1";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -641,7 +641,7 @@ input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 
 .pmpill{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:6px 8px 6px 8px;border-radius:999px;border:0;text-align:left;background:rgba(16,20,34,.74);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff;box-shadow:0 6px 20px -8px rgba(0,0,0,.7)}
 .pmpill>i{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);font-style:normal}.pmpill>i .si{font-size:20px}
 .pmpill span{display:flex;flex-direction:column;min-width:0;flex:1}.pmpill b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pmpill small{font-size:12px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pmppl{flex:none;display:flex;font-style:normal;transform:scale(.8);transform-origin:right center}
+.pmppl{flex:none;display:flex;gap:6px;align-items:center;font-style:normal;padding-right:4px}.pmppl .h3av{flex:none;width:34px;height:34px;font-size:12px;border-width:2px}
 .pmbar{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:20;display:flex;gap:10px;align-items:center}
 .pmcap{flex:1;min-width:0;height:56px;display:flex;align-items:center;gap:10px;padding:0 16px 0 12px;border-radius:999px;border:0;text-align:left;color:#fff;background:rgba(16,20,34,.74);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 6px 20px -8px rgba(0,0,0,.7)}
 .pmcap>i{font-style:normal;flex:none;color:#ffb347}.pmcap>i .si{font-size:26px}.pmcap span{display:flex;flex-direction:column;min-width:0}.pmcap b{font-size:19px;font-weight:600}.pmcap small{font-size:12px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2723,7 +2723,7 @@ class QuintDashboard extends HTMLElement {
   _h3dImm() { return this._h3dFull() && this.getAttribute("data-dev") !== "phone" && this._h3d().layout !== "classic"; }
   _h3dBarOpen() {
     let u = ""; try { u = localStorage.getItem("quint_h3bar") || ""; } catch (e) {}
-    return u === "1" ? true : u === "0" ? false : this._h3d().bar !== "closed";
+    return u === "1" ? true : u === "0" ? false : (this.clientWidth || window.innerWidth || 1024) < 900 ? false : this._h3d().bar !== "closed";
   }
   _h3dBarSet(open) { try { localStorage.setItem("quint_h3bar", open ? "1" : "0"); } catch (e) {} this._h3lt = Date.now(); this._last = null; this._draw(true); }
   _h3dBarTick() {
@@ -2731,9 +2731,9 @@ class QuintDashboard extends HTMLElement {
     if (!s || !this._h3dImm() || this._v.p !== "home" || !this._h3dBarOpen()) return;
     if (Date.now() - (this._h3lt || (this._h3lt = Date.now())) > s * 1000) this._h3dBarSet(false);
   }
-  _people() {
+  _people(max) {
     const H = this._h.states, E = (t) => this._esc(t);
-    return Object.keys(H).filter((i) => i.startsWith("person.")).slice(0, 8).map((id) => {
+    return Object.keys(H).filter((i) => i.startsWith("person.")).slice(0, max || 8).map((id) => {
       const s = H[id], a = s.attributes || {}, nm = a.friendly_name || id, home = s.state === "home", pic = a.entity_picture;
       const ini = String(nm).trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
       return `<span class="h3av ${home ? "at" : ""}" title="${E(nm)} · ${E(s.state)}">${pic ? `<img src="${E(pic)}" alt="">` : E(ini)}</span>`;
@@ -2758,7 +2758,7 @@ class QuintDashboard extends HTMLElement {
     const nl = this._nList(), nU = nl.filter((x) => !x.read), last = nU[0] || null;
     const nOn = sv.includes("lights") ? this._ents("lights").filter((i) => H[i].state === "on").length : 0;
     const l1 = last ? E(last.title || "") : wx ? E(wx.t) : E(c.title || this._title || "Home"), l2 = last ? E(last.msg || "") : nOn ? nOn + " light" + (nOn > 1 ? "s" : "") + " on" : E(date);
-    const ppl = this._people();
+    const ppl = this._people(3);
     const top = `<div class="pmtop"><button class="pmb" data-more="open" title="Menu"><svg class="si" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><button class="pmpill" data-ntf="open"><i>${last ? BELL_I : wx ? wx.ic : BELL_I}</i><span><b>${l1}</b><small>${l2}</small></span>${ppl ? `<em class="pmppl">${ppl}</em>` : ""}</button>${nU.length ? `<button class="pmb" data-ntf="open" title="Notifications">${BELL_I}<span class="nbd">${nU.length > 9 ? "9+" : nU.length}</span></button>` : ""}</div>`;
     const cl = this._ents("climate").find((i) => H[i] && H[i].attributes.current_temperature != null);
     let ct = "", cs = "";
@@ -3305,6 +3305,8 @@ class QuintDashboard extends HTMLElement {
         + `.fp3d-stage:not(.fp3d-low) canvas.fp3d-canvas{filter:${ex}drop-shadow(0 4px 5px rgba(${k.light ? "50,34,20,.30" : "0,0,0,.40"})) drop-shadow(0 22px 26px rgba(${k.light ? "50,34,20,.38" : "0,0,0,.45"}))}`
         + (k.live ? "" : `.fp3d-stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 48%,transparent 55%,rgba(${k.light ? "40,28,18,.30" : "0,0,0,.38"}) 100%)}`);
     } else if (cv) { if (cv._qs) cv._qs.stop(); cv.remove(); }
+    let pm = false; for (let n = el; n && !pm; n = n.parentNode) if (n.classList && n.classList.contains("pimm")) pm = true;
+    if (pm) { css += `.fp3d-eye{top:auto!important;right:auto!important;left:12px!important;bottom:calc(92px + env(safe-area-inset-bottom))!important}.fp3d-mic{top:auto!important;right:auto!important;left:12px!important;bottom:calc(136px + env(safe-area-inset-bottom))!important}`; key += "|pm"; }
     if (!force && el._qreal === key && el._qrealRoot === root) return true;
     let st = root.querySelector("style[data-quint-back]");
     if (!st) { st = document.createElement("style"); st.setAttribute("data-quint-back", "1"); root.appendChild(st); }
