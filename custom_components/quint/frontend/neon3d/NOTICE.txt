@@ -32,3 +32,8 @@ Quint v1.53.1: the scripts of the 3D house (neonplan3d.js, neonplan3d-editor.js)
 same ?v= address they were loaded with themselves (it used to be a fixed fingerprint per file), and neon.py computes
 that address from every script of the folder, so an updated engine is never served from the browser's old copy. The
 world got a very large lawn around the plot that fades out at its edge, and the sky behind it turns with the camera.
+
+Quint v1.54.0: the world of neonplan3d-3d.js was redrawn after a photo reference: a striped lawn, a stone terrace around the house,
+a dark porch and a stone path to the main door, clipped hedges, potted shrubs, flower beds, lamps and smooth, dense trees
+(oak, round crown, conifer). The road, the cars, the 3D clouds and the picket fence were removed, and the world is not drawn
+in the plan editor any more. The live sky lost its clouds and birds.

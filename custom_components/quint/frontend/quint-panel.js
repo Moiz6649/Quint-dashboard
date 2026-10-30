@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.53.1";
+const VER = "1.54.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -3170,7 +3170,7 @@ class QuintDashboard extends HTMLElement {
   _qcolSet() {
     const o = this._h3d(), m = this._am;
     const rl = o.real !== false;
-    const wl = o.land !== false && o.bg !== "native", wg = wl && o.garden !== false, wk = (wl ? "L" : "") + (wg ? "G" : "");   /* the land, road and garden of the engine */
+    const wl = o.land !== false && o.bg !== "native", wg = wl && o.garden !== false, wk = (wl ? "L" : "") + (wg ? "G" : "");   /* the land and garden of the engine */
     if (!o.color) { globalThis.__qcol = { on: false, real: rl, gain: 1, pool: o.pool !== false ? 0.5 : 0, cut: o.solid !== false, world: { land: wl, garden: wg }, fx: o.motion === false ? "off" : "live" }; this._h3dSkyPush(); return (rl ? "0r" : "0") + (o.pool !== false ? "p" : "") + (o.solid !== false ? "s" : "") + wk; }
     const bk = this._h3dBack(o), look = o.look === "auto" ? (bk.live ? "cozy" : "soft") : o.look, cin = look === "cinema", soft = look === "soft", coz = look === "cozy";
     const pool = o.pool !== false ? 0.5 : 0, cut = o.solid !== false;
@@ -3644,10 +3644,10 @@ class QuintDashboard extends HTMLElement {
           row("Quint rooms", "the rooms Quint shows on the Rooms page", `<b>${rooms.length}</b>`)) +
         sec("Look", "how the house is drawn",
           row("Theme", "Nice is the bright, cosy house. Auto gives the same", sg("theme", ["Auto", "Nice"])) +
-          row("Background", "Auto and Live: a living sky behind the house that follows the real time: sunrise, day, sunset and a starry night, clouds that keep drifting and birds in the morning. Light, Slate and Dark are plain colours; Native is Quinteca's own starry view", sg("bg", ["Auto", "Live", "Light", "Slate", "Dark", "Native"])) +
-          row("Land and road", "the house stands on its own plot of land, with a road in front and a driveway to the main door", B("land")) +
-          row("Front garden", "lawn, fence, flower beds, trees, shrubs, lamps and a bench in front of the house. Hide it for a bare plot", B("garden")) +
-          row("Moving sky and garden", "drifting clouds, birds, swaying trees, cars on the road and fireflies at night. Off keeps everything still", B("motion")) +
+          row("Background", "Auto and Live: a living sky behind the house that follows the real time: sunrise, day, sunset and a starry night with moon and shooting stars. Light, Slate and Dark are plain colours; Native is Quinteca's own starry view", sg("bg", ["Auto", "Live", "Light", "Slate", "Dark", "Native"])) +
+          row("Land", "the house stands on its own striped lawn with a stone terrace around it and a stone path to the main door. Only in the live 3D house, not in the plan editor", B("land")) +
+          row("Garden", "real trees, clipped hedges, potted shrubs, flower beds, lamps and a bench. Hide it for a bare lawn", B("garden")) +
+          row("Moving garden", "swaying trees and fireflies at night. Off keeps everything still", B("motion")) +
           row("Solid walls", "the walls on your side are cut low, so you look into the rooms over solid walls, like a dollhouse. Off makes them see-through glass", B("solid")) +
           row("Light only where it reaches", "a lamp lights the floor and walls around it like a pool of light, not the whole room. Off gives the engine's wide glow", B("pool")) +
           row("Realistic materials", "wood-plank and tile floors, soft wall shading and fine outlines in the light look. Off gives the plain flat colours", B("real")) +

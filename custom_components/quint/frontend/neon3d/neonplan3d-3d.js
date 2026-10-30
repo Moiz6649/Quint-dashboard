@@ -4489,8 +4489,47 @@ function qcWDrop(E){
   if(w.tex)w.tex.dispose();
   E.qcw=null;
 }
+/* a smooth-shaded low-poly ball (foliage, shrubs): shaded by its own direction, darker underneath, a little noise */
+let qcWIcoC={};
+function qcWFol(G,x,y,z,rx,ry,rz,col,seed,lv,wob){
+  let r=qcWRng(seed|0),T=qcWIcoC[lv||2]||(()=>{
+    let t0=[[0,2,4],[4,2,1],[1,2,5],[5,2,0],[4,3,0],[1,3,4],[5,3,1],[0,3,5]],V=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]],mid=(p,q)=>{let m=[(p[0]+q[0])/2,(p[1]+q[1])/2,(p[2]+q[2])/2],l=Math.hypot(m[0],m[1],m[2]);return[m[0]/l,m[1]/l,m[2]/l]};
+    let T=t0.map(t=>[V[t[0]],V[t[1]],V[t[2]]]);
+    for(let k=0;k<(lv||2);k++){let o=[];for(let t of T){let a=t[0],b=t[1],c=t[2],ab=mid(a,b),bc=mid(b,c),ca=mid(c,a);o.push([a,ab,ca],[ab,b,bc],[ca,bc,c],[ab,bc,ca])}T=o}
+    return qcWIcoC[lv||2]=T})();
+  let jit=new Map(),J=p=>{let k=p[0].toFixed(3)+","+p[1].toFixed(3)+","+p[2].toFixed(3);if(!jit.has(k))jit.set(k,1+(r()-.5)*(wob===undefined?.16:wob));return jit.get(k)};
+  for(let t of T){
+    let P=[],C=[];
+    for(let n of t){
+      let j=J(n),s=.5+.5*Math.max(0,n[0]*-.38+n[1]*.82+n[2]*-.42),ao=.6+.4*Math.max(0,Math.min(1,(n[1]+.9)/1.5)),nz=.84+.3*((Math.sin(n[0]*23.1+n[1]*19.3+n[2]*17.7+seed)*Math.sin(n[1]*13.7+n[2]*11.1+seed*2)+1)/2),k=Math.min(1.12,(.52+.6*s)*ao*nz);
+      P.push([x+n[0]*rx*j,y+n[1]*ry*j,z+n[2]*rz*j]);C.push(col.r*k,col.g*k,col.b*k);
+    }
+    G.p.push(...P[0],...P[1],...P[2]);G.c.push(...C);
+  }
+}
+function qcWTree(G,kind,h,cr,seed,col){
+  let r=qcWRng(seed|0),gr=(a)=>col(a[Math.floor(r()*a.length)]);
+  let trunk=col(0x6a4a30),dark=col(0x2f6a34);
+  qcWCyl(G,0,0,h*.62,0,.2*cr/1.2,.11*cr/1.2,trunk,9);
+  if(kind==="conifer"){
+    qcWCyl(G,0,0,h*.3,0,.16,.1,trunk,7);
+    let tiers=6;
+    for(let k=0;k<tiers;k++){let t=k/(tiers-1),rr=cr*(1-t*.78)*1.05,yy=h*(.22+t*.7);qcWFol(G,0,yy,0,rr,rr*.62,rr,gr([0x2d6b3b,0x347a45,0x2a6035,0x3a8350]),seed*7+k,3,.2)}
+    qcWFol(G,0,h*.98,0,cr*.2,cr*.34,cr*.2,col(0x3a8350),seed+99,1,.1);
+    return;
+  }
+  let greens=kind==="round"?[0x5fa648,0x6cb352,0x54993f,0x78bd5a]:[0x3f7d3a,0x4d9040,0x35703a,0x5a9f48];
+  qcWFol(G,0,h*.72,0,cr*.8,cr*.62,cr*.8,dark,seed+1,2,.14);
+  let n=13;
+  for(let k=0;k<n;k++){let a=k/n*6.2832+r()*.5,rad=cr*(.42+r()*.4),yy=h*(.58+r()*.34),s2=cr*(.46+r()*.3);qcWFol(G,Math.cos(a)*rad,yy,Math.sin(a)*rad,s2,s2*.8,s2,gr(greens),seed*13+k,3,.22)}
+  for(let k=0;k<5;k++){let s2=cr*(.4+r()*.22);qcWFol(G,(r()-.5)*cr*.9,h*(.88+r()*.14),(r()-.5)*cr*.9,s2,s2*.78,s2,gr(greens.slice(1)),seed*17+k,3,.22)}
+  /* two branches into the crown */
+  for(let k=0;k<2;k++){let a=r()*6.28;qcWCyl(G,Math.cos(a)*.25,h*.5,h*.72,Math.sin(a)*.25,.05,.03,trunk,5)}
+}
 function qcWBuild(E){
   let q=globalThis.__qcol,wd=q&&q.world,b=E.building;
+  /* the world belongs to the live house, not to the plan editor */
+  try{for(let n=E.host,k=0;n&&k<40;k++,n=n.parentNode||n.host){if(n.tagName&&/editor|neonplan3d-panel/i.test(n.tagName)){qcWDrop(E);return}}}catch(e){}
   if(!wd||!wd.land||!b){qcWDrop(E);return}
   let F=qcWFrame(b);
   if(!F){qcWDrop(E);return}
@@ -4498,32 +4537,44 @@ function qcWBuild(E){
   if(E.qcw&&E.qcw.sig===sig)return;
   qcWDrop(E);
   let gy=F.gy,r=qcWRng(Math.abs((F.px*131+F.pz*71+F.u0*17+F.v0*29)*1000)|0),col=qcWC;
-  let mat=new $t({vertexColors:true,side:re,fog:true}),mats=[mat],group=new Oe,anim=[],lamps=[],cars=[],clouds=[],glowMat,flies=null;
+  let mat=new $t({vertexColors:true,side:re,fog:true}),mats=[mat],group=new Oe,anim=[],flies=null;
   group.userData.qcw=1;
-  let dw=Math.max(2.2,Math.min(3,F.dw+1.2)),doorU=0;
-  let vf=F.v1,uL=F.u0-4,uR=F.u1+4,vB=F.v0-4,gD=5.6,sw0=vf+gD,sw1=sw0+1.3,rd0=sw1,rd1=rd0+4.6,vF=rd1+1.4;
-  /* --- the land --- */
+  let pick=(a)=>a[Math.floor(r()*a.length)];
+  let M=1.3,vf=F.v1,doorU=0,pw=2.2;
+  /* the footprint of every room in the frame of the front door, grown into a stone terrace */
+  let rects=[];
+  for(let f of b.floors)for(let rm of (f.rooms||[])){
+    let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
+    for(let p of rm.points){let dx=p[0]-F.px,dz=p[1]-F.pz,u=dx*F.tx+dz*F.tz,v=dx*F.nx+dz*F.nz;u0=Math.min(u0,u);u1=Math.max(u1,u);v0=Math.min(v0,v);v1=Math.max(v1,v)}
+    rects.push([u0,u1,v0,v1]);
+  }
+  let vT=vf+M;
+  let uL=F.u0-M-4.2,uR=F.u1+M+4.2,vB=F.v0-M-4.2,vF=vT+6.6;
   let L={p:[],c:[]};
-  let R0=uL-36,R1=uR+36;
-  qcWBox(L,F,uL,uR,vB,sw0,gy-.1,gy,col(0x8ec05e),true);
-  /* road with a pavement on the house side, a verge on the far side */
-  qcWBox(L,F,R0,R1,sw0,sw1,gy-.1,gy+.07,col(0xd6d0c4),true);
-  qcWBox(L,F,R0,R1,sw1-.12,sw1,gy-.1,gy+.09,col(0xb7b1a5),true);
-  qcWBox(L,F,R0,R1,rd0,rd1,gy-.1,gy+.035,col(0x4b4e57),true);
-  qcWBox(L,F,R0,R1,rd1,rd1+.12,gy-.1,gy+.09,col(0xb7b1a5),true);
-  let mid=(rd0+rd1)/2;
-  for(let u=R0+.8;u<R1-1.4;u+=2.6)qcWBox(L,F,u,u+1.3,mid-.07,mid+.07,gy+.034,gy+.042,col(0xf2e7bf),true);
-  qcWBox(L,F,R0,R1,rd0+.18,rd0+.26,gy+.034,gy+.042,col(0xe9e4d6),true);qcWBox(L,F,R0,R1,rd1-.26,rd1-.18,gy+.034,gy+.042,col(0xe9e4d6),true);
-  /* the driveway from the road to the main door, with a flare at the road and joints in the paving */
-  let d0=doorU-dw/2,d1=doorU+dw/2;
-  qcWBox(L,F,d0,d1,-.05,sw1,gy-.1,gy+.05,col(0xcfc7ba),true);
-  qcWBox(L,F,d0-.5,d0,rd0-.5,rd0,gy-.1,gy+.05,col(0xcfc7ba),true);qcWBox(L,F,d1,d1+.5,rd0-.5,rd0,gy-.1,gy+.05,col(0xcfc7ba),true);
-  qcWBox(L,F,d0,d1,sw0-.1,sw1,gy+.05,gy+.055,col(0xcfc7ba),true);
-  for(let v=.9;v<rd0;v+=1.1)qcWBox(L,F,d0,d1,v,v+.05,gy+.05,gy+.058,col(0xb0a899),true);
-  qcWBox(L,F,d0,d0+.07,0,sw1,gy+.05,gy+.058,col(0xb0a899),true);qcWBox(L,F,d1-.07,d1,0,sw1,gy+.05,gy+.058,col(0xb0a899),true);
-  /* the main door: a step and a mat */
-  qcWBox(L,F,doorU-.8,doorU+.8,-.02,.85,gy+.05,gy+.11,col(0xb9b1a3),true);
-  qcWBox(L,F,doorU-.55,doorU+.55,.12,.62,gy+.11,gy+.125,col(0x8a5a3c),true);
+  /* the lawn, mown in stripes */
+  let sx=1.7,ns=Math.max(2,Math.ceil((uR-uL)/sx));
+  for(let i=0;i<ns;i++){let a=uL+i*sx,b2=Math.min(uR,a+sx);qcWBox(L,F,a,b2,vB,vF,gy-.1,gy,col(i%2?0x7fb34e:0x88bb57),true)}
+  /* the stone terrace around the house: grey flagstones with joints */
+  let inR=(u,v,m)=>rects.some(q2=>u>q2[0]-m&&u<q2[1]+m&&v>q2[2]-m&&v<q2[3]+m);
+  let cs=.92,gu0=Math.floor((F.u0-M)/cs)*cs,gv0=Math.floor((F.v0-M)/cs)*cs,tiles=0;
+  let jc=col(0x77746f);
+  let tileCols=[0xa9a6a1,0x9d9a95,0xb2afaa,0xa3a09b,0x96938e,0xada29a];
+  for(let u=gu0;u<F.u1+M;u+=cs)for(let v=gv0;v<vT;v+=cs){
+    let cu=u+cs/2,cv=v+cs/2;if(!inR(cu,cv,M))continue;
+    if(rects.some(q2=>cu>q2[0]+.3&&cu<q2[1]-.3&&cv>q2[2]+.3&&cv<q2[3]-.3))continue;   /* under the house */
+    let porch=Math.abs(cu-doorU)<1.4&&cv>-.5&&cv<3.2,c0=porch?col(pick([0x4a4a50,0x424248,0x505056])):col(pick(tileCols));
+    qcWBox(L,F,u,u+cs,v,v+cs,gy-.1,gy+.02,jc,true);
+    qcWBox(L,F,u+.035,u+cs-.035,v+.035,v+cs-.035,gy+.02,gy+.045,c0,true);tiles++;
+  }
+  /* the entry porch (dark slate) in front of the door */
+  /* the path from the terrace to the front of the lawn: stone slabs with grass between */
+  let sl=1.0;
+  for(let v=vT;v<vF-.2;v+=sl+.07){
+    let c0=col(pick(tileCols));
+    qcWBox(L,F,doorU-pw/2,doorU+pw/2,v,Math.min(v+sl,vF-.1),gy-.1,gy+.045,c0,true);
+  }
+  qcWBox(L,F,doorU-.8,doorU+.8,-.02,.5,gy+.03,gy+.075,col(0x8a8a90),true);   /* the step */
+  qcWBox(L,F,doorU-.55,doorU+.55,.1,.6,gy+.075,gy+.09,col(0x8a5a3c),true);   /* the mat */
   group.add(qcWMesh(L,mat,"land"));
   /* the field around the plot: a very large lawn that fades away at its edge, so the house stands in the landscape */
   let ftc=document.createElement("canvas");ftc.width=ftc.height=128;let fg2=ftc.getContext("2d"),fgr=fg2.createRadialGradient(64,64,0,64,64,64);
@@ -4531,125 +4582,75 @@ function qcWBuild(E){
   let ftex=new mi(ftc);ftex.colorSpace=De;
   let fbase=new Q(0x80b258),fmat=new $t({map:ftex,color:fbase.clone(),transparent:true,depthWrite:false,fog:false});mats.push(fmat);
   let field=new Ct(new gi(1,1),fmat);field.raycast=()=>{};field.rotation.x=-Math.PI/2;field.scale.set(320,320,1);field.renderOrder=-2;
-  {let c0=qcWP(F,(uL+uR)/2,(vB+sw0)/2,gy-.09);field.position.set(c0[0],c0[1],c0[2])}
+  {let c0=qcWP(F,(uL+uR)/2,(vB+vF)/2,gy-.09);field.position.set(c0[0],c0[1],c0[2])}
   group.add(field);
-  /* lamps along the road */
-  let lampPos=[[doorU-dw/2-4.2,sw0+.55],[doorU+dw/2+4.6,sw0+.55]];
   /* --- the garden (can be hidden) --- */
   let gm=new Oe;gm.userData.qcw="garden";
+  let lampPos=[],pal=[0xe8567a,0xf6c244,0xfafafa,0xb06ad8,0xff8a3d,0xf08fb0];
   if(wd.garden){
-    let G={p:[],c:[]},fence=col(0xf6f0e4),post=col(0xe2d9c6);
-    let fv=sw0-.5,fy=gy;
-    let pick=(...a)=>a[Math.floor(r()*a.length)];
-    let fenceRun=(u0,u1,v0,v1)=>{ /* a white picket fence from (u0,v0) to (u1,v1) */
-      let L2=Math.hypot(u1-u0,v1-v0),n=Math.max(1,Math.round(L2/.34));
-      let uu=(u1-u0)/L2,vv=(v1-v0)/L2;
-      for(let i=0;i<=n;i++){let u=u0+uu*L2*i/n,v=v0+vv*L2*i/n,hgt=.78+((i*7)%3)*.02;qcWBox(G,F,u-.04,u+.04,v-.012,v+.012,fy,fy+hgt,fence,true)}
-      for(let k of[.22,.52]){let a=qcWP(F,u0,v0,fy+k),bq=qcWP(F,u1,v1,fy+k);
-        /* rails as thin boxes along the run */
-        let steps=Math.max(1,Math.round(L2/1.2));for(let i=0;i<steps;i++){let ua=u0+uu*L2*i/steps,ub=u0+uu*L2*(i+1)/steps,va=v0+vv*L2*i/steps,vb=v0+vv*L2*(i+1)/steps;qcWBox(G,F,Math.min(ua,ub)-.02,Math.max(ua,ub)+.02,Math.min(va,vb)-.02,Math.max(va,vb)+.02,fy+k-.025,fy+k+.025,post,true)}}
-    };
-    let g0=d0-.55,g1=d1+.55;
-    fenceRun(uL+.7,g0,fv,fv);fenceRun(g1,uR-.7,fv,fv);
-    fenceRun(uL+.7,uL+.7,vB+.9,fv);fenceRun(uR-.7,uR-.7,vB+.9,fv);
-    for(let u of[g0,g1])qcWBox(G,F,u-.1,u+.1,fv-.1,fv+.1,fy,fy+1.05,col(0xe9e0cd),true);
-    /* a hedge along the back */
-    for(let u=uL+.9;u<uR-.8;u+=1.15)qcWBlob(G,...qcWP(F,u,vB+.7,fy+.5),.62,.55,.55,col(0x4f9a48),(u*13)|0);
-    /* flower beds against the house, either side of the door */
-    let beds=[[F.u0+.6,doorU-1.5],[doorU+1.5,F.u1-.6]];
-    let pal=[0xe8567a,0xf6c244,0xfafafa,0xb06ad8,0xff8a3d,0xf08fb0];
-    for(let [a,bq] of beds){if(bq-a<.8)continue;
-      qcWBox(G,F,a,bq,vf+.08,vf+.95,fy,fy+.14,col(0x7a5538),true);
-      qcWBox(G,F,a-.06,bq+.06,vf+.02,vf+.08,fy,fy+.2,col(0xbdb4a4),true);qcWBox(G,F,a-.06,bq+.06,vf+.95,vf+1.01,fy,fy+.2,col(0xbdb4a4),true);
-      let n=Math.round((bq-a)*5);
-      for(let i=0;i<n;i++){let u=a+.12+r()*(bq-a-.24),v=vf+.18+r()*.6,hh=.2+r()*.22,c=col(pick(...pal));
-        qcWBlob(G,...qcWP(F,u,v,fy+.2),.12,.1,.12,col(0x4c9a46),i*7+1);
-        qcWBox(G,F,u-.012,u+.012,v-.012,v+.012,fy+.14,fy+.14+hh,col(0x3f8a3c),true);
-        qcWBlob(G,...qcWP(F,u,v,fy+.16+hh),.09,.07,.09,c,i*11+3)}}
-    /* shrubs beside the door */
-    for(let s of[-1,1])qcWBlob(G,...qcWP(F,doorU+s*1.75,vf+.5,fy+.34),.45,.38,.4,col(0x4a9644),s*57+9);
-    /* a mailbox, a bench */
-    qcWBox(G,F,d1+.9,d1+.98,sw0-.62,sw0-.54,fy,fy+1.0,col(0x7a5a3c),true);
-    qcWBox(G,F,d1+.7,d1+1.18,sw0-.74,sw0-.4,fy+1.0,fy+1.22,col(0xd24d44),true);
-    let bu=F.u1+1.6,bvv=vf+1.8;
-    qcWBox(G,F,bu-.7,bu+.7,bvv-.2,bvv+.2,fy+.4,fy+.46,col(0xa9743f),true);qcWBox(G,F,bu-.7,bu+.7,bvv-.22,bvv-.16,fy+.46,fy+.9,col(0xa9743f),true);
-    for(let s of[-.6,.6])qcWBox(G,F,bu+s-.04,bu+s+.04,bvv-.18,bvv+.18,fy,fy+.4,col(0x5c5c60),true);
-    /* stepping stones across the lawn */
-    for(let i=0;i<5;i++)qcWBox(G,F,F.u0-2.4+i*.01-.0,F.u0-2.4+.5,vf+3.2+i*.7,vf+3.6+i*.7,fy,fy+.04,col(0xb8b0a2),true);
+    let G={p:[],c:[]};
+    /* round clipped shrubs in terracotta pots at the corners of the terrace and beside the path */
+    let potAt=(u,v,s)=>{let p=qcWP(F,u,v,gy);qcWCyl(G,p[0],gy+.03,gy+.4*s,p[2],.3*s,.22*s,col(0xb9744d),10);qcWFol(G,p[0],gy+.4*s+.36*s,p[2],.42*s,.4*s,.42*s,col(pick([0x4f9a44,0x57a24a,0x468f3f])),(u*7+v*3)|0,2,.1)};
+    for(let [u,v] of[[F.u0-M+.3,F.v0-M+.3],[F.u1+M-.3,F.v0-M+.3],[F.u0-M+.3,vT-.3],[F.u1+M-.3,vT-.3],[doorU-pw/2-.5,vT+.4],[doorU+pw/2+.5,vT+.4]])potAt(u,v,1);
+    /* low clipped hedges either side of the path, ground-cover shrubs, flower beds */
+    for(let s of[-1,1])for(let k=0;k<5;k++){let u=doorU+s*(pw/2+1.0+k*.78),p=qcWP(F,u,vT+.4,gy+.28);qcWFol(G,p[0],p[1],p[2],.45,.34,.45,col(0x4a9140),(k*31+s*7)|0,2,.12)}
+    for(let s of[-1,1]){
+      let a=doorU+s*(pw/2+.6),bq=doorU+s*(pw/2+5.4),u0=Math.min(a,bq),u1=Math.max(a,bq),v0=vT+1.2,v1=v0+1.0;
+      qcWBox(G,F,u0,u1,v0,v1,gy-.02,gy+.12,col(0x6e4c33),true);
+      qcWBox(G,F,u0-.05,u1+.05,v0-.05,v0,gy-.02,gy+.18,col(0xb9b0a0),true);qcWBox(G,F,u0-.05,u1+.05,v1,v1+.05,gy-.02,gy+.18,col(0xb9b0a0),true);
+      let n=Math.round((u1-u0)*6);
+      for(let i=0;i<n;i++){let u=u0+.15+r()*(u1-u0-.3),v=v0+.15+r()*.7,hh=.15+r()*.2,c=col(pick(pal)),p=qcWP(F,u,v,gy+.12);
+        qcWFol(G,p[0],p[1]+.06,p[2],.14,.1,.14,col(0x4c9a46),i*7+1,1,.1);
+        qcWBox(G,F,u-.012,u+.012,v-.012,v+.012,gy+.12,gy+.12+hh,col(0x3f8a3c),true);
+        let hp=qcWP(F,u,v,gy+.14+hh);qcWFol(G,hp[0],hp[1],hp[2],.09,.07,.09,c,i*11+3,1,.1)}
+    }
+    /* a bench on the terrace */
+    let bu=F.u1+M-.1,bv=(F.v0+vf)/2;
+    qcWBox(G,F,bu-.2,bu+.2,bv-.7,bv+.7,gy+.43,gy+.49,col(0xa9743f),true);qcWBox(G,F,bu+.16,bu+.22,bv-.7,bv+.7,gy+.49,gy+.95,col(0xa9743f),true);
+    for(let s of[-.55,.55])qcWBox(G,F,bu-.15,bu+.15,bv+s-.04,bv+s+.04,gy+.03,gy+.43,col(0x5c5c60),true);
+    /* hedge-like shrubs along the back of the lawn */
+    for(let u=uL+1.6;u<uR-1.4;u+=.95){if(Math.abs(u-(F.u0+F.u1)/2)<3.2&&false)continue;let p=qcWP(F,u,vB+.7,gy+.4);qcWFol(G,p[0],p[1],p[2],.58,.5,.58,col(pick([0x4d9442,0x56a04a,0x468b3d])),(u*13)|0,2,.14)}
     gm.add(qcWMesh(G,mat,"garden-static"));
-    /* trees that sway */
-    let spots=[[F.u0-2.3,vf+2,1],[F.u1+2.4,vf+3,0],[F.u0-2.4,(F.v0+vf)/2+1,0],[F.u1+2.5,(F.v0+vf)/2-.5,1],[F.u0+1,F.v0-2.2,0],[F.u1-1.4,F.v0-2.4,1]];
-    spots.forEach(([u,v,pine],i)=>{
-      let T={p:[],c:[]},h=3.1+r()*1.5,cr=1.1+r()*.5;
-      qcWCyl(T,0,0,h*.55,0,.17,.12,col(0x7b5233),7);
-      if(pine){for(let k=0;k<4;k++)qcWBlob(T,0,h*(.4+k*.2),0,cr*(1-k*.2)*.85,cr*.7,cr*(1-k*.2)*.85,col(k%2?0x3f8a4a:0x357c40),i*5+k);}
-      else{qcWBlob(T,0,h*.8,0,cr,cr*.85,cr,col(0x5aa850),i*5+2);qcWBlob(T,cr*.45,h*.62,cr*.2,cr*.7,cr*.6,cr*.7,col(0x4f9a46),i*5+3);qcWBlob(T,-cr*.4,h*.68,-cr*.25,cr*.72,cr*.62,cr*.7,col(0x66b25a),i*5+4)}
-      let m=qcWMesh(T,mat,"tree"),p=qcWP(F,u,v,fy);m.position.set(p[0],p[1],p[2]);m.rotation.y=r()*6;m.userData.ph=r()*6.28;m.userData.amp=.012+r()*.01;
+    /* real trees: oaks, round-crowned trees and conifers around the lawn, swaying a little */
+    let spots=[[uL+1.8,vB+2,"oak",7.2,2.5],[uR-2,vB+2.2,"round",6.2,2.2],[uL+1.6,(vB+vT)/2+.5,"conifer",7.4,1.7],[uR-1.7,(vB+vT)/2,"oak",6.6,2.3],[uL+2,vF-2,"round",5.8,2.1],[uR-1.8,vF-1.8,"conifer",6.8,1.6],[F.u0-M-1.6,(F.v0+vf)/2-1,"round",5.0,1.9]];
+    spots.forEach(([u,v,kind,h,crd],i)=>{
+      let T={p:[],c:[]};qcWTree(T,kind,h,crd,i*17+5,col);
+      let m=qcWMesh(T,mat,"tree"),p=qcWP(F,u,v,gy);m.position.set(p[0],p[1],p[2]);m.rotation.y=r()*6;m.userData.ph=r()*6.28;m.userData.amp=.006+r()*.006;
       gm.add(m);anim.push(m);
-      let sh=new Ct(new qcWDisc(24),new $t({color:0x000000,transparent:true,opacity:.2,depthWrite:false}));sh.raycast=()=>{};sh.rotation.x=-Math.PI/2;sh.position.set(p[0]-.35,fy+.04,p[2]+.3);sh.scale.set(cr*1.5,cr*1.5,1);sh.renderOrder=-1;sh.material.fog=false;mats.push(sh.material);gm.add(sh);
+      for(let [sc,op] of[[2.4,.1],[1.5,.16]]){let sh=new Ct(new qcWDisc(28),new $t({color:0x000000,transparent:true,opacity:op,depthWrite:false,fog:false}));sh.raycast=()=>{};sh.rotation.x=-Math.PI/2;sh.position.set(p[0]-.5,gy+.045,p[2]+.4);sh.scale.set(crd*sc,crd*sc*.85,1);sh.renderOrder=-1;mats.push(sh.material);gm.add(sh)}
     });
-    lampPos.push([d0-.9,sw0-2.4],[d1+.9,sw0-2.4]);
+    lampPos.push([doorU-pw/2-.7,vT+2.6],[doorU+pw/2+.7,vT+2.6],[doorU-pw/2-.7,vT+5],[doorU+pw/2+.7,vT+5]);
   }
   group.add(gm);
   /* --- lamps: posts with a warm bulb, lit at night --- */
   let LP={p:[],c:[]},bulbs=[];
-  for(let [u,v] of lampPos){let p=qcWP(F,u,v,gy);qcWCyl(LP,p[0],gy,gy+.14,p[2],.14,.1,col(0x3a3d44),8);qcWCyl(LP,p[0],gy+.14,gy+2.0,p[2],.045,.04,col(0x3a3d44),6);qcWBlob(LP,p[0],gy+2.14,p[2],.17,.1,.17,col(0x3a3d44),(u*9)|0);bulbs.push([p[0],gy+2.04,p[2]])}
-  group.add(qcWMesh(LP,mat,"lamps"));
-  let bm=new $t({color:0xfff0c8,fog:false}),bpos=[],bg=new Wt;for(let b2 of bulbs)bpos.push(...b2);
+  for(let [u,v] of lampPos){let p=qcWP(F,u,v,gy);qcWCyl(LP,p[0],gy,gy+.14,p[2],.14,.1,col(0x3a3d44),8);qcWCyl(LP,p[0],gy+.14,gy+1.4,p[2],.045,.04,col(0x3a3d44),6);qcWFol(LP,p[0],gy+1.52,p[2],.15,.1,.15,col(0x3a3d44),(u*9)|0,1,.05);bulbs.push([p[0],gy+1.46,p[2]])}
+  if(bulbs.length)group.add(qcWMesh(LP,mat,"lamps"));
+  let bpos=[],bg=new Wt;for(let b2 of bulbs)bpos.push(...b2);
   bg.setAttribute("position",new Ut(bpos,3));
-  let bulbPts=new jr(bg,new cr({color:0xfff0c8,size:.22,sizeAttenuation:true,fog:false}));bulbPts.raycast=()=>{};bulbPts.frustumCulled=false;mats.push(bulbPts.material);group.add(bulbPts);
-  let halo=new jr(bg,new cr({map:E.haloTexture,color:0xffc878,size:2.6,sizeAttenuation:true,transparent:true,blending:Pe,depthWrite:false,opacity:0,fog:false}));halo.raycast=()=>{};halo.frustumCulled=false;mats.push(halo.material);group.add(halo);
+  let bulbPts=new jr(bg,new cr({color:0xfff0c8,size:.2,sizeAttenuation:true,fog:false}));bulbPts.raycast=()=>{};bulbPts.frustumCulled=false;mats.push(bulbPts.material);group.add(bulbPts);
+  let halo=new jr(bg,new cr({map:E.haloTexture,color:0xffc878,size:2.4,sizeAttenuation:true,transparent:true,blending:Pe,depthWrite:false,opacity:0,fog:false}));halo.raycast=()=>{};halo.frustumCulled=false;mats.push(halo.material);group.add(halo);
   let pools=[];
-  for(let b2 of bulbs){let pm=new $t({map:E.haloTexture,color:0xffc070,transparent:true,blending:Pe,depthWrite:false,opacity:0,fog:false});let pl=new Ct(new gi(1,1),pm);pl.raycast=()=>{};pl.rotation.x=-Math.PI/2;pl.position.set(b2[0],gy+.075,b2[2]);pl.scale.set(5.2,5.2,1);pl.renderOrder=1;mats.push(pm);group.add(pl);pools.push(pl)}
-  /* --- cars on the road --- */
-  let carDef=[[0xd9534f,1,mid+.95,.55],[0x3d78c9,-1,mid-.95,.4]];
-  for(let [cc,dir,v,sp] of carDef){
-    let C={p:[],c:[]},bd=col(cc);
-    let ID={px:0,pz:0,tx:1,tz:0,nx:0,nz:1};
-    qcWBox(C,ID,-.95,.95,-.42,.42,.22,.58,bd,true);qcWBox(C,ID,-.5,.5,-.37,.37,.58,.98,col(0xeaf0f4),true);qcWBox(C,ID,-.46,.46,-.39,.39,.62,.92,col(0x9ccbe0),true);
-    qcWBox(C,ID,.94,.99,-.34,-.2,.3,.42,col(0xfff3c4),true);qcWBox(C,ID,.94,.99,.2,.34,.3,.42,col(0xfff3c4),true);qcWBox(C,ID,-.99,-.94,-.34,-.2,.3,.42,col(0xb02a2a),true);qcWBox(C,ID,-.99,-.94,.2,.34,.3,.42,col(0xb02a2a),true);
-    for(let sx of[-.62,.62])for(let sz of[-.44,.44])qcWBox(C,ID,sx-.17,sx+.17,sz-.06,sz+.06,0,.34,col(0x25272c),true);
-    let cm=qcWMesh(C,mat,"car"),gr=new Oe;gr.add(cm);
-    let hg=new Wt;hg.setAttribute("position",new Ut([1.5,.36,-.27,1.5,.36,.27],3));
-    let hl=new jr(hg,new cr({map:E.haloTexture,color:0xfff0c0,size:1.4,sizeAttenuation:true,transparent:true,blending:Pe,depthWrite:false,opacity:0,fog:false}));hl.raycast=()=>{};hl.frustumCulled=false;mats.push(hl.material);gr.add(hl);
-    gr.userData={dir,v,sp,u:0,wait:1+r()*10,yaw:Math.atan2(-F.tz,F.tx)+(dir<0?Math.PI:0),hl};
-    group.add(gr);cars.push(gr);
-  }
-  /* --- clouds high above the house, with their shadows on the lawn --- */
-  if(!E.lowQuality)for(let i=0;i<4;i++){
-    let C={p:[],c:[]},n=5+Math.floor(r()*3),w=col(0xffffff),sh=col(0xdfe7f2);
-    for(let k=0;k<n;k++)qcWBlob(C,(k-n/2)*1.3+r()*.6,r()*.7,r()*1.2-.6,1.6+r()*1.0,1.0+r()*.5,1.4+r()*.7,k%2?w:sh,i*31+k);
-    let cmat=new $t({color:0xffffff,transparent:true,opacity:.55,depthWrite:false,fog:false,side:re});mats.push(cmat);
-    let m=qcWMesh(C,cmat,"cloud");m.renderOrder=9;
-    let span=Math.max(uR-uL,vF-vB)/2+18;
-    m.userData={u:(r()*2-1)*span,v:(r()*2-1)*(span*.55)+ (vF+vB)/2,y:gy+15+r()*5,sp:.35+r()*.5,span,s:.8+r()*.7};
-    group.add(m);clouds.push(m);
-    let sm=new $t({color:0x000000,transparent:true,opacity:.1,depthWrite:false,fog:false});mats.push(sm);
-    let sd=new Ct(new qcWDisc(28),sm);sd.raycast=()=>{};sd.rotation.x=-Math.PI/2;sd.renderOrder=-1;group.add(sd);m.userData.sd=sd;
-  }
+  for(let b2 of bulbs){let pm=new $t({map:E.haloTexture,color:0xffc070,transparent:true,blending:Pe,depthWrite:false,opacity:0,fog:false});let pl=new Ct(new gi(1,1),pm);pl.raycast=()=>{};pl.rotation.x=-Math.PI/2;pl.position.set(b2[0],gy+.075,b2[2]);pl.scale.set(4.6,4.6,1);pl.renderOrder=1;mats.push(pm);group.add(pl);pools.push(pl)}
   /* --- fireflies in the garden at night --- */
   if(wd.garden&&!E.lowQuality){
-    let n=26,pp=[],ph=[];for(let i=0;i<n;i++){let u=uL+1.5+r()*(uR-uL-3),v=vB+1.5+r()*(sw0-vB-3),p=qcWP(F,u,v,gy+.4+r()*1.4);pp.push(...p);ph.push([u,v,r()*6.28,.4+r()*.8,gy+.4+r()*1.4])}
+    let n=26,pp=[],ph=[];for(let i=0;i<n;i++){let u=uL+1.5+r()*(uR-uL-3),v=vB+1.5+r()*(vF-vB-3),p=qcWP(F,u,v,gy+.4+r()*1.4);pp.push(...p);ph.push([u,v,r()*6.28,.4+r()*.8,gy+.4+r()*1.4])}
     let fg=new Wt;fg.setAttribute("position",new Ut(pp,3));
     let fp=new jr(fg,new cr({map:E.haloTexture,color:0xd8ff80,size:.5,sizeAttenuation:true,transparent:true,blending:Pe,depthWrite:false,opacity:0,fog:false}));fp.raycast=()=>{};fp.frustumCulled=false;mats.push(fp.material);group.add(fp);flies={pts:fp,ph};
   }
   E.scene.add(group);
   let ext=[[uL,vB],[uR,vB],[uL,vF],[uR,vF]].map(([u,v])=>{let p=qcWP(F,u,v,gy);return[p[0],p[2]]});
-  E.qcw={sig,F,group,mats,mat,field,fbase,tex:ftex,anim,cars,clouds,pools,halo,bulbPts,bm,flies,gm,gy,ext,rev:-1,last:0,timer:0,t:0,bounds:{uL,uR,vB,vF,cu0:R0,cu1:R1},anyAnim:!E.lowQuality&&q.fx!=="off"};
+  E.qcw={sig,F,group,mats,mat,field,fbase,tex:ftex,anim,pools,halo,bulbPts,flies,gm,gy,ext,rev:-1,last:0,timer:0,t:0,bounds:{uL,uR,vB,vF},anyAnim:!E.lowQuality&&q.fx!=="off"};
   qcWTint(E);
 }
 class qcWDisc extends Wt{constructor(n){super();let p=[0,0,0];for(let i=0;i<=n;i++){let a=i/n*6.2832;p.push(Math.cos(a)*.5,Math.sin(a)*.5,0)}let idx=[];for(let i=1;i<=n;i++)idx.push(0,i,i+1);this.setAttribute("position",new Ut(p,3));this.setIndex(idx)}}
-
 function qcWTint(E){
   let w=E.qcw;if(!w)return;
-  let sk=(globalThis.__qcol&&globalThis.__qcol.sky)||{},e=Number.isFinite(sk.e)?sk.e:30,cov=Number.isFinite(sk.cover)?sk.cover:.35,t=qcWTone(e),night=Math.max(0,Math.min(1,(5-e)/10));
+  let sk=(globalThis.__qcol&&globalThis.__qcol.sky)||{},e=Number.isFinite(sk.e)?sk.e:30,t=qcWTone(e),night=Math.max(0,Math.min(1,(5-e)/10));
   w.mat.color.setRGB(t[0],t[1],t[2]);w.night=night;w.field.material.color.setRGB(w.fbase.r*t[0],w.fbase.g*t[1],w.fbase.b*t[2]);
   w.halo.material.opacity=night*.9;
   for(let p of w.pools)p.material.opacity=night*.5;
-  for(let c of w.cars)c.userData.hl.material.opacity=night;
   if(w.flies)w.flies.pts.material.opacity=Math.max(0,Math.min(1,(-e-2)/8))*.95;
-  let shown=Math.round(1+cov*3);
-  w.clouds.forEach((m,i)=>{m.userData.on=i<shown;m.material.color.setRGB(Math.min(1,t[0]*1.04),Math.min(1,t[1]*1.04),Math.min(1,t[2]*1.04));m.userData.base=.42+cov*.3});
   E.invalidate();
 }
 function qcWStep(E,now){
@@ -4660,26 +4661,8 @@ function qcWStep(E,now){
     if(w.rev!==sk.rev){w.rev=sk.rev;qcWTint(E)}
     let anim=w.anyAnim&&!E.lowQuality&&!document.hidden&&q.fx!=="off";
     if(anim){
-      let dt=w.last?Math.min(.1,(now-w.last)/1e3):.05;w.last=now;w.t+=dt;let F=w.F,B=w.bounds,T=w.t;
+      let dt=w.last?Math.min(.1,(now-w.last)/1e3):.05;w.last=now;w.t+=dt;let F=w.F,T=w.t;
       for(let m of w.anim){m.rotation.z=Math.sin(T*.9+m.userData.ph)*m.userData.amp;m.rotation.x=Math.cos(T*.7+m.userData.ph)*m.userData.amp*.7}
-      for(let c of w.cars){
-        let d=c.userData;
-        if(d.wait>0){d.wait-=dt;c.visible=false;if(d.wait<=0)d.u=d.dir>0?B.cu0+.4:B.cu1-.4;continue}
-        d.u+=d.dir*d.sp*dt;
-        if((d.dir>0&&d.u>B.cu1-.4)||(d.dir<0&&d.u<B.cu0+.4)){d.wait=9+Math.random()*22;c.visible=false;continue}
-        let p=qcWP(F,d.u,d.v,w.gy+.035);c.position.set(p[0],p[1],p[2]);c.rotation.y=d.yaw;c.visible=true;
-      }
-      let pv=new Y;
-      for(let m of w.clouds){
-        let d=m.userData;m.visible=!!d.on;d.sd.visible=!!d.on;if(!d.on)continue;
-        d.u+=d.sp*dt;if(d.u>d.span)d.u-=2*d.span;
-        let p=qcWP(F,d.u,d.v,d.y);m.position.set(p[0],p[1],p[2]);m.scale.setScalar(d.s);
-        pv.set(p[0],p[1],p[2]).project(E.camera);
-        let f=Math.max(.28,Math.min(1,Math.hypot(pv.x,pv.y*1.2)/.7));m.material.opacity=d.base*f;
-        let inside=Math.abs(d.u-(B.uL+B.uR)/2)<40&&Math.abs(d.v-(B.vB+B.vF)/2)<40;
-        d.sd.visible=inside;
-        if(inside){let sp=qcWP(F,d.u,d.v,w.gy+.05);d.sd.position.set(sp[0],sp[1],sp[2]);d.sd.scale.set(7*d.s,4.5*d.s,1);d.sd.rotation.z=Math.atan2(F.tz,F.tx)}
-      }
       if(w.flies&&w.flies.pts.material.opacity>.02){
         let a=w.flies.pts.geometry.getAttribute("position"),arr=a.array;
         w.flies.ph.forEach((f,i)=>{let u=f[0]+Math.sin(T*f[3]+f[2])*.8,v=f[1]+Math.cos(T*f[3]*.8+f[2])*.8,p=qcWP(F,u,v,f[4]+Math.sin(T*f[3]*1.7+f[2])*.2);arr[i*3]=p[0];arr[i*3+1]=p[1];arr[i*3+2]=p[2]});

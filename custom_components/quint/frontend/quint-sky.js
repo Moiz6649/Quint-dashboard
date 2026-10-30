@@ -1,6 +1,6 @@
 /* Quint live sky: the living background behind the 3D house.
    Painted on a plain 2D canvas that sits behind the house: a sky that follows the real sun (night, sunrise, day, sunset), the sun and the
-   moon crossing it, stars, clouds that drift all the time, birds in the morning, distant hills and a haze at the horizon.
+   moon crossing it, stars, distant hills and a haze at the horizon (no clouds, no birds).
    mount(canvas, state) starts it; state() is asked for { e: sun height in degrees, h: hour of the day, cover: 0..1 clouds, rain: 0..1, snow: 0..1,
    fog: 0..1, anim: true|false, test: bool } on every frame. It stops by itself when the canvas leaves the page, hides while the page is
    hidden or the card is off screen, and paints a still picture when animation is off. */
@@ -36,8 +36,6 @@ export function mount(canvas, state) {
   let W = 0, H = 0, raf = 0, dead = false, lastDraw = 0, lastT = 0, visible = true, still = 0;
   const stars = Array.from({ length: 380 }, () => ({ x: R() * 2.4, y: Math.pow(R(), 1.35) * 0.78, r: 0.4 + R() * 1.1, ph: R() * 6.28, sp: 0.6 + R() * 2.2 }));
   let shoot = null, nextShoot = 8 + R() * 14;
-  let clouds = [], sprites = [], spriteKey = "", cloudN = -1;
-  const birds = []; let nextFlock = 0.4;
   const tm = { v: 0 };   /* seconds of animation (does not run while hidden) */
 
   const size = () => {
@@ -46,60 +44,6 @@ export function mount(canvas, state) {
     if (nw !== canvas.width || nh !== canvas.height) { canvas.width = nw; canvas.height = nh; }
     W = canvas.width; H = canvas.height;
   };
-
-  /* a cumulus cloud sprite: a heap of round puffs, lit from above, shaded below */
-  function cloudSprite(tone, idx) {
-    const r = rng(7001 + idx * 131), w = 420, h = 190, c = document.createElement("canvas"); c.width = w; c.height = h;
-    const x = c.getContext("2d"), n = 7 + ((r() * 4) | 0), puffs = [];
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1), px = 70 + t * 280 + (r() - 0.5) * 30, pr = (0.5 + Math.sin(t * Math.PI) * 0.75) * 48 * (0.7 + r() * 0.5);
-      puffs.push({ x: px, y: 118 - Math.sin(t * Math.PI) * 30 + (r() - 0.5) * 16, r: pr });
-    }
-    puffs.push({ x: 210, y: 84, r: 58 + r() * 12 });
-    for (const p of puffs) {
-      const gr = x.createRadialGradient(p.x - p.r * 0.25, p.y - p.r * 0.45, p.r * 0.1, p.x, p.y, p.r);
-      gr.addColorStop(0, rgb(tone.lit)); gr.addColorStop(0.62, rgb(mixc(tone.lit, tone.shade, 0.45))); gr.addColorStop(1, rgb(tone.shade, 0.0));
-      x.fillStyle = gr; x.beginPath(); x.arc(p.x, p.y, p.r, 0, 7); x.fill();
-    }
-    /* flat underside */
-    x.globalCompositeOperation = "destination-in";
-    const fl = x.createLinearGradient(0, 100, 0, 168); fl.addColorStop(0, "rgba(0,0,0,1)"); fl.addColorStop(1, "rgba(0,0,0,0)");
-    x.fillStyle = fl; x.fillRect(0, 0, w, h);
-    return c;
-  }
-  function tones(e, cover, rain) {
-    const day = clamp((e + 4) / 14, 0, 1), glow = clamp(1 - Math.abs(e - 1) / 9, 0, 1);   /* glow: sunrise / sunset colours */
-    let lit = mixc([46, 52, 84], [255, 255, 255], day), shade = mixc([24, 28, 52], [190, 205, 226], day);
-    lit = mixc(lit, [255, 196, 150], glow * 0.62); shade = mixc(shade, [196, 130, 130], glow * 0.55);
-    const grey = clamp(cover * 0.55 + rain * 0.5, 0, 0.8);
-    lit = mixc(lit, [168, 174, 186].map((v) => v * (0.3 + 0.7 * day)), grey); shade = mixc(shade, [104, 112, 128].map((v) => v * (0.3 + 0.7 * day)), grey);
-    return { lit, shade };
-  }
-  function ensureClouds(e, cover, rain) {
-    const t = tones(e, cover, rain), key = [t.lit, t.shade].map((c) => c.map((v) => Math.round(v / 10)).join(",")).join("|");
-    if (key !== spriteKey) { spriteKey = key; sprites = [0, 1, 2, 3, 4].map((i) => cloudSprite(t, i)); }
-    const want = Math.round((4 + cover * 8) * 2.4);
-    if (want !== cloudN) {
-      const r = rng(991);
-      clouds = Array.from({ length: 30 }, (_, i) => ({ x: r() * 2.4, y: 0.07 + r() * 0.42, s: 0.55 + r() * 0.95, v: 0.006 + r() * 0.012, sp: i % 5, a: 0.55 + r() * 0.4 }));
-      clouds.forEach((c) => { c.v *= 0.5 + c.s * 0.5; });
-      cloudN = want;
-    }
-    return want;
-  }
-
-  function spawnFlock(h, x0) {
-    const left = R() < 0.5, n = h < 11 ? 3 + ((R() * 5) | 0) : 1 + ((R() * 2) | 0), y = 0.1 + R() * 0.32, v = (0.035 + R() * 0.03) * (left ? 1 : -1);
-    for (let i = 0; i < n; i++) {
-      birds.push({ x: x0 !== undefined ? x0 + i * -0.018 * Math.sign(v) : (left ? -0.06 : 1.06) + i * (left ? -0.02 : 0.02), y: y + (i % 2 ? 0.014 : -0.014) * ((i + 1) >> 1) + R() * 0.01, v: v * (0.92 + R() * 0.16), vy: (R() - 0.5) * 0.004, ph: R() * 6.28, f: 5 + R() * 3, s: 0.8 + R() * 0.35 });
-    }
-  }
-  function bird(b, col, k) {
-    const s = 10 * k * b.s, w = Math.sin(b.ph) * s * 0.9, dir = Math.sign(b.v) || 1;
-    g.strokeStyle = col; g.lineWidth = Math.max(1, 1.4 * k); g.lineCap = "round";
-    g.beginPath(); g.moveTo(b.px - s * 1.5 * dir, b.py - w * 0.3); g.quadraticCurveTo(b.px - s * 0.6 * dir, b.py - w - s * 0.2, b.px, b.py);
-    g.quadraticCurveTo(b.px + s * 0.6 * dir, b.py - w - s * 0.2, b.px + s * 1.5 * dir, b.py - w * 0.3); g.stroke();
-  }
 
   function frame(now) {
     raf = 0;
@@ -181,19 +125,6 @@ export function mount(canvas, state) {
       for (const [dx, dy, r] of [[-0.3, -0.2, 0.26], [0.25, 0.1, 0.2], [-0.05, 0.35, 0.16], [0.3, -0.35, 0.12]]) { g.beginPath(); g.arc(x + dx * R0, y + dy * R0, r * R0, 0, 7); g.fill(); }
     }
 
-    /* clouds (they always drift) */
-    const nCl = ensureClouds(e, cover, rain);
-    for (let i = 0; i < nCl; i++) {
-      const c = clouds[i];
-      if (dt) c.x += c.v * dt * (1 + (st.wind || 0) * 0.5);
-      if (c.x > 2.4) c.x -= 2.4;
-      const sp = sprites[c.sp], w = sp.width * c.s * (W / 1000) * 0.95, hh = sp.height * c.s * (W / 1000) * 0.95;
-      g.globalAlpha = clamp(c.a * (0.55 + cover * 0.6), 0, 1) * (1 - fog * 0.3);
-      const cx = pan(c.x * W - 0.15 * W) - w / 2; if (cx > W || cx + w < 0) continue;
-      g.drawImage(sp, cx, hz * (0.03 + 0.78 * ((c.y - 0.07) / 0.42)) - hh * 0.25, w, hh);
-    }
-    g.globalAlpha = 1;
-
     /* hills at the horizon */
     const light = clamp((e + 6) / 22, 0.1, 1), hillCol = (base) => mixc(mixc(base.map((v) => v * 0.2), base, light), mixc(hor, base, 0.4), 0.0);
     const hill = (yb, amp, f1, f2, ph0, col, haze, par) => {
@@ -218,29 +149,9 @@ export function mount(canvas, state) {
     hzg.addColorStop(0, rgb(hor, 0)); hzg.addColorStop(0.5, rgb(mixc(hor, [255, 190, 130], glowK * 0.5), 0.34 + fog * 0.4 + glowK * 0.18)); hzg.addColorStop(1, rgb(hor, 0));
     g.fillStyle = hzg; g.fillRect(0, hz - H * 0.12, W, H * 0.24);
 
-    /* birds: many in the morning, a pair now and then by day, swallows at dusk, none at night or in rain */
-    if (dt && night < 0.5 && rain < 0.3) {
-      nextFlock -= dt;
-      if (nextFlock <= 0) {
-        const morning = h >= 5.2 && h < 11, dusk = h >= 17 && h < 20;
-        if (morning) { spawnFlock(h); nextFlock = 7 + R() * 9; }
-        else if (dusk) { spawnFlock(h); nextFlock = 12 + R() * 14; }
-        else if (h >= 11 && h < 17) { spawnFlock(h); nextFlock = 28 + R() * 40; }
-        else nextFlock = 20;
-      }
-    }
-    if (st.test && !birds.length && h >= 5.2 && h < 11) spawnFlock(h, 0.35);
-    const col = e > 6 ? "rgba(36,40,52,.78)" : "rgba(26,22,34,.82)";
-    for (let i = birds.length - 1; i >= 0; i--) {
-      const b = birds[i];
-      if (dt) { b.x += b.v * dt; b.y += b.vy * dt + Math.sin(tm.v * 0.8 + b.ph) * 0.0004; b.ph += b.f * dt; }
-      if ((b.v > 0 && b.x > 1.15) || (b.v < 0 && b.x < -0.15)) { birds.splice(i, 1); continue; }
-      b.px = b.x * W; b.py = b.y * H; bird(b, col, W / 900 + 0.3);
-    }
-
     /* night tint over everything but the stars, a mist in fog */
     if (fog > 0.05) { g.fillStyle = rgb(hor, fog * 0.35); g.fillRect(0, 0, W, H); }
-    canvas.dataset.qskyN = String((+canvas.dataset.qskyN || 0) + 1); canvas.dataset.qskyE = String(Math.round(e)); canvas.dataset.qskyH = String(Math.round(h * 10) / 10); canvas.dataset.qskyBirds = String(birds.length);
+    canvas.dataset.qskyN = String((+canvas.dataset.qskyN || 0) + 1); canvas.dataset.qskyE = String(Math.round(e)); canvas.dataset.qskyH = String(Math.round(h * 10) / 10);
   }
 
   const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => { size(); still = 1; clearTimeout(timer); timer = 0; if (!raf) schedule(true); }) : null;
