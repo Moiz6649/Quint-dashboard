@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.58.1";
+const VER = "1.58.2";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -3306,7 +3306,18 @@ class QuintDashboard extends HTMLElement {
         + (k.live ? "" : `.fp3d-stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 48%,transparent 55%,rgba(${k.light ? "40,28,18,.30" : "0,0,0,.38"}) 100%)}`);
     } else if (cv) { if (cv._qs) cv._qs.stop(); cv.remove(); }
     let pm = false; for (let n = el; n && !pm; n = n.parentNode) if (n.classList && n.classList.contains("pimm")) pm = true;
-    if (pm) { css += `.fp3d-eye{top:auto!important;right:auto!important;left:12px!important;bottom:calc(92px + env(safe-area-inset-bottom))!important}.fp3d-mic{top:auto!important;right:auto!important;left:12px!important;bottom:calc(136px + env(safe-area-inset-bottom))!important}`; key += "|pm"; }
+    if (pm) {   /* the phone: the card's own buttons stand in a clean column on the right and its view bars sit above the bottom bar, nothing under it */
+      const sb = "env(safe-area-inset-bottom)", col = (cls, n) => `.${cls}{top:auto!important;left:auto!important;right:12px!important;bottom:calc(${n}px + ${sb})!important}`;
+      css += col("fp3d-find-btn", 196) + col("fp3d-central-btn", 244) + col("fp3d-eye", 292) + col("fp3d-mic", 336);
+      key += "|pm2";
+    }
+    try {   /* the view bars live in the card's own root, one level above the stage */
+      const sr = el.shadowRoot; let s2 = sr.querySelector("style[data-quint-ctl]");
+      if (pm) {
+        if (!s2) { s2 = document.createElement("style"); s2.setAttribute("data-quint-ctl", "1"); sr.appendChild(s2); }
+        s2.textContent = `.fp3d-card-controls{top:auto!important;left:12px!important;right:12px!important;width:auto!important;bottom:calc(86px + env(safe-area-inset-bottom))!important;display:flex!important;flex-wrap:wrap;justify-content:center;gap:8px}`;
+      } else if (s2) s2.remove();
+    } catch (e) {}
     if (!force && el._qreal === key && el._qrealRoot === root) return true;
     let st = root.querySelector("style[data-quint-back]");
     if (!st) { st = document.createElement("style"); st.setAttribute("data-quint-back", "1"); root.appendChild(st); }
