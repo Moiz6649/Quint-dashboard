@@ -101,7 +101,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.60.0";
+const VER = "1.60.2";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -361,7 +361,7 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .icgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;align-items:start}
 .icr{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
 .icb{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);font-size:12px;font-weight:600;line-height:1.1;text-align:center;transition:transform .15s,background .2s}
-.icb .si{font-size:22px}.icb:active{transform:scale(.95)}.icb.ans{background:#1fb86a;border-color:#1fb86a;color:#04170c;animation:icans 1.1s ease-in-out infinite alternate}@keyframes icans{to{box-shadow:0 0 0 6px rgba(31,184,106,.25)}}.vsay{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 20px 8px}.vsay .icb{flex-direction:row;padding:9px 14px;font-size:13px}.dst{display:inline-flex;align-items:center;gap:6px;font-weight:600}.dst::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--ok,#3ddc84)}.dst.open{color:#ffb020}.dst.open::before{background:#ffb020}.icb.isopen{border-color:#ffb020}
+.icb .si{font-size:22px}.icb:active{transform:scale(.95)}.icb.ans{background:#1fb86a;border-color:#1fb86a;color:#04170c;animation:icans 1.1s ease-in-out infinite alternate}@keyframes icans{to{box-shadow:0 0 0 6px rgba(31,184,106,.25)}}.vsay{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 20px 8px}.vsay .icb{flex-direction:row;padding:9px 14px;font-size:13px}.icb.cur{border-color:#3ddc84;background:rgba(61,220,132,.16)}.dst{display:inline-flex;align-items:center;gap:6px;font-weight:600}.dst::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--ok,#3ddc84)}.dst.open{color:#ffb020}.dst.open::before{background:#ffb020}.icb.isopen{border-color:#ffb020}
 .icb.door{background:rgba(95,211,154,.16);border-color:rgba(95,211,154,.5);color:#a8f0cd}
 .icb.door.armed{background:var(--warn);border-color:var(--warn);color:#1a1205;animation:armed .6s ease-in-out infinite alternate}
 @keyframes armed{from{transform:scale(1)}to{transform:scale(1.04)}}
@@ -2351,7 +2351,8 @@ class QuintDashboard extends HTMLElement {
   /* is the door open or closed? from the door status entity, or from the open-door action when that is a lock, a cover or a contact sensor */
   _icDoor(ic) {
     if (!ic) return null;
-    const S = this._h.states, id = (ic.state || "").trim() || (ic.door && S[ic.door.a] && ["lock", "cover", "binary_sensor"].includes(String(ic.door.a).split(".")[0]) ? ic.door.a : "") || (ic.lock && S[ic.lock.a] && ["lock", "cover"].includes(String(ic.lock.a).split(".")[0]) ? ic.lock.a : "");
+    const S = this._h.states; let id = (ic.state || "").trim() || (ic.door && S[ic.door.a] && ["lock", "cover", "binary_sensor"].includes(String(ic.door.a).split(".")[0]) ? ic.door.a : "") || (ic.lock && S[ic.lock.a] && ["lock", "cover"].includes(String(ic.lock.a).split(".")[0]) ? ic.lock.a : "");
+    if (!id) { const L = Object.keys(S).filter((i) => i.startsWith("lock.")), nmx = (i) => ((S[i].attributes && S[i].attributes.friendly_name) || "") + " " + i; id = L.find((i) => /intercom|ua-g3/i.test(nmx(i))) || (L.length === 1 ? L[0] : ""); }   /* nothing chosen: an intercom lock, or the only lock there is */
     const s = id && S[id]; if (!s || ["unavailable", "unknown", ""].includes(s.state)) return null;
     const d = id.split(".")[0], st = s.state, dc = (s.attributes && s.attributes.device_class) || "";
     let open, word;
@@ -2359,7 +2360,7 @@ class QuintDashboard extends HTMLElement {
     else if (d === "cover" || d === "valve") { open = ["open", "opening"].includes(st); word = open ? "Open" : "Closed"; }
     else { open = ["on", "open", "opened", "true", "unlocked", "home"].includes(st); word = dc === "lock" ? (open ? "Unlocked" : "Locked") : open ? "Open" : "Closed"; }
     if (ic.inv) { open = !open; word = d === "lock" || dc === "lock" ? (open ? "Unlocked" : "Locked") : open ? "Open" : "Closed"; }
-    return { open, word };
+    return { open, word, lockish: d === "lock" || dc === "lock", id };
   }
   _run(o) {
     o = o || {}; const a = (o.a || "").trim(), tgt = (o.e || "").trim(), S = this._h.states; let data = {};
@@ -2399,11 +2400,11 @@ class QuintDashboard extends HTMLElement {
   }
   _icPhrases(ic) { const p = String(ic.phr || "").split(/[;\n]/).map((x) => x.trim()).filter(Boolean); return p.length ? p : ["Please wait, I am coming.", "Please leave the parcel at the door.", "Who is it?", "Please come back later."]; }
   _icLock(ic) {
-    const a = ic.lock && (ic.lock.a || "").trim(); if (!a) return this._toast("Set the lock-door action in Settings → Intercom");
+    let a = ic.lock && (ic.lock.a || "").trim(); const dr0 = this._icDoor(ic); if (!a && ic.door && /^lock\./.test(ic.door.a || "")) a = ic.door.a; if (!a && dr0 && /^lock\./.test(dr0.id || "")) a = dr0.id; if (!a) return this._toast("Set the lock-door action in Settings → Intercom");
     const d = a.split(".")[0];
     if (this._h.states[a] && d === "lock") { this._h.callService("lock", "lock", { entity_id: a }); this._toast("Locking…"); return; }
     if (this._h.states[a] && d === "cover") { this._h.callService("cover", "close_cover", { entity_id: a }); this._toast("Closing…"); return; }
-    if (this._run(ic.lock)) this._toast("Locking…");
+    if (this._run({ ...(ic.lock || {}), a })) this._toast("Locking…");
   }
   _icSayNow(ic, i) {
     const t = this._icPhrases(ic)[i]; if (!t) return;
@@ -2423,6 +2424,8 @@ class QuintDashboard extends HTMLElement {
     }
     if (kind === "audio") { if (!(ic.audio && ic.audio.a)) return this._toast("Set the audio call in Settings → Intercom"); if (this._run(ic.audio)) this._toast("Calling…"); return; }
     if (kind === "door") {
+      const dr = this._icDoor(ic);
+      if (dr && dr.lockish && dr.open && !ic.noLock) return this._icLock(ic);   /* it stands unlocked: one tap locks it again */
       if (!(ic.door && ic.door.a)) return this._toast("Set the open-door action in Settings → Intercom");
       const key = "door:" + ic.id;
       if (this._arm !== key) { this._arm = key; clearTimeout(this._armT); this._armT = setTimeout(() => { this._arm = null; this._draw(true); }, 3500); return this._draw(true); }
@@ -2434,8 +2437,9 @@ class QuintDashboard extends HTMLElement {
     const pic = cam && cam.attributes.entity_picture && !["unavailable", "unknown"].includes(cam.state) ? this._h.hassUrl(cam.attributes.entity_picture) : "";
     const view = pic ? `<div class="cvw" data-cam="${ic.camera}"><img class="cam" data-src="${pic}" src="${pic}"><span class="cn">${E(this._nm(ic.camera))}</span><span class="live">${ring ? "Ringing" : "Live"}</span><span class="xp">⤢</span></div>` : `<div class="cvw" style="cursor:default;font-size:44px">${PHONE_I}</div>`;
     const b = (kind, ico, t, cls) => `<button class="icb ${cls || ""}" data-ic="${kind}|${E(ic.id)}">${ico}<span>${t}</span></button>`;
-    const spk = !ic.noSpeak && ic.speaker && ic.tts, canLock = !ic.noLock && ic.lock && ic.lock.a;
-    const btns = [ring && ic.camera && b("answer", VIDEO_I, "Answer", "ans"), !ic.noVideo && b("video", VIDEO_I, "Video call"), !ic.noAudio && b("audio", PHONE_I, "Audio call"), spk && b("speak", MIC_I, "Speak"), !ic.noDoor && b("door", KEY_I, door ? "Tap again to open" : dr && dr.open ? "Door is open" : "Unlock door", "door " + (door ? "armed" : "") + (dr && dr.open ? " isopen" : "")), canLock && b("lock", LOCK_I, "Lock door")].filter(Boolean);
+    const spk = !ic.noSpeak && ic.speaker && ic.tts;
+    const lk = dr && dr.lockish, isLocked = lk && !dr.open, isUnl = lk && dr.open;
+    const btns = [ring && ic.camera && b("answer", VIDEO_I, "Answer", "ans"), !ic.noVideo && b("video", VIDEO_I, "Video call"), !ic.noAudio && b("audio", PHONE_I, "Audio call"), spk && b("speak", MIC_I, "Speak"), !ic.noDoor && b("door", isLocked ? LOCK_I : KEY_I, door ? "Tap again to unlock" : isLocked ? "Locked" : isUnl ? "Unlocked" : dr && dr.open ? "Door is open" : "Unlock door", "door " + (door ? "armed" : "") + (isLocked ? " cur" : "") + (dr && dr.open ? " isopen" : ""))].filter(Boolean);
     return `<div class="bc icm ${ring ? "ringing" : ""} ${big ? "bigic" : ""}" data-id="b:ic:${E(ic.id)}"><div class="bh" ${this._tileGo("intercom")}><span>${E(this._icName(ic))}</span><span class="bs">${ring ? '<b class="rg">Ringing</b>' : dr ? `<b class="dst ${dr.open ? "open" : "closed"}">Door ${dr.word.toLowerCase()}</b>` : "Ready"}</span></div>${view}${btns.length ? `<div class="icr" style="grid-template-columns:repeat(auto-fit,minmax(${btns.length > 4 ? 76 : 96}px,1fr))">${btns.join("")}</div>` : ""}</div>`;
   }
   _icPage() {
@@ -3015,8 +3019,8 @@ class QuintDashboard extends HTMLElement {
     const snap = this._h.hassUrl(s.attributes.entity_picture), stream = snap.replace("/camera_proxy/", "/camera_proxy_stream/");
     if (this._camId !== id) { this._camId = id; this._camSince = Date.now(); }
     const ic = this._icList().find((x) => x.camera === id) || {}, armed = this._arm === "door:" + ic.id;
-    const spk = !ic.noSpeak && ic.speaker && ic.tts, canLock = !ic.noLock && ic.lock && ic.lock.a, dr = this._icDoor(ic);
-    const vb = [!ic.noAudio && ic.audio && ic.audio.a && `<button class="icb" data-ic="audio|${E(ic.id || "")}">${PHONE_I}<span>Talk</span></button>`, spk && `<button class="icb ${this._icSay === ic.id ? "armed" : ""}" data-ic="speak|${E(ic.id || "")}">${MIC_I}<span>Speak</span></button>`, !ic.noDoor && `<button class="icb door ${armed ? "armed" : ""}" data-ic="door|${E(ic.id || "")}">${KEY_I}<span>${armed ? "Tap again to open" : "Unlock door"}</span></button>`, canLock && `<button class="icb" data-ic="lock|${E(ic.id || "")}">${LOCK_I}<span>Lock door</span></button>`].filter(Boolean);
+    const spk = !ic.noSpeak && ic.speaker && ic.tts, dr = this._icDoor(ic), isLocked = dr && dr.lockish && !dr.open, isUnl = dr && dr.lockish && dr.open;
+    const vb = [!ic.noAudio && ic.audio && ic.audio.a && `<button class="icb" data-ic="audio|${E(ic.id || "")}">${PHONE_I}<span>Talk</span></button>`, spk && `<button class="icb ${this._icSay === ic.id ? "armed" : ""}" data-ic="speak|${E(ic.id || "")}">${MIC_I}<span>Speak</span></button>`, !ic.noDoor && `<button class="icb door ${armed ? "armed" : ""} ${isLocked ? "cur" : ""}" data-ic="door|${E(ic.id || "")}">${isLocked ? LOCK_I : KEY_I}<span>${armed ? "Tap again to unlock" : isLocked ? "Locked" : isUnl ? "Unlocked" : "Unlock door"}</span></button>`].filter(Boolean);
     const say = ic.id && spk && this._icSay === ic.id ? `<div class="vsay">${this._icPhrases(ic).map((t, i) => `<button class="icb" data-ic="say|${E(ic.id)}|${i}">${E(t)}</button>`).join("")}</div>` : "";
     const ictl = ic.id && vb.length ? `${say}<div class="vic">${vb.join("")}${dr ? `<span class="dst ${dr.open ? "open" : "closed"}" style="align-self:center">Door ${dr.word.toLowerCase()}</span>` : ""}</div>` : "";
     const arrows = cams.length > 1 ? `<button class="ib" data-cam="prev">‹</button><button class="ib" data-cam="next">›</button>` : "";
@@ -3895,12 +3899,11 @@ class QuintDashboard extends HTMLElement {
         sec("Buttons", "choose which buttons are shown on the tile, page and big camera",
           row("Video call", "opens the big camera", tg(!ic.noVideo, 'data-s="icflag|noVideo"')) +
           row("Audio call", "", tg(!ic.noAudio, 'data-s="icflag|noAudio"')) +
-          row("Unlock door", "", tg(!ic.noDoor, 'data-s="icflag|noDoor"')) +
-          row("Lock door", "", tg(!ic.noLock, 'data-s="icflag|noLock"')) +
+          row("Door lock", "one button that shows Locked or Unlocked and switches it", tg(!ic.noDoor, 'data-s="icflag|noDoor"')) +
           row("Speak", "", tg(!ic.noSpeak, 'data-s="icflag|noSpeak"'))) +
         sec("UniFi Access intercom (Ubiquiti UA-G3)", "one tap fills the camera, door lock, doorbell, speaker and voice from your Home Assistant entities (UniFi Protect and UniFi Access). Then check each field below", `<div class="btns"><button class="pri" data-s="icunifi|">Set up for a UniFi intercom</button></div><div class="lbl" style="padding:8px 4px 0">How it works: when the bell rings the tile shows a green Answer button that opens the live video. There you can Unlock and Lock the door and say a quick reply through the intercom speaker. Talking live with your own voice is not possible from Home Assistant: put the link of the UniFi Access app or your phone call in Audio call below.</div>`) +
         sec("Unlock door", "needs two taps to confirm. Use an entity (lock, switch, button, script…) or a service", act("door", "")) +
-        sec("Lock door", "an entity or service that locks the door again: a lock entity is locked, a cover is closed", act("lock", "")) +
+        sec("Lock the door again", "used when the door button is tapped while the door stands unlocked. Left empty, a lock entity used above is locked; a cover is closed", act("lock", "")) +
         sec("Speak to the visitor", "quick replies are spoken through the speaker of the intercom with a text-to-speech voice",
           row("Intercom speaker", "the media_player of the intercom, for example media_player.intercom_speaker", txt("speaker", "media_player.intercom_speaker")) +
           row("Voice", "a text-to-speech entity, for example tts.piper or tts.home_assistant_cloud", txt("tts", "tts.home_assistant_cloud")) +
