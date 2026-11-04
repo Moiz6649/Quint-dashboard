@@ -99,7 +99,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.58.2";
+const VER = "1.59.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -359,7 +359,7 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .icgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;align-items:start}
 .icr{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
 .icb{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);font-size:12px;font-weight:600;line-height:1.1;text-align:center;transition:transform .15s,background .2s}
-.icb .si{font-size:22px}.icb:active{transform:scale(.95)}
+.icb .si{font-size:22px}.icb:active{transform:scale(.95)}.dst{display:inline-flex;align-items:center;gap:6px;font-weight:600}.dst::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--ok,#3ddc84)}.dst.open{color:#ffb020}.dst.open::before{background:#ffb020}.icb.isopen{border-color:#ffb020}
 .icb.door{background:rgba(95,211,154,.16);border-color:rgba(95,211,154,.5);color:#a8f0cd}
 .icb.door.armed{background:var(--warn);border-color:var(--warn);color:#1a1205;animation:armed .6s ease-in-out infinite alternate}
 @keyframes armed{from{transform:scale(1)}to{transform:scale(1.04)}}
@@ -2345,6 +2345,19 @@ class QuintDashboard extends HTMLElement {
     if (ic.bell.startsWith("event.")) { const t = Date.parse(s.state); return !isNaN(t) && Date.now() - t < 30000; }
     return ["on", "ringing", "pressed", "true"].includes(s.state);
   }
+  /* is the door open or closed? from the door status entity, or from the open-door action when that is a lock, a cover or a contact sensor */
+  _icDoor(ic) {
+    if (!ic) return null;
+    const S = this._h.states, id = (ic.state || "").trim() || (ic.door && S[ic.door.a] && ["lock", "cover", "binary_sensor"].includes(String(ic.door.a).split(".")[0]) ? ic.door.a : "");
+    const s = id && S[id]; if (!s || ["unavailable", "unknown", ""].includes(s.state)) return null;
+    const d = id.split(".")[0], st = s.state, dc = (s.attributes && s.attributes.device_class) || "";
+    let open, word;
+    if (d === "lock") { open = !["locked", "locking"].includes(st); word = st === "jammed" ? "Jammed" : open ? (st === "open" || st === "opening" ? "Open" : "Unlocked") : "Locked"; }
+    else if (d === "cover" || d === "valve") { open = ["open", "opening"].includes(st); word = open ? "Open" : "Closed"; }
+    else { open = ["on", "open", "opened", "true", "unlocked", "home"].includes(st); word = dc === "lock" ? (open ? "Unlocked" : "Locked") : open ? "Open" : "Closed"; }
+    if (ic.inv) { open = !open; word = d === "lock" || dc === "lock" ? (open ? "Unlocked" : "Locked") : open ? "Open" : "Closed"; }
+    return { open, word };
+  }
   _run(o) {
     o = o || {}; const a = (o.a || "").trim(), tgt = (o.e || "").trim(), S = this._h.states; let data = {};
     if (!a) return false;
@@ -2375,12 +2388,12 @@ class QuintDashboard extends HTMLElement {
     }
   }
   _icCard(ic, big) {
-    const H = this._h.states, E = (t) => this._esc(t), cam = ic.camera && H[ic.camera], ring = this._ringing(ic), door = this._arm === "door:" + ic.id;
+    const H = this._h.states, E = (t) => this._esc(t), cam = ic.camera && H[ic.camera], ring = this._ringing(ic), door = this._arm === "door:" + ic.id, dr = this._icDoor(ic);
     const pic = cam && cam.attributes.entity_picture && !["unavailable", "unknown"].includes(cam.state) ? this._h.hassUrl(cam.attributes.entity_picture) : "";
     const view = pic ? `<div class="cvw" data-cam="${ic.camera}"><img class="cam" data-src="${pic}" src="${pic}"><span class="cn">${E(this._nm(ic.camera))}</span><span class="live">${ring ? "Ringing" : "Live"}</span><span class="xp">⤢</span></div>` : `<div class="cvw" style="cursor:default;font-size:44px">${PHONE_I}</div>`;
     const b = (kind, ico, t, cls) => `<button class="icb ${cls || ""}" data-ic="${kind}|${E(ic.id)}">${ico}<span>${t}</span></button>`;
-    const btns = [!ic.noVideo && b("video", VIDEO_I, "Video call"), !ic.noAudio && b("audio", PHONE_I, "Audio call"), !ic.noDoor && b("door", KEY_I, door ? "Tap again to open" : "Open door", "door " + (door ? "armed" : ""))].filter(Boolean);
-    return `<div class="bc icm ${ring ? "ringing" : ""} ${big ? "bigic" : ""}" data-id="b:ic:${E(ic.id)}"><div class="bh" ${this._tileGo("intercom")}><span>${E(this._icName(ic))}</span><span class="bs">${ring ? '<b class="rg">Ringing</b>' : "Ready"}</span></div>${view}${btns.length ? `<div class="icr" style="grid-template-columns:repeat(${btns.length},1fr)">${btns.join("")}</div>` : ""}</div>`;
+    const btns = [!ic.noVideo && b("video", VIDEO_I, "Video call"), !ic.noAudio && b("audio", PHONE_I, "Audio call"), !ic.noDoor && b("door", KEY_I, door ? "Tap again to open" : dr && dr.open ? "Door is open" : "Open door", "door " + (door ? "armed" : "") + (dr && dr.open ? " isopen" : ""))].filter(Boolean);
+    return `<div class="bc icm ${ring ? "ringing" : ""} ${big ? "bigic" : ""}" data-id="b:ic:${E(ic.id)}"><div class="bh" ${this._tileGo("intercom")}><span>${E(this._icName(ic))}</span><span class="bs">${ring ? '<b class="rg">Ringing</b>' : dr ? `<b class="dst ${dr.open ? "open" : "closed"}">Door ${dr.word.toLowerCase()}</b>` : "Ready"}</span></div>${view}${btns.length ? `<div class="icr" style="grid-template-columns:repeat(${btns.length},1fr)">${btns.join("")}</div>` : ""}</div>`;
   }
   _icPage() {
     const l = this._icList(), hint = this._admin() && l.some((ic) => !(ic.door && ic.door.a && ic.audio && ic.audio.a && ic.camera)) ? `<div class="lbl" style="margin-top:14px">Finish the set-up in Settings → Intercom (camera, door-open action, audio call).</div>` : "";
@@ -3831,6 +3844,8 @@ class QuintDashboard extends HTMLElement {
           row("Name", "", txt("name", "Intercom")) +
           row("Camera", "the video of your door station", `<select data-icf="camera"><option value="">(none)</option>${cams.map((i) => `<option value="${E(i)}" ${ic.camera === i ? "selected" : ""}>${E(this._nm(i))}</option>`).join("")}</select>`) +
           row("Doorbell sensor", "optional: a binary_sensor or event that rings", txt("bell", "binary_sensor.doorbell")) +
+          row("Door status", "optional: the door contact, lock or cover, so the tile shows Door open or Door closed. Left empty, a lock, cover or contact sensor chosen as the open-door action is used", txt("state", "binary_sensor.front_door")) +
+          row("Flip the door status", "turn this on when the tile says open while the door is closed (some contact sensors work the other way round)", tg(!!ic.inv, 'data-s="icflag|inv"')) +
           row("Open video on ring", "show the big camera by itself when the bell rings", tg(!!ic.auto, 'data-s="icflag|auto"'))) +
         sec("Buttons", "choose which buttons are shown on the tile, page and big camera",
           row("Video call", "opens the big camera", tg(!ic.noVideo, 'data-s="icflag|noVideo"')) +
