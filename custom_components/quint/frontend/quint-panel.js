@@ -48,6 +48,8 @@ const PLAY_I = ic('<path d="M7 4l13 8-13 8z" fill="currentColor"/>');
 const PAUSE_I = ic('<path d="M8 5v14M16 5v14" stroke-width="3"/>');
 const PHONE_I = SV.intercom.i;
 const VIDEO_I = SV.cameras.i;
+const LOCK_I = ic('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>');
+const MIC_I = ic('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>');
 const KEY_I = ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-1.5"/>');
 const CHEV_I = ic('<path d="M15 5l-7 7 7 7"/>');
 const RAIN_I = ic('<path d="M18 14H7a4 4 0 1 1 .9-7.9A6 6 0 0 1 19 7a3.5 3.5 0 0 1-1 7z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>');
@@ -99,7 +101,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.59.0";
+const VER = "1.60.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -359,7 +361,7 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .icgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;align-items:start}
 .icr{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
 .icb{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);font-size:12px;font-weight:600;line-height:1.1;text-align:center;transition:transform .15s,background .2s}
-.icb .si{font-size:22px}.icb:active{transform:scale(.95)}.dst{display:inline-flex;align-items:center;gap:6px;font-weight:600}.dst::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--ok,#3ddc84)}.dst.open{color:#ffb020}.dst.open::before{background:#ffb020}.icb.isopen{border-color:#ffb020}
+.icb .si{font-size:22px}.icb:active{transform:scale(.95)}.icb.ans{background:#1fb86a;border-color:#1fb86a;color:#04170c;animation:icans 1.1s ease-in-out infinite alternate}@keyframes icans{to{box-shadow:0 0 0 6px rgba(31,184,106,.25)}}.vsay{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 20px 8px}.vsay .icb{flex-direction:row;padding:9px 14px;font-size:13px}.dst{display:inline-flex;align-items:center;gap:6px;font-weight:600}.dst::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--ok,#3ddc84)}.dst.open{color:#ffb020}.dst.open::before{background:#ffb020}.icb.isopen{border-color:#ffb020}
 .icb.door{background:rgba(95,211,154,.16);border-color:rgba(95,211,154,.5);color:#a8f0cd}
 .icb.door.armed{background:var(--warn);border-color:var(--warn);color:#1a1205;animation:armed .6s ease-in-out infinite alternate}
 @keyframes armed{from{transform:scale(1)}to{transform:scale(1.04)}}
@@ -1234,6 +1236,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "tile") { const i = v.indexOf("|"), k = v.slice(0, i), id = v.slice(i + 1); c.tiles = c.tiles || {}; const cur = new Set(this._tileIds(k)); cur.has(id) ? cur.delete(id) : cur.add(id); c.tiles[k] = [...cur]; }
     else if (a === "tileauto") { if (c.tiles) delete c.tiles[v]; }
     else if (a === "icflag") { const ic = this._icCur(); if (ic) ic[v] = !ic[v]; }
+    else if (a === "icunifi") this._icUnifi();
     else if (a === "auto") { const l = new Set(c.autos || []); l.has(v) ? l.delete(v) : l.add(v); c.autos = [...l]; }
     else if (a === "autoclear") c.autos = [];
     else if (a === "icadd") { this._ics().push({ id: "ic" + Date.now().toString(36) }); this._icSel = this._ics().length - 1; }
@@ -2348,7 +2351,7 @@ class QuintDashboard extends HTMLElement {
   /* is the door open or closed? from the door status entity, or from the open-door action when that is a lock, a cover or a contact sensor */
   _icDoor(ic) {
     if (!ic) return null;
-    const S = this._h.states, id = (ic.state || "").trim() || (ic.door && S[ic.door.a] && ["lock", "cover", "binary_sensor"].includes(String(ic.door.a).split(".")[0]) ? ic.door.a : "");
+    const S = this._h.states, id = (ic.state || "").trim() || (ic.door && S[ic.door.a] && ["lock", "cover", "binary_sensor"].includes(String(ic.door.a).split(".")[0]) ? ic.door.a : "") || (ic.lock && S[ic.lock.a] && ["lock", "cover"].includes(String(ic.lock.a).split(".")[0]) ? ic.lock.a : "");
     const s = id && S[id]; if (!s || ["unavailable", "unknown", ""].includes(s.state)) return null;
     const d = id.split(".")[0], st = s.state, dc = (s.attributes && s.attributes.device_class) || "";
     let open, word;
@@ -2372,8 +2375,47 @@ class QuintDashboard extends HTMLElement {
     if (m) { this._h.callService(m[1], m[2], { ...(tgt ? { entity_id: tgt } : {}), ...data }); return true; }
     this._toast("Action not recognised: " + a); return false;
   }
+  /* the quick set-up for a UniFi Access intercom (Ubiquiti UA-G3 Intercom): finds its camera, door lock, bell, speaker and a voice by name */
+  _icUnifi() {
+    let ic = this._icCur(); if (!ic) { ic = { id: "ic" + Date.now().toString(36) }; this._ics().push(ic); this._icSel = this._ics().length - 1; }
+    const S = this._h.states, ids = Object.keys(S), nm = (i) => ((S[i].attributes && S[i].attributes.friendly_name) || "") + " " + i;
+    const all = (dom) => ids.filter((i) => i.startsWith(dom + "."));
+    const pick = (dom, re, alt, bad) => { const l = all(dom).filter((i) => !(bad && bad.test(nm(i)))); return l.find((i) => re.test(nm(i))) || (alt ? l.find((i) => alt.test(nm(i))) : "") || ""; };
+    const cam = all("camera").filter((i) => /intercom|ua-g3/i.test(nm(i)) && !/package/i.test(nm(i))).sort((a, b) => (/high/i.test(nm(b)) ? 1 : 0) - (/high/i.test(nm(a)) ? 1 : 0))[0] || pick("camera", /door|entry|front/i, null, /package/i);
+    const lock = pick("lock", /intercom|ua-g3/i, /door|entry|front|gate/i) || all("lock")[0] || "";
+    const bell = pick("event", /doorbell|ring|bell/i) || pick("binary_sensor", /doorbell|ring|bell/i);
+    const spk = pick("media_player", /intercom|ua-g3/i);
+    const tts = all("tts").find((i) => /piper|cloud|google|microsoft|openai|elevenlabs/i.test(i)) || all("tts")[0] || "";
+    const got = [], miss = [], put = (ok, what) => (ok ? got : miss).push(what);
+    if (!ic.name) ic.name = "Intercom";
+    if (!ic.camera && cam) ic.camera = cam; put(!!ic.camera, "camera");
+    if (lock) { ic.door = ic.door && ic.door.a ? ic.door : { a: lock }; ic.lock = ic.lock && ic.lock.a ? ic.lock : { a: lock }; if (!ic.state) ic.state = lock; }
+    put(!!(ic.door && ic.door.a), "door lock");
+    if (!ic.bell && bell) ic.bell = bell; put(!!ic.bell, "doorbell");
+    if (!ic.speaker && spk) ic.speaker = spk; put(!!ic.speaker, "speaker");
+    if (!ic.tts && tts) ic.tts = tts; put(!!ic.tts, "voice (text to speech)");
+    if (ic.auto === undefined) ic.auto = true;
+    this._toast((got.length ? "Found: " + got.join(", ") : "Nothing found") + (miss.length ? ". Still to choose: " + miss.join(", ") : "."));
+  }
+  _icPhrases(ic) { const p = String(ic.phr || "").split(/[;\n]/).map((x) => x.trim()).filter(Boolean); return p.length ? p : ["Please wait, I am coming.", "Please leave the parcel at the door.", "Who is it?", "Please come back later."]; }
+  _icLock(ic) {
+    const a = ic.lock && (ic.lock.a || "").trim(); if (!a) return this._toast("Set the lock-door action in Settings → Intercom");
+    const d = a.split(".")[0];
+    if (this._h.states[a] && d === "lock") { this._h.callService("lock", "lock", { entity_id: a }); this._toast("Locking…"); return; }
+    if (this._h.states[a] && d === "cover") { this._h.callService("cover", "close_cover", { entity_id: a }); this._toast("Closing…"); return; }
+    if (this._run(ic.lock)) this._toast("Locking…");
+  }
+  _icSayNow(ic, i) {
+    const t = this._icPhrases(ic)[i]; if (!t) return;
+    if (!ic.speaker || !ic.tts) return this._toast("Choose the intercom speaker and a voice in Settings → Intercom");
+    this._h.callService("tts", "speak", { entity_id: ic.tts, media_player_entity_id: ic.speaker, message: t, cache: true }); this._toast("Said: " + t);
+  }
   _icAct(v) {
-    const [kind, id] = v.split("|"), ic = this._ics().find((x) => x.id === id) || this._icList()[0] || {};
+    const [kind, id, x] = v.split("|"), ic = this._ics().find((x) => x.id === id) || this._icList()[0] || {};
+    if (kind === "answer") { if (ic.video && ic.video.a) this._run(ic.video); if (ic.camera) { this._cam = ic.camera; this._camFb = false; return this._draw(true); } return this._toast("Choose the intercom camera in Settings → Intercom"); }
+    if (kind === "lock") return this._icLock(ic);
+    if (kind === "speak") { if (ic.camera && !this._cam) { this._cam = ic.camera; this._camFb = false; } this._icSay = this._icSay === ic.id ? null : ic.id; return this._draw(true); }
+    if (kind === "say") { this._icSayNow(ic, +x); return; }
     if (kind === "video") {
       if (ic.video && ic.video.a) this._run(ic.video);
       if (ic.camera) { this._cam = ic.camera; this._camFb = false; return this._draw(true); }
@@ -2392,8 +2434,9 @@ class QuintDashboard extends HTMLElement {
     const pic = cam && cam.attributes.entity_picture && !["unavailable", "unknown"].includes(cam.state) ? this._h.hassUrl(cam.attributes.entity_picture) : "";
     const view = pic ? `<div class="cvw" data-cam="${ic.camera}"><img class="cam" data-src="${pic}" src="${pic}"><span class="cn">${E(this._nm(ic.camera))}</span><span class="live">${ring ? "Ringing" : "Live"}</span><span class="xp">⤢</span></div>` : `<div class="cvw" style="cursor:default;font-size:44px">${PHONE_I}</div>`;
     const b = (kind, ico, t, cls) => `<button class="icb ${cls || ""}" data-ic="${kind}|${E(ic.id)}">${ico}<span>${t}</span></button>`;
-    const btns = [!ic.noVideo && b("video", VIDEO_I, "Video call"), !ic.noAudio && b("audio", PHONE_I, "Audio call"), !ic.noDoor && b("door", KEY_I, door ? "Tap again to open" : dr && dr.open ? "Door is open" : "Open door", "door " + (door ? "armed" : "") + (dr && dr.open ? " isopen" : ""))].filter(Boolean);
-    return `<div class="bc icm ${ring ? "ringing" : ""} ${big ? "bigic" : ""}" data-id="b:ic:${E(ic.id)}"><div class="bh" ${this._tileGo("intercom")}><span>${E(this._icName(ic))}</span><span class="bs">${ring ? '<b class="rg">Ringing</b>' : dr ? `<b class="dst ${dr.open ? "open" : "closed"}">Door ${dr.word.toLowerCase()}</b>` : "Ready"}</span></div>${view}${btns.length ? `<div class="icr" style="grid-template-columns:repeat(${btns.length},1fr)">${btns.join("")}</div>` : ""}</div>`;
+    const spk = !ic.noSpeak && ic.speaker && ic.tts, canLock = !ic.noLock && ic.lock && ic.lock.a;
+    const btns = [ring && ic.camera && b("answer", VIDEO_I, "Answer", "ans"), !ic.noVideo && b("video", VIDEO_I, "Video call"), !ic.noAudio && b("audio", PHONE_I, "Audio call"), spk && b("speak", MIC_I, "Speak"), !ic.noDoor && b("door", KEY_I, door ? "Tap again to open" : dr && dr.open ? "Door is open" : "Unlock door", "door " + (door ? "armed" : "") + (dr && dr.open ? " isopen" : "")), canLock && b("lock", LOCK_I, "Lock door")].filter(Boolean);
+    return `<div class="bc icm ${ring ? "ringing" : ""} ${big ? "bigic" : ""}" data-id="b:ic:${E(ic.id)}"><div class="bh" ${this._tileGo("intercom")}><span>${E(this._icName(ic))}</span><span class="bs">${ring ? '<b class="rg">Ringing</b>' : dr ? `<b class="dst ${dr.open ? "open" : "closed"}">Door ${dr.word.toLowerCase()}</b>` : "Ready"}</span></div>${view}${btns.length ? `<div class="icr" style="grid-template-columns:repeat(auto-fit,minmax(${btns.length > 4 ? 76 : 96}px,1fr))">${btns.join("")}</div>` : ""}</div>`;
   }
   _icPage() {
     const l = this._icList(), hint = this._admin() && l.some((ic) => !(ic.door && ic.door.a && ic.audio && ic.audio.a && ic.camera)) ? `<div class="lbl" style="margin-top:14px">Finish the set-up in Settings → Intercom (camera, door-open action, audio call).</div>` : "";
@@ -2972,8 +3015,10 @@ class QuintDashboard extends HTMLElement {
     const snap = this._h.hassUrl(s.attributes.entity_picture), stream = snap.replace("/camera_proxy/", "/camera_proxy_stream/");
     if (this._camId !== id) { this._camId = id; this._camSince = Date.now(); }
     const ic = this._icList().find((x) => x.camera === id) || {}, armed = this._arm === "door:" + ic.id;
-    const vb = [!ic.noAudio && `<button class="icb" data-ic="audio|${E(ic.id || "")}">${PHONE_I}<span>Audio call</span></button>`, !ic.noDoor && `<button class="icb door ${armed ? "armed" : ""}" data-ic="door|${E(ic.id || "")}">${KEY_I}<span>${armed ? "Tap again to open" : "Open door"}</span></button>`].filter(Boolean);
-    const ictl = ic.id && vb.length ? `<div class="vic">${vb.join("")}</div>` : "";
+    const spk = !ic.noSpeak && ic.speaker && ic.tts, canLock = !ic.noLock && ic.lock && ic.lock.a, dr = this._icDoor(ic);
+    const vb = [!ic.noAudio && ic.audio && ic.audio.a && `<button class="icb" data-ic="audio|${E(ic.id || "")}">${PHONE_I}<span>Talk</span></button>`, spk && `<button class="icb ${this._icSay === ic.id ? "armed" : ""}" data-ic="speak|${E(ic.id || "")}">${MIC_I}<span>Speak</span></button>`, !ic.noDoor && `<button class="icb door ${armed ? "armed" : ""}" data-ic="door|${E(ic.id || "")}">${KEY_I}<span>${armed ? "Tap again to open" : "Unlock door"}</span></button>`, canLock && `<button class="icb" data-ic="lock|${E(ic.id || "")}">${LOCK_I}<span>Lock door</span></button>`].filter(Boolean);
+    const say = ic.id && spk && this._icSay === ic.id ? `<div class="vsay">${this._icPhrases(ic).map((t, i) => `<button class="icb" data-ic="say|${E(ic.id)}|${i}">${E(t)}</button>`).join("")}</div>` : "";
+    const ictl = ic.id && vb.length ? `${say}<div class="vic">${vb.join("")}${dr ? `<span class="dst ${dr.open ? "open" : "closed"}" style="align-self:center">Door ${dr.word.toLowerCase()}</span>` : ""}</div>` : "";
     const arrows = cams.length > 1 ? `<button class="ib" data-cam="prev">‹</button><button class="ib" data-cam="next">›</button>` : "";
     return `<div class="camv" data-cam="bg"><div class="vh"><span class="live">Live</span><span class="vt">${E(this._nm(id))}</span><span class="grow"></span>${arrows}<button class="ib" data-cam="close">✕</button></div><div class="vb">${this._haOn() && !this._camFb && !(this._haBad || new Set()).has(id) ? this._haHost(id, false, snap) : ""}${this._haOn() && !this._camFb && !(this._haBad || new Set()).has(id) ? "" : `<img class="camx" data-cam="keep" data-src="${stream}" data-snap="${snap}" style="background:#000 url('${E(snap)}') center/contain no-repeat" src="${this._camFb ? snap : stream}">`}</div>${ictl}<div class="vf">${cams.map((i) => `<button class="cc2 ${i === id ? "on" : ""}" data-id="cc:${i}" data-cam="${i}">${E(this._nm(i))}</button>`).join("")}</div></div>`;
   }
@@ -3850,8 +3895,16 @@ class QuintDashboard extends HTMLElement {
         sec("Buttons", "choose which buttons are shown on the tile, page and big camera",
           row("Video call", "opens the big camera", tg(!ic.noVideo, 'data-s="icflag|noVideo"')) +
           row("Audio call", "", tg(!ic.noAudio, 'data-s="icflag|noAudio"')) +
-          row("Open door", "", tg(!ic.noDoor, 'data-s="icflag|noDoor"'))) +
-        sec("Open door", "needs two taps to confirm. Use an entity (lock, switch, button, script…) or a service", act("door", "")) +
+          row("Unlock door", "", tg(!ic.noDoor, 'data-s="icflag|noDoor"')) +
+          row("Lock door", "", tg(!ic.noLock, 'data-s="icflag|noLock"')) +
+          row("Speak", "", tg(!ic.noSpeak, 'data-s="icflag|noSpeak"'))) +
+        sec("UniFi Access intercom (Ubiquiti UA-G3)", "one tap fills the camera, door lock, doorbell, speaker and voice from your Home Assistant entities (UniFi Protect and UniFi Access). Then check each field below", `<div class="btns"><button class="pri" data-s="icunifi|">Set up for a UniFi intercom</button></div><div class="lbl" style="padding:8px 4px 0">How it works: when the bell rings the tile shows a green Answer button that opens the live video. There you can Unlock and Lock the door and say a quick reply through the intercom speaker. Talking live with your own voice is not possible from Home Assistant: put the link of the UniFi Access app or your phone call in Audio call below.</div>`) +
+        sec("Unlock door", "needs two taps to confirm. Use an entity (lock, switch, button, script…) or a service", act("door", "")) +
+        sec("Lock door", "an entity or service that locks the door again: a lock entity is locked, a cover is closed", act("lock", "")) +
+        sec("Speak to the visitor", "quick replies are spoken through the speaker of the intercom with a text-to-speech voice",
+          row("Intercom speaker", "the media_player of the intercom, for example media_player.intercom_speaker", txt("speaker", "media_player.intercom_speaker")) +
+          row("Voice", "a text-to-speech entity, for example tts.piper or tts.home_assistant_cloud", txt("tts", "tts.home_assistant_cloud")) +
+          row("Quick replies", "separated by a semicolon. Empty uses four ready-made replies", txt("phr", "Please wait, I am coming.; Leave the parcel at the door."))) +
         sec("Audio call", "an entity or service that starts the call, or a link like sip:101@pbx or tel:+974…", act("audio", "")) +
         sec("Video call (optional)", "extra action when Video call is tapped; the big camera always opens", act("video", "")) +
         `<datalist id="ic-ents">${Object.keys(this._h.states).sort().map((i) => `<option value="${E(i)}">`).join("")}</datalist>`;
