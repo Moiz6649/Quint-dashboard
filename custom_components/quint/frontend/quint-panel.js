@@ -105,7 +105,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.69.0";
+const VER = "1.70.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -1352,7 +1352,7 @@ class QuintDashboard extends HTMLElement {
       else { const cur = new Set(Array.isArray(c.devTypes) ? c.devTypes : []); cur.has(v) ? cur.delete(v) : cur.add(v); c.devTypes = [...cur]; }
       this._last = null;
     }
-    else if (a === "hmx") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.hmx = c.hmx || {}); if (k === "on") o.on = x === "1"; else if (k === "mode") { o.on = x !== "flow"; if (x !== "flow") o.style = x; } else if (k === "cols") o.cols = +x; else if (k === "size" && ["s", "m", "l"].includes(x)) o.size = x; this._last = null; }
+    else if (a === "hmx") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.hmx = c.hmx || {}); if (k === "on") o.on = x === "1"; else if (k === "mode") { o.on = true; if (x === "dash" || x === "tiles") o.style = x; } else if (k === "cols") o.cols = +x; else if (k === "size" && ["s", "m", "l"].includes(x)) o.size = x; this._last = null; }
     else if (a === "tsz") { if (TSIZES[v]) { c.tsz = v; delete c.tszd; } }
     else if (a === "tszd0") { delete c.tszd; delete c.tsz; }
     else if (a === "scr") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.scr = c.scr || {}); if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (["idle"].includes(k)) o.idle = x; else o[k] = +x; this._wkT = 0; this._ambHide(); }
@@ -2862,7 +2862,7 @@ class QuintDashboard extends HTMLElement {
       <div class="btns" style="margin-top:16px"><button class="pri" data-pers="close">Done</button></div></div></div>`;
   }
   /* ---------- matrix home: all tiles the same size on a grid ---------- */
-  _hmx() { const o = this._c.hmx || {}; return { on: o.on !== false, style: o.style === "tiles" ? "tiles" : o.style === "dash" ? "dash" : "cards", cols: [2, 3, 4, 5, 6].includes(+o.cols) ? +o.cols : 0, size: ["s", "m", "l"].includes(o.size) ? o.size : "m" }; }
+  _hmx() { const o = this._c.hmx || {}; return { on: true, style: o.style === "tiles" ? "tiles" : "dash", cols: [2, 3, 4, 5, 6].includes(+o.cols) ? +o.cols : 0, size: ["s", "m", "l"].includes(o.size) ? o.size : "m" }; }
   /* what a service shows on its cell: a big value, a caption and whether it is active */
   _mxInfo(k) {
     const H = this._h.states, st = (i) => H[i].state, E = (t) => this._esc(t), S = SV[k] || { n: k, c: "#8d9ab8", i: "" };
@@ -4306,9 +4306,9 @@ class QuintDashboard extends HTMLElement {
       body = sec("Home screen", "what the home page shows",
         row("Clock", "the clock tile on the home page", tg(!c.noClock, 'data-s="flag|noClock"')) +
         row("Clock style", "digital numbers or an analog face, for the home clock and the clock saver", `<div class="seg sm">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${(c.cks === "analog" ? "analog" : "digital") === k ? "on" : ""}" data-s="cks|${k}">${n}</button>`).join("")}</div>`) +
-        row("Tile layout", "Dashboard: one tile for each device, small tiles with a switch, a brightness bar for lights, a position bar for shades and a round gauge for climate. Matrix cards: every card is the same size on a grid and keeps its controls. Compact tiles: a small tile with the state and one quick button. Flow: each card takes the height it needs", `<div class="seg sm">${[["dash", "Dashboard"], ["cards", "Matrix cards"], ["tiles", "Compact tiles"], ["flow", "Flow"]].map(([k, n]) => `<button class="${(this._hmx().on ? this._hmx().style : "flow") === k ? "on" : ""}" data-s="hmx|mode|${k}">${n}</button>`).join("")}</div>`) +
-        (this._hmx().on ? row("Matrix columns", "how many tiles sit side by side. Auto fits the screen", `<div class="seg sm">${[[0, "Auto"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"]].map(([k, n]) => `<button class="${this._hmx().cols === k ? "on" : ""}" data-s="hmx|cols|${k}">${n}</button>`).join("")}</div>`) +
-        row("Matrix tile size", "the size of every tile", `<div class="seg sm">${[["s", "Small"], ["m", "Medium"], ["l", "Large"]].map(([k, n]) => `<button class="${this._hmx().size === k ? "on" : ""}" data-s="hmx|size|${k}">${n}</button>`).join("")}</div>`) : "") +
+        row("Tile layout", "Dashboard: one tile for each device, small tiles with a switch, a brightness bar for lights, a position bar for shades and a round gauge for climate. Compact tiles: one small tile for each service with its state and one quick button", `<div class="seg sm">${[["dash", "Dashboard"], ["tiles", "Compact tiles"]].map(([k, n]) => `<button class="${this._hmx().style === k ? "on" : ""}" data-s="hmx|mode|${k}">${n}</button>`).join("")}</div>`) +
+        (this._hmx().on ? row("Tile columns", "how many tiles sit side by side. Auto fits the screen", `<div class="seg sm">${[[0, "Auto"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"]].map(([k, n]) => `<button class="${this._hmx().cols === k ? "on" : ""}" data-s="hmx|cols|${k}">${n}</button>`).join("")}</div>`) +
+        row("Tile size", "the size of every tile", `<div class="seg sm">${[["s", "Small"], ["m", "Medium"], ["l", "Large"]].map(([k, n]) => `<button class="${this._hmx().size === k ? "on" : ""}" data-s="hmx|size|${k}">${n}</button>`).join("")}</div>`) : "") +
         row("Home page layout", "everyone can drag every item (clock, weather, greeting, scenes, tiles, cards) to any place: hold for 2 seconds. What you arrange here is the layout everyone starts with", '<button class="sbtn" data-s="hbreset|">Reset the shared layout</button>') +
         row("Weather line", "temperature, condition and sunset", tg(!c.noWeather, 'data-s="flag|noWeather"')) +
         row("Scenes", "the scene buttons", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
