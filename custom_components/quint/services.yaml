@@ -1,0 +1,26 @@
+thermostat_set:
+  name: Set a thermostat function
+  description: Sets one function of a thermostat through the entity chosen for it in Quint Settings (or the thermostat itself).
+  fields:
+    entity_id:
+      name: Thermostat
+      description: The thermostat (climate entity).
+      required: true
+      example: climate.living_room
+      selector:
+        entity:
+          domain: climate
+    function:
+      name: Function
+      description: target, shift, low, high, comfort, standby, eco, frost, hum_target, mode, preset, fan, swing, power, lock, ecosw or boost.
+      required: true
+      example: preset
+      selector:
+        select:
+          options: [target, shift, low, high, comfort, standby, eco, frost, hum_target, mode, preset, fan, swing, power, lock, ecosw, boost]
+    value:
+      name: Value
+      description: A number, an option name, or on / off.
+      example: comfort
+      selector:
+        text:

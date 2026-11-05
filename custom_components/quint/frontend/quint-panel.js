@@ -105,7 +105,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.74.0";
+const VER = "1.75.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -264,6 +264,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .ths{display:flex;flex-direction:column;gap:4px}.ths small{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px}.ths>div{display:flex;align-items:center;gap:10px}.ths b{font-size:22px;font-weight:600;min-width:64px;text-align:center}
 .ths button{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:var(--tx);font:inherit;font-size:20px;line-height:1;cursor:pointer;padding:0}.ths button:active{transform:scale(.93)}
 .thf{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.thx{font-size:11px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--mu)}.thx.w{background:rgba(255,138,61,.2);color:#ffb27a}
+.thsp{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 10px}.thsp .ths{flex:1 1 130px}.thx.tb{border:0;font:inherit;font-size:11px;cursor:pointer;color:var(--tx)}.thx.tb.on{background:var(--ac,#e8c98f);color:#1a1408}
 .the{display:flex;flex-wrap:nowrap;gap:8px;align-items:center}.the input{width:230px;min-width:0}.the em{font-style:normal;font-size:11px;color:var(--mu)}.the em.bad{color:#ff8a8a}
 .thg{display:flex;flex-direction:column;gap:6px}.thg>small{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px}
 .thr{display:flex;flex-wrap:wrap;gap:6px}.thr button{padding:7px 12px;border-radius:999px;border:1px solid var(--bd);background:rgba(255,255,255,.07);color:var(--tx);font:inherit;font-size:13px;cursor:pointer}.thr button.on{background:var(--dc);color:#10131c;border-color:transparent;font-weight:600}
@@ -1371,6 +1372,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "thermo") { const cur = this._thOpts(); if (cur[v] !== undefined && typeof cur[v] === "boolean") c.thermo = { ...(c.thermo || {}), [v]: !cur[v] }; this._last = null; }
     else if (a === "thclr") { const m = { ...(this._thOpts().map || {}) }; delete m[v]; c.thermo = { ...(c.thermo || {}), map: m }; this._last = null; }
     else if (a === "thscan") { this._thScan(v); return; }
+    else if (a === "thscanall") { this._thScan(""); return; }
     else if (a === "thstep") { c.thermo = { ...(c.thermo || {}), step: +v || 0 }; this._last = null; }
     else if (a === "thdec") { c.thermo = { ...(c.thermo || {}), dec: +v === 0 ? 0 : 1 }; this._last = null; }
     else if (a === "devlook") { if (["tile", "card", "mini"].includes(v)) c.devLook = v; this._last = null; }
@@ -1679,17 +1681,29 @@ class QuintDashboard extends HTMLElement {
   /* ---------- the full thermostat card (also for KNX): every function the climate device offers ---------- */
   _thOpts() { const o = this._c.thermo || {}, b = (k) => o[k] !== false; return { on: b("on"), modes: b("modes"), presets: b("presets"), fan: b("fan"), swing: b("swing"), hum: b("hum"), power: b("power"), range: b("range"), step: [0.1, 0.5, 1].includes(+o.step) ? +o.step : 0, dec: +o.dec === 0 ? 0 : 1, names: o.names && typeof o.names === "object" ? o.names : {}, map: o.map && typeof o.map === "object" ? o.map : {} }; }
   /* the entity the person chose for one thermostat function (temp, hum, target, mode, preset, fan, swing, power, window, valve, shift, action); "" when none or gone */
-  _thFns() { return [["temp", "Current temperature", "sensor", "a sensor that measures the room, instead of the one of the thermostat"], ["hum", "Humidity", "sensor", "a humidity sensor of the room"], ["target", "Target temperature", "number", "a number that holds the wanted temperature (setpoint), for example from KNX"], ["shift", "Setpoint shift", "number", "a number that moves the wanted temperature up or down; shown as + / − under the target"], ["mode", "Mode (heat, cool, auto, off)", "select", "a selector with the operating modes"], ["preset", "Preset / operation mode", "select", "a selector with Comfort, Standby, Economy, Night and so on"], ["fan", "Fan speed", "select", "a selector with the fan steps"], ["swing", "Swing", "select", "a selector with the swing / louver positions"], ["power", "On / off", "switch", "a switch that turns the thermostat on and off"], ["window", "Window contact", "binary", "shows Window open on the card"], ["valve", "Valve / heating output", "sensor", "shows the opening of the valve in percent"], ["action", "What it does now", "sensor", "a text sensor like Heating, Cooling or Idle"]]; }
+  _thFns() { return [
+    ["temp", "Current temperature", "sensor", "a sensor that measures the room, instead of the one of the thermostat", 0], ["hum", "Humidity", "sensor", "a humidity sensor of the room", 0],
+    ["target", "Target temperature", "number", "a number that holds the wanted temperature (setpoint), for example from KNX", 0], ["shift", "Setpoint shift", "number", "a number that moves the wanted temperature up or down; shown as + / − under the target", 0],
+    ["low", "Heat to", "number", "the lower target of Heat / Cool mode", 0], ["high", "Cool to", "number", "the upper target of Heat / Cool mode", 0],
+    ["mode", "Mode (heat, cool, auto, off)", "select", "a selector with the operating modes", 0], ["preset", "Preset / operation mode", "select", "a selector with Comfort, Standby, Economy, Night and so on", 0],
+    ["fan", "Fan speed", "select", "a selector with the fan steps", 0], ["swing", "Swing", "select", "a selector with the swing / louver positions", 0],
+    ["power", "On / off", "switch", "a switch that turns the thermostat on and off", 0], ["action", "What it does now", "sensor", "a text sensor like Heating, Cooling or Idle", 0],
+    ["comfort", "Comfort temperature", "number", "the temperature of the Comfort operation mode, with + / − on the card", 1], ["standby", "Standby temperature", "number", "the temperature of the Standby (away) mode", 1], ["eco", "Economy / night temperature", "number", "the temperature of the Economy or Night mode", 1], ["frost", "Frost protection temperature", "number", "the temperature of the frost / building protection mode", 1], ["hum_target", "Target humidity", "number", "the wanted humidity, with + / − on the card", 1],
+    ["window", "Window contact", "binary", "shows Window open on the card", 2], ["valve", "Valve / heating output", "sensor", "shows the opening of the valve in percent", 2], ["outdoor", "Outdoor temperature", "sensor", "shows the temperature outside", 2], ["floor", "Floor temperature", "sensor", "shows the temperature of the floor (underfloor heating)", 2], ["presence", "Presence", "binary", "shows Occupied or Empty", 2], ["energy", "Power or energy", "sensor", "shows what the heating uses", 2],
+    ["lock", "Child lock", "act", "a switch or lock; a button on the card turns the child lock on and off", 2], ["ecosw", "Eco mode switch", "act", "a switch; a button on the card turns eco mode on and off", 2], ["boost", "Boost", "act", "a button or switch; a Boost button on the card", 2]]; }
+  _thGroups() { return [["Entity for each function", "optional: choose another Home Assistant entity for a function, for example the separate KNX group addresses. Empty uses the thermostat itself"], ["Preset temperatures", "the temperatures of the operation modes and the wanted humidity, changed with + / − on the card"], ["More information and switches", "small extra chips and buttons on the card"]]; }
   _thEnt(id, fn) { const e = ((this._thOpts().map || {})[id] || {})[fn]; return e && this._h.states[e] ? e : ""; }
   /* the Quint backend looks at the entities of the same device and suggests what serves which function; only empty slots are filled */
   async _thScan(id) {
-    this._toast("Looking for the entities of this thermostat…");
+    this._toast("Looking for the entities of the thermostat" + (id ? "" : "s") + "…");
     try {
-      const r = await this._h.callApi("GET", "quint/thermo?climate=" + encodeURIComponent(id)), f = (r && r[id] && r[id].entities) || {}, m = { ...(this._thOpts().map || {}) }, cur = { ...(m[id] || {}) };
-      let n = 0; Object.keys(f).forEach((k) => { if (!cur[k] && this._h.states[f[k]]) { cur[k] = f[k]; n++; } });
-      if (Object.keys(cur).length) m[id] = cur;
+      const r = (await this._h.callApi("GET", "quint/thermo" + (id ? "?climate=" + encodeURIComponent(id) : ""))) || {}, m = { ...(this._thOpts().map || {}) };
+      let n = 0;
+      Object.keys(r).forEach((cid) => { const f = (r[cid] && r[cid].entities) || {}, cur = { ...(m[cid] || {}) };
+        Object.keys(f).forEach((k) => { if (!cur[k] && this._h.states[f[k]]) { cur[k] = f[k]; n++; } });
+        if (Object.keys(cur).length) m[cid] = cur; });
       this._c.thermo = { ...(this._c.thermo || {}), map: m }; if (n) this._save();
-      this._toast(n ? n + " function" + (n === 1 ? "" : "s") + " found and set" : "Nothing new found for this thermostat");
+      this._toast(n ? n + " function" + (n === 1 ? "" : "s") + " found and set" : "Nothing new found");
     } catch (e) { this._toast("Could not search: " + this._err(e, "error")); }
     this._last = null; this._draw(true);
   }
@@ -1704,10 +1718,11 @@ class QuintDashboard extends HTMLElement {
   _thermo(id) {
     const s = this._h.states[id], a = s.attributes, st = s.state, o = this._thOpts(), E = (t) => this._esc(t), gone = ["unavailable", "unknown"].includes(st);
     const M = (fn) => this._thEnt(id, fn), H = this._h.states, num = (e) => { const v = e ? parseFloat(H[e].state) : NaN; return Number.isFinite(v) ? v : null; };
-    const eT = M("temp"), eG = M("target"), eH = M("hum"), eP = M("power"), eS = M("shift"), eA = M("action"), eW = M("window"), eV = M("valve");
+    const sn2 = (e, x) => `data-act="${e.split(".")[0]}.set_value" data-e="${E(e)}" data-x='${JSON.stringify({ value: x })}'`;
+    const eT = M("temp"), eG = M("target"), eH = M("hum"), eP = M("power"), eS = M("shift"), eA = M("action"), eW = M("window"), eV = M("valve"), eL = M("low"), eU = M("high");
     const off = eP ? H[eP].state === "off" : st === "off", ga = eG ? H[eG].attributes : {};
     const step = eG ? +ga.step || 0.5 : this._thStep(a), mn = eG && ga.min != null ? +ga.min : a.min_temp != null ? +a.min_temp : 7, mx = eG && ga.max != null ? +ga.max : a.max_temp != null ? +a.max_temp : 35;
-    const cur = num(eT) != null ? num(eT) : a.current_temperature, tg = num(eG) != null ? num(eG) : a.temperature, lo = a.target_temp_low, hi = a.target_temp_high, hum = num(eH) != null ? num(eH) : a.current_humidity;
+    const cur = num(eT) != null ? num(eT) : a.current_temperature, tg = num(eG) != null ? num(eG) : a.temperature, lo = num(eL) != null ? num(eL) : a.target_temp_low, hi = num(eU) != null ? num(eU) : a.target_temp_high, hum = num(eH) != null ? num(eH) : a.current_humidity;
     const act = eA ? H[eA].state : a.hvac_action, col = gone || off ? "#8d9ab8" : act === "heating" ? "#ff8a3d" : act === "cooling" ? "#4da3ff" : "#e8c98f";
     const lab = gone ? "Offline" : off ? "Off" : act === "heating" ? "Heating" : act === "cooling" ? "Cooling" : act === "drying" ? "Drying" : act === "fan" ? "Fan" : act === "idle" ? "Idle" : eA ? this._thName(act) : this._thName(st);
     const R = 46, C = 2 * Math.PI * R, arc = C * 0.75, fr = (v) => (v != null && mx > mn ? Math.max(0, Math.min(1, (v - mn) / (mx - mn))) : 0), shownT = tg != null ? tg : hi != null ? hi : null;
@@ -1716,7 +1731,8 @@ class QuintDashboard extends HTMLElement {
     const stp = (label, v, mk) => `<div class="ths"><small>${E(label)}</small><div><button ${mk(clamp(v - step))}>−</button><b>${this._thF(v)}°</b><button ${mk(clamp(+v + step))}>+</button></div></div>`;
     let ctl = "";
     if (!off && !gone) {
-      if (o.range && lo != null && hi != null) ctl = stp("Heat to", lo, (x) => sv({ target_temp_low: x, target_temp_high: hi })) + stp("Cool to", hi, (x) => sv({ target_temp_low: lo, target_temp_high: x }));
+      const sn = (e, x) => `data-act="${e.split(".")[0]}.set_value" data-e="${E(e)}" data-x='${JSON.stringify({ value: x })}'`;
+      if (o.range && lo != null && hi != null) ctl = stp("Heat to", lo, (x) => (eL ? sn(eL, x) : sv({ target_temp_low: x, target_temp_high: hi }))) + stp("Cool to", hi, (x) => (eU ? sn(eU, x) : sv({ target_temp_low: lo, target_temp_high: x })));
       else if (tg != null) ctl = stp("Target", tg, (x) => sv({ temperature: x }));
       if (eS && num(eS) != null) { const sa = H[eS].attributes, ss = +sa.step || 0.5, smn = sa.min != null ? +sa.min : -10, smx = sa.max != null ? +sa.max : 10, sc = (v) => Math.round(Math.max(smn, Math.min(smx, v)) * 100) / 100, sd = (x) => `data-act="${eS.split(".")[0]}.set_value" data-e="${E(eS)}" data-x='${JSON.stringify({ value: x })}'`, v = num(eS);
         ctl += `<div class="ths"><small>Shift</small><div><button ${sd(sc(v - ss))}>−</button><b>${(v > 0 ? "+" : "") + this._thF(v)}°</b><button ${sd(sc(v + ss))}>+</button></div></div>`; }
@@ -1730,8 +1746,13 @@ class QuintDashboard extends HTMLElement {
     const pre = o.presets ? pick("preset", "Preset", a.preset_modes, a.preset_mode, "set_preset_mode", "preset_mode") : "";
     const fan = o.fan ? pick("fan", "Fan", a.fan_modes, a.fan_mode, "set_fan_mode", "fan_mode") : "";
     const swg = o.swing ? pick("swing", "Swing", a.swing_modes, a.swing_mode, "set_swing_mode", "swing_mode") : "";
-    const xs = [eW && H[eW].state === "on" ? '<span class="thx w">Window open</span>' : "", eV && num(eV) != null ? `<span class="thx">Valve ${E(this._fmt(num(eV)))}${E(H[eV].attributes.unit_of_measurement || "%")}</span>` : ""].filter(Boolean).join(""), thf = xs ? `<div class="thf">${xs}</div>` : "";
-    return `<div class="card thm ${off || gone ? "" : "on"}" data-id="th:${E(id)}" style="--dc:${col}"><div class="thh"><div class="thn"><b>${E(this._nm(id))}</b><small>${E(lab)}${a.preset_mode && a.preset_mode !== "none" ? " · " + E(this._thName(a.preset_mode)) : ""}</small></div>${pw}</div><div class="thb">${dial}<div class="thy">${ctl}</div></div>${thf}${modes}${pre}${fan}${swg}</div>`;
+    const un = (e) => E(H[e].attributes.unit_of_measurement || ""), eO = M("outdoor"), eF = M("floor"), eR = M("presence"), eE = M("energy");
+    const tg1 = (fn, label) => { const e = M(fn); if (!e) return ""; const dm = e.split(".")[0], on = ["on", "locked"].includes(H[e].state), svc = dm === "button" || dm === "input_button" ? "press" : dm === "lock" ? (on ? "unlock" : "lock") : "toggle"; return `<button class="thx tb ${on && svc !== "press" ? "on" : ""}" data-act="${dm}.${svc}" data-e="${E(e)}">${E(label)}</button>`; };
+    const xs = [eW && H[eW].state === "on" ? '<span class="thx w">Window open</span>' : "", eV && num(eV) != null ? `<span class="thx">Valve ${E(this._fmt(num(eV)))}${un(eV) || "%"}</span>` : "", eO && num(eO) != null ? `<span class="thx">Outside ${this._thF(num(eO))}${un(eO) || "°"}</span>` : "", eF && num(eF) != null ? `<span class="thx">Floor ${this._thF(num(eF))}${un(eF) || "°"}</span>` : "", eR ? `<span class="thx">${H[eR].state === "on" ? "Occupied" : "Empty"}</span>` : "", eE && num(eE) != null ? `<span class="thx">${E(this._fmt(num(eE)))} ${un(eE)}</span>` : "", tg1("lock", "Child lock"), tg1("ecosw", "Eco"), tg1("boost", "Boost")].filter(Boolean).join(""), thf = xs ? `<div class="thf">${xs}</div>` : "";
+    /* preset temperatures and the wanted humidity: one small stepper each, only for the entities chosen in Settings */
+    const spn = [["comfort", "Comfort", "comfort"], ["standby", "Standby", "away"], ["eco", "Economy", "eco"], ["frost", "Frost protection", ""], ["hum_target", "Humidity", ""]].map(([fn, lb, nk]) => { const e = M(fn), v = num(e); if (!e || v == null) return ""; const at = H[e].attributes, ss = +at.step || (fn === "hum_target" ? 5 : 0.5), lo2 = at.min != null ? +at.min : fn === "hum_target" ? 0 : 5, hi2 = at.max != null ? +at.max : fn === "hum_target" ? 100 : 35, cl = (x) => Math.round(Math.max(lo2, Math.min(hi2, x)) * 100) / 100, sd = (x) => sn2(e, cl(x)), u = fn === "hum_target" ? "%" : "°", nm2 = (nk && o.names[nk]) || lb;
+      return `<div class="ths"><small>${E(nm2)}</small><div><button ${sd(v - ss)}>−</button><b>${fn === "hum_target" ? Math.round(v) : this._thF(v)}${u}</b><button ${sd(v + ss)}>+</button></div></div>`; }).join(""), thsp = spn ? `<div class="thsp">${spn}</div>` : "";
+    return `<div class="card thm ${off || gone ? "" : "on"}" data-id="th:${E(id)}" style="--dc:${col}"><div class="thh"><div class="thn"><b>${E(this._nm(id))}</b><small>${E(lab)}${a.preset_mode && a.preset_mode !== "none" ? " · " + E(this._thName(a.preset_mode)) : ""}</small></div>${pw}</div><div class="thb">${dial}<div class="thy">${ctl}</div></div>${thf}${thsp}${modes}${pre}${fan}${swg}</div>`;
   }
   _devCard(id) {
     if (this._svcOf(id)) return this._card(id);
@@ -4413,13 +4434,14 @@ class QuintDashboard extends HTMLElement {
         sec("Temperature", "how the numbers behave",
           row("Step", "how much one tap on − or + changes the target. Thermostat: its own step", seg([[0, "Thermostat"], [0.1, "0.1°"], [0.5, "0.5°"], [1, "1°"]], o.step, "thstep")) +
           row("Show", "temperatures with a decimal or in whole degrees", seg([[1, "21.5°"], [0, "22°"]], o.dec, "thdec"))) +
-        (first ? sec("Entity for each function", "optional: choose another Home Assistant entity for a function, for example the separate KNX group addresses. Empty uses the thermostat itself",
-          (T.length > 1 ? `<div class="seg sm" style="flex-wrap:wrap;margin:0 0 10px">${T.slice(0, 12).map((i) => `<button class="${i === first ? "on" : ""}" data-pick="thsel|${E(i)}">${E(this._nm(i))}</button>`).join("")}</div>` : "") +
-          `<div class="btns" style="margin:2px 0 8px"><button data-s="thscan|${E(first)}">Find automatically</button><button data-s="thclr|${E(first)}">Clear all</button></div>` +
-          this._thFns().map(([fn, nme, kind, hint]) => { const cur = ((o.map || {})[first] || {})[fn] || "", ok = !cur || this._h.states[cur], dl = kind === "binary" ? "binary_sensor" : kind === "number" ? "num" : kind === "select" ? "sel" : kind === "switch" ? "swi" : "sensor";
-            return row(nme, hint, `<div class="the"><input type="text" data-the="${fn}" data-tid="${E(first)}" list="thd-${dl}" value="${E(cur)}" placeholder="${E(kind === "binary" ? "binary_sensor." : kind === "number" ? "number." : kind === "select" ? "select." : kind === "switch" ? "switch." : "sensor.")}" autocomplete="off">${cur ? `<em class="${ok ? "" : "bad"}">${ok ? E(String(this._h.states[cur].state).slice(0, 18)) : "not found"}</em>` : ""}</div>`); }).join("") +
-          (() => { const doms = { sensor: ["sensor"], binary_sensor: ["binary_sensor"], num: ["number", "input_number"], sel: ["select", "input_select"], swi: ["switch", "input_boolean"] }, base = first.split(".")[1] || "";
-            return Object.keys(doms).map((k) => `<datalist id="thd-${k}">${Object.keys(this._h.states).filter((i) => doms[k].includes(i.split(".")[0])).sort((x, y) => (y.includes(base) ? 1 : 0) - (x.includes(base) ? 1 : 0) || (x < y ? -1 : 1)).slice(0, 400).map((i) => `<option value="${E(i)}">`).join("")}</datalist>`).join(""); })()) : "") +
+        (first ? (T.length > 1 ? sec("Thermostat", T.length + " thermostats", `<div class="seg sm" style="flex-wrap:wrap;margin:0 0 10px">${T.slice(0, 12).map((i) => `<button class="${i === first ? "on" : ""}" data-pick="thsel|${E(i)}">${E(this._nm(i))}</button>`).join("")}</div>`) : "") +
+          (() => { const KD = { sensor: "sensor", binary: "binary_sensor", number: "num", select: "sel", switch: "swi", act: "act" }, PH = { sensor: "sensor.", binary: "binary_sensor.", number: "number.", select: "select.", switch: "switch.", act: "switch. / lock. / button." };
+            const one = ([fn, nme, kind, hint]) => { const cur = ((o.map || {})[first] || {})[fn] || "", ok = !cur || this._h.states[cur];
+              return row(nme, hint, `<div class="the"><input type="text" data-the="${fn}" data-tid="${E(first)}" list="thd-${KD[kind]}" value="${E(cur)}" placeholder="${E(PH[kind])}" autocomplete="off">${cur ? `<em class="${ok ? "" : "bad"}">${ok ? E(String(this._h.states[cur].state).slice(0, 18)) : "not found"}</em>` : ""}</div>`); };
+            const doms = { sensor: ["sensor"], binary_sensor: ["binary_sensor"], num: ["number", "input_number"], sel: ["select", "input_select"], swi: ["switch", "input_boolean"], act: ["switch", "input_boolean", "lock", "button", "input_button"] }, base = first.split(".")[1] || "";
+            const dls = Object.keys(doms).map((k) => `<datalist id="thd-${k}">${Object.keys(this._h.states).filter((i) => doms[k].includes(i.split(".")[0])).sort((x, y) => (y.includes(base) ? 1 : 0) - (x.includes(base) ? 1 : 0) || (x < y ? -1 : 1)).slice(0, 400).map((i) => `<option value="${E(i)}">`).join("")}</datalist>`).join("");
+            const done = Object.keys((o.map || {})[first] || {}).length;
+            return this._thGroups().map(([tt, sub], gi) => sec(tt, gi ? sub : done + " chosen · " + sub, (gi ? "" : `<div class="btns" style="margin:2px 0 8px"><button data-s="thscan|${E(first)}">Find automatically</button>${T.length > 1 ? '<button data-s="thscanall|">Find for all thermostats</button>' : ""}<button data-s="thclr|${E(first)}">Clear all</button></div>`) + this._thFns().filter((f) => f[4] === gi).map(one).join(""))).join("") + dls; })() : "") +
         sec("Preset names", "rename the modes, for example for your KNX system. Empty keeps the standard name",
           nm("comfort", "Comfort") + nm("eco", "Economy") + nm("away", "Standby") + nm("sleep", "Night") + nm("home", "Home") + nm("boost", "Boost")) +
         sec("Preview", first ? E(this._nm(first)) : "", first ? `<div style="padding:4px 2px 8px;max-width:520px">${this._thermo(first)}</div>` : '<div class="lbl" style="padding:6px 4px 12px">No thermostat found in Home Assistant yet.</div>');
