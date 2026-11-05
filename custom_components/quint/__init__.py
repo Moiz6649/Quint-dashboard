@@ -13,6 +13,7 @@ from .const import DOMAIN, PANEL_PATH, STATIC_URL, VERSION
 from .neon import async_setup_neon, async_unload_neon
 from .updater import QuintUpdater, read_disk_version
 from .push import QuintPush
+from .knx import FUNCS as KNX_FUNCS, QuintKnx, clean_kt, is_ga
 from .util import clean_perms, clean_thermo_cond, clean_thermo_map, guess_thermo, is_newer, thermo_call, thermo_cond_ok, valid_image, valid_new_user
 
 
@@ -47,7 +48,12 @@ class QuintConfigView(HomeAssistantView):
         if isinstance(data.get("thermo"), dict):
             data["thermo"]["map"] = clean_thermo_map(data["thermo"].get("map"))
             data["thermo"]["cond"] = clean_thermo_cond(data["thermo"].get("cond"))
+        if "kt" in data:
+            data["kt"] = clean_kt(data["kt"])
         await self._store.async_save(data)
+        knx = (self._hass.data.get(DOMAIN, {}) if self._hass else {}).get("knx")
+        if knx is not None:
+            self._hass.async_create_task(knx.async_sync(data))
         push = (self._hass.data.get(DOMAIN, {}) if self._hass else {}).get("push")
         if push is not None:
             await push.async_refresh()
@@ -251,6 +257,40 @@ class QuintThermoView(HomeAssistantView):
             return self.json_message(str(err), 400)
 
 
+class QuintKnxView(HomeAssistantView):
+    """Own thermostats from KNX group addresses.
+    GET  /api/quint/knx   the latest value of every followed group address
+    POST /api/quint/knx   {thermostat, function, value}: writes the group address chosen for that function"""
+
+    url = "/api/quint/knx"
+    name = "api:quint:knx"
+    requires_auth = True
+
+    def __init__(self, knx: QuintKnx, store: Store) -> None:
+        self._knx = knx
+        self._store = store
+
+    async def get(self, request):
+        return self.json({"knx": self._knx.available, "values": self._knx.cache})
+
+    async def post(self, request):
+        from homeassistant.exceptions import HomeAssistantError
+
+        body = await request.json()
+        if not isinstance(body, dict):
+            return self.json_message("Bad request", 400)
+        cfg = await self._store.async_load() or {}
+        t = next((x for x in cfg.get("kt") or [] if x.get("id") == body.get("thermostat")), None)
+        fn = str(body.get("function", ""))
+        sl = ((t or {}).get("s") or {}).get(fn)
+        if not sl or fn not in KNX_FUNCS or not KNX_FUNCS[fn][1] or not is_ga(sl.get("w")):
+            return self.json_message("No group address to write for this function", 400)
+        try:
+            return self.json(await self._knx.async_send(sl["w"], sl.get("t", KNX_FUNCS[fn][0]), body.get("value")))
+        except HomeAssistantError as err:
+            return self.json_message(str(err), 400)
+
+
 class QuintVersionView(HomeAssistantView):
     """Running / installed version (the browser reloads itself when it is out of date)."""
 
@@ -432,6 +472,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.http.register_view(QuintConfigView(store, hass))
         hass.http.register_view(QuintPushView(hass))
         hass.http.register_view(QuintThermoView(hass, store))
+        knx = QuintKnx(hass, store)
+        data["knx"] = knx
+        hass.http.register_view(QuintKnxView(knx, store))
         _register_services(hass, store)
         data["push"] = QuintPush(hass, store)
         updater = QuintUpdater(hass, store)
@@ -447,6 +490,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data["static"] = True
     data["updater"].start()
     await data["push"].async_start()
+    await data["knx"].async_start()
     title = entry.data.get("title", "Quint")
     neon = await async_setup_neon(hass, entry)
     js = Path(__file__).parent / "frontend" / "quint-panel.js"
@@ -476,6 +520,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     push = hass.data.get(DOMAIN, {}).get("push")
     if push:
         push.stop()
+    knx = hass.data.get(DOMAIN, {}).get("knx")
+    if knx:
+        knx.stop()
     guard = hass.data.get(DOMAIN, {}).pop("guard", None)
     if guard:
         frontend.remove_extra_js_url(hass, guard)

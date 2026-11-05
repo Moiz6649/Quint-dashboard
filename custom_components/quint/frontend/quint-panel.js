@@ -105,7 +105,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.76.0";
+const VER = "1.77.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -258,6 +258,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .thh{display:flex;align-items:center;gap:10px}.thn{display:flex;flex-direction:column;flex:1;min-width:0}.thn b{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.thn small{font-size:12px;color:var(--dc)}
 .thh{gap:8px}.thp.the2{background:transparent;opacity:.55;margin-left:auto}.thp.the2:hover{opacity:1}.thh .thn{margin-right:0}.thp.the2+.thp{margin-left:0}
 .cdl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.cdl small{font-size:11px;color:var(--mu)}.cdl input,.cdl select{width:auto;min-width:0}.cdl .cde{width:150px}.cdl .cdv{width:80px}
+.ktg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin:6px 0 14px}.kte{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.kte input{width:132px!important;min-width:0;flex:none}.kte select{width:auto!important;max-width:170px;flex:none}.kte input.kn{width:72px!important}.kte em{font-style:normal;font-size:11px;color:var(--mu)}
 .thp{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:var(--tx);display:grid;place-items:center;padding:0;cursor:pointer;flex:none}.thp svg{width:18px;height:18px}.thp.on{background:var(--dc);color:#10131c}
 .thb{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .thd{position:relative;width:132px;height:132px;flex:none}.thd svg{width:100%;height:100%}.thd circle{fill:none;stroke-width:9;stroke-linecap:round}.thd .dvl{stroke:var(--dc)}.thd .dtg{stroke:#fff;stroke-width:13;stroke-linecap:butt}
@@ -1204,7 +1205,7 @@ class QuintDashboard extends HTMLElement {
     this._lastAct = Date.now(); this._actf = () => this._act(); this._visf = () => { if (!document.hidden) this._wake(); };
     ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.addEventListener(ev, this._actf, { passive: true, capture: true }));
     document.addEventListener("visibilitychange", this._visf);
-    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); this._h3dBarTick(); this._fxSync(); this._h3dBackTick(); }, 1000);
+    this._iv6 = setInterval(() => { this._ambTick(); this._keepAwake(); this._ntfTick(); this._h3dBarTick(); this._fxSync(); this._h3dBackTick(); this._kxTick(); }, 1000);
     this._iv = setInterval(() => { const r = this.shadowRoot; this._tickClock(); const m = r.querySelector(".tm"); if (m) m.textContent = this._time(); }, 1000);
   }
   disconnectedCallback() { this._hOff(); clearInterval(this._iv4); clearInterval(this._iv); clearInterval(this._iv2); clearInterval(this._iv3); clearInterval(this._iv5); clearInterval(this._iv6); clearInterval(this._nsi); this._wakeOff(); if (this._amb) this._ambHide(); if (this._actf) ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) => window.removeEventListener(ev, this._actf, true)); if (this._visf) document.removeEventListener("visibilitychange", this._visf); window.removeEventListener("keydown", this._kd); if (this._ro) { this._ro.disconnect(); this._ro = null; } Object.values(this._tsub || {}).forEach((p) => p.then((u) => u()).catch(() => {})); this._tsub = {}; this._conn = null; }
@@ -1302,6 +1303,7 @@ class QuintDashboard extends HTMLElement {
     if (o.devCards && typeof o.devCards === "object") { const dc = {}; Object.keys(o.devCards).slice(0, 2000).forEach((k) => { const x = o.devCards[k]; if (x && typeof x === "object") dc[k] = { ...(typeof x.home === "boolean" ? { home: x.home } : {}), ...(typeof x.room === "boolean" ? { room: x.room } : {}), ...(["tile", "card", "mini"].includes(x.look) ? { look: x.look } : {}), ...(typeof x.name === "string" && x.name ? { name: x.name.slice(0, 40) } : {}) }; }); c.devCards = dc; }
     if (["room", "home", "both", "none"].includes(o.devNew)) c.devNew = o.devNew;
     if (o.thermo && typeof o.thermo === "object") c.thermo = o.thermo;
+    if (Array.isArray(o.kt)) c.kt = o.kt.filter((t) => t && /^[a-z0-9_]{1,24}$/.test(t.id || "")).slice(0, 20);
     if (["tile", "card", "mini"].includes(o.devLook)) c.devLook = o.devLook;
     if (["name", "room", "type"].includes(o.devSort)) c.devSort = o.devSort;
     if (o.devShow && typeof o.devShow === "object") c.devShow = { room: o.devShow.room !== false, sub: !!o.devShow.sub, ctl: o.devShow.ctl !== false };
@@ -1374,6 +1376,8 @@ class QuintDashboard extends HTMLElement {
     else if (a === "thermo") { const cur = this._thOpts(); if (cur[v] !== undefined && typeof cur[v] === "boolean") c.thermo = { ...(c.thermo || {}), [v]: !cur[v] }; this._last = null; }
     else if (a === "thclr") { const m = { ...(this._thOpts().map || {}) }, cm = { ...(this._thOpts().cond || {}) }; delete m[v]; delete cm[v]; c.thermo = { ...(c.thermo || {}), map: m, cond: cm }; this._last = null; }
     else if (a === "thscan") { this._thScan(v); return; }
+    else if (a === "ktadd") { const L = this._ktList(); if (L.length >= 20) return; let id; do id = "k" + Math.random().toString(36).slice(2, 8); while (L.some((t) => t.id === id)); c.kt = [...L, { id, name: "Thermostat " + (L.length + 1), room: "", s: {} }]; this._pick = { ...(this._pick || {}), ktsel: id }; this._kxt = 0; this._last = null; }
+    else if (a === "ktdel") { c.kt = this._ktList().filter((t) => t.id !== v); this._last = null; }
     else if (a === "thscanall") { this._thScan(""); return; }
     else if (a === "thstep") { c.thermo = { ...(c.thermo || {}), step: +v || 0 }; this._last = null; }
     else if (a === "thdec") { c.thermo = { ...(c.thermo || {}), dec: +v === 0 ? 0 : 1 }; this._last = null; }
@@ -1717,6 +1721,97 @@ class QuintDashboard extends HTMLElement {
     } catch (e) { this._toast("Could not search: " + this._err(e, "error")); }
     this._last = null; this._draw(true);
   }
+
+  /* ---------- own thermostats from KNX group addresses (like an ABB EAE room temperature controller) ---------- */
+  /* c.kt = [{id, name, room, min, max, step, s: {function: {w: write address or entity, r: status address or entity, t: type}}}] */
+  _KF() { return [
+    ["temp", "Room temperature", 0, 0, "the measured temperature (actual value)", "temp"], ["target", "Setpoint", 1, 0, "the wanted temperature", "temp"], ["shift", "Setpoint shift", 1, 0, "Verschiebung: moves the setpoint up or down, in steps", "s8"], ["onoff", "On / off", 1, 0, "1 bit: switches the thermostat on and off", "bool"], ["hc", "Heating / cooling", 1, 0, "1 bit: 1 = heating, 0 = cooling", "bool"], ["fan", "Fan speed", 1, 0, "1 byte: 0 = auto, then 1, 2, 3", "u8"],
+    ["opmode", "Operation mode", 1, 1, "one address for all modes (DPT 20.102): 1 comfort, 2 standby, 3 economy, 4 frost protection", "mode"], ["m_comfort", "Comfort", 1, 1, "1 bit: 1 switches Comfort on", "bool"], ["m_standby", "Standby", 1, 1, "1 bit: 1 switches Standby on", "bool"], ["m_eco", "Economy / night", 1, 1, "1 bit: 1 switches Economy on", "bool"], ["m_frost", "Frost protection", 1, 1, "1 bit: 1 switches Frost protection on", "bool"],
+    ["sp_comfort", "Comfort setpoint", 1, 2, "the temperature of the Comfort mode", "temp"], ["sp_standby", "Standby setpoint", 1, 2, "the temperature of the Standby mode", "temp"], ["sp_eco", "Economy setpoint", 1, 2, "the temperature of the Economy mode", "temp"], ["sp_frost", "Frost protection setpoint", 1, 2, "the temperature of the Frost protection", "temp"],
+    ["hum", "Humidity", 0, 3, "the room humidity", "humidity"], ["valve", "Valve / heating output", 0, 3, "percent", "percent"], ["window", "Window contact", 0, 3, "1 bit: 1 = window open", "bool"], ["presence", "Presence", 0, 3, "1 bit: 1 = somebody is in the room", "bool"], ["heat_st", "Heating active", 0, 3, "1 bit status", "bool"], ["cool_st", "Cooling active", 0, 3, "1 bit status", "bool"], ["outdoor", "Outdoor temperature", 0, 3, "", "temp"], ["floor", "Floor temperature", 0, 3, "", "temp"], ["lock", "Child lock", 1, 3, "1 bit: 1 locks the thermostat", "bool"], ["boost", "Boost", 1, 3, "1 bit: 1 starts boost", "bool"]]; }
+  _ktTypes() { return [["bool", "1 bit · DPT 1"], ["temp", "Temp · 9.001"], ["percent", "Percent · 5.001"], ["humidity", "Humidity · 9.007"], ["mode", "Mode · 20.102"], ["u8", "1 byte · 5.010"], ["s8", "Signed · 6.010"]]; }
+  _ktGA(x) { return /^(\d{1,2}\/\d{1,2}\/\d{1,3}|\d{1,2}\/\d{1,4})$/.test(String(x || "")); }
+  _ktList() { return Array.isArray(this._c.kt) ? this._c.kt.filter((t) => t && t.id) : []; }
+  _ktSel() { const L = this._ktList(), k = (this._pick || {}).ktsel; return L.find((t) => t.id === k) || L[0] || null; }
+  _ktLim(t) { const n = (v, d) => (Number.isFinite(+v) && v !== "" && v != null ? +v : d); return { mn: n(t.min, 5), mx: n(t.max, 35), st: n(t.step, 0.5) || 0.5 }; }
+  /* the value of a function: from the status address (or the write address), or from the entity; null when unknown */
+  _ktVal(t, fn) {
+    const sl = (t.s || {})[fn]; if (!sl) return null;
+    const src = sl.r || sl.w; if (!src) return null;
+    if (this._ktGA(src)) { const v = (this._kx || {})[src]; return v == null ? null : +v; }
+    const st = this._h.states[src]; if (!st || ["unavailable", "unknown"].includes(st.state)) return null;
+    if (sl.t === "bool") return ["on", "locked", "true", "open", "home", "heat", "heating"].includes(String(st.state).toLowerCase()) ? 1 : 0;
+    const v = parseFloat(st.state); return Number.isFinite(v) ? v : null;
+  }
+  /* what a button does: a KNX write (data-kx) or a Home Assistant service on the entity chosen for that function */
+  _ktAct(t, fn, v) {
+    const sl = (t.s || {})[fn]; if (!sl || !sl.w) return "";
+    const E = (x) => this._esc(x), w = sl.w;
+    if (this._ktGA(w)) return `data-kx="${E(t.id)}|${fn}|${E(String(v))}"`;
+    const dm = w.split(".")[0];
+    if (sl.t === "bool") { const on = +v ? 1 : 0, svc = dm === "button" || dm === "input_button" ? "press" : dm === "lock" ? (on ? "lock" : "unlock") : on ? "turn_on" : "turn_off"; return `data-act="${dm}.${svc}" data-e="${E(w)}"`; }
+    if (["select", "input_select"].includes(dm)) return `data-act="${dm}.select_option" data-e="${E(w)}" data-x='${JSON.stringify({ option: String(v) }).replace(/'/g, "&#39;")}'`;
+    return `data-act="${dm}.set_value" data-e="${E(w)}" data-x='${JSON.stringify({ value: +v })}'`;
+  }
+  async _kxSet(id, fn, v) {
+    const t = this._ktList().find((x) => x.id === id), sl = t && (t.s || {})[fn]; if (!sl) return;
+    const val = sl.t === "bool" ? (+v ? 1 : 0) : +v, src = sl.r || sl.w;
+    this._kxW = Date.now();
+    if (src === sl.w) { this._kx = { ...(this._kx || {}), [sl.w]: val }; this._last = null; this._draw(true); }
+    try { await this._h.callApi("POST", "quint/knx", { thermostat: id, function: fn, value: val }); } catch (e) { this._toast("KNX: " + this._err(e, "could not send")); this._kxPoll(true); }
+  }
+  async _kxPoll(force) {
+    if (!this._ktList().length || !this._h || !this._h.callApi) return;
+    if (this._kxBusy && !force) return; this._kxBusy = true;
+    const t0 = Date.now();
+    try {
+      const r = await this._h.callApi("GET", "quint/knx");
+      if (t0 < (this._kxW || 0)) return; /* a write happened while asking: this answer is older than the screen */
+      const vals = (r && r.values) || {}, ok = r ? r.knx !== false : true;
+      if (JSON.stringify(vals) !== JSON.stringify(this._kx || {}) || ok !== this._kxOk) {
+        this._kx = vals; this._kxOk = ok;
+        const ae = this.shadowRoot.activeElement; if (!(ae && ["INPUT", "SELECT"].includes(ae.tagName))) { this._last = null; this._draw(true); }
+      }
+    } catch (e) {} finally { this._kxBusy = false; }
+  }
+  _kxTick() { if (!this._ktList().length) return; const n = Date.now(); if (n - (this._kxt || 0) > 4000) { this._kxt = n; this._kxPoll(); } }
+  _ktCard(t) {
+    const E = (x) => this._esc(x), g = (fn) => this._ktVal(t, fn), can = (fn) => !!(((t.s || {})[fn] || {}).w), o = this._thOpts(), lim = this._ktLim(t), has = (fn) => !!(t.s || {})[fn];
+    const cur = g("temp"), tg = g("target"), onv = g("onoff"), off = onv === 0, heat = g("heat_st") === 1, cool = g("cool_st") === 1, hum = g("hum");
+    const col = off ? "#8d9ab8" : cool ? "#4da3ff" : heat ? "#ff8a3d" : "#e8c98f", MODES = [[1, "comfort"], [2, "away"], [3, "eco"], [4, "frost"]];
+    const om = g("opmode"), omName = om != null && !Number.isNaN(om) ? (MODES.find((m) => m[0] === om) || [0, ""])[1] : "";
+    const lab = off ? "Off" : cool ? "Cooling" : heat ? "Heating" : omName ? this._thName(omName) : "Idle";
+    const R = 46, C = 2 * Math.PI * R, arc = C * 0.75, fr = (v) => (v != null && lim.mx > lim.mn ? Math.max(0, Math.min(1, (v - lim.mn) / (lim.mx - lim.mn))) : 0);
+    const dial = `<div class="thd"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="${R}" class="dtr" stroke-dasharray="${arc} ${C}" transform="rotate(135 60 60)"/><circle cx="60" cy="60" r="${R}" class="dvl" stroke-dasharray="${arc * fr(cur)} ${C}" transform="rotate(135 60 60)"/>${tg != null && !off ? `<circle cx="60" cy="60" r="${R}" class="dtg" stroke-dasharray="3 ${C}" stroke-dashoffset="${-(arc * fr(tg) - 1.5)}" transform="rotate(135 60 60)"/>` : ""}</svg><div class="thc"><small>${E(lab)}</small><b>${cur != null ? this._thF(cur) : "–"}<sup>°</sup></b><span>${o.hum && hum != null ? E(Math.round(hum) + "% humidity") : "now"}</span></div></div>`;
+    const cl = (v, a, b) => Math.round(Math.max(a, Math.min(b, v)) * 100) / 100;
+    const stp = (label, fn, v, a, b, st, u) => `<div class="ths"><small>${E(label)}</small><div><button ${can(fn) ? this._ktAct(t, fn, cl(v - st, a, b)) : ""}>−</button><b>${u === "°" ? this._thF(v) : Math.round(v * 10) / 10}${u}</b><button ${can(fn) ? this._ktAct(t, fn, cl(+v + st, a, b)) : ""}>+</button></div></div>`;
+    let ctl = "";
+    if (!off) {
+      if (tg != null) ctl += stp("Target", "target", tg, lim.mn, lim.mx, lim.st, "°");
+      const sh = g("shift"); if (sh != null && has("shift")) ctl += stp("Shift", "shift", sh, -128, 127, 1, ((t.s.shift || {}).t === "temp" ? "°" : ""));
+    }
+    const pw = has("onoff") && can("onoff") ? `<button class="thp ${off ? "" : "on"}" ${this._ktAct(t, "onoff", off ? 1 : 0)} title="${off ? "Turn on" : "Turn off"}">${PWR_I}</button>` : "";
+    const edit = this._admin() ? `<button class="thp the2" data-go='${JSON.stringify({ p: "settings", tab: "knxt", kt: t.id })}' title="Edit group addresses">${GEAR_I}</button>` : "";
+    const tb = (fn, label) => { if (!can(fn)) return ""; const on = g(fn) === 1; return `<button class="thx tb ${on ? "on" : ""}" ${this._ktAct(t, fn, on ? 0 : 1)}>${E(label)}</button>`; };
+    const unit = (fn) => { const sl = (t.s || {})[fn] || {}, src = sl.r || sl.w; return src && !this._ktGA(src) && this._h.states[src] ? this._h.states[src].attributes.unit_of_measurement || "" : ""; };
+    const v1 = (fn) => g(fn), xs = [g("window") === 1 ? '<span class="thx w">Window open</span>' : "", has("presence") && g("presence") != null ? `<span class="thx">${g("presence") === 1 ? "Occupied" : "Empty"}</span>` : "", v1("valve") != null ? `<span class="thx">Valve ${Math.round(v1("valve"))}%</span>` : "", v1("outdoor") != null ? `<span class="thx">Outside ${this._thF(v1("outdoor"))}°</span>` : "", v1("floor") != null ? `<span class="thx">Floor ${this._thF(v1("floor"))}°</span>` : "", can("hc") ? `<button class="thx tb on" ${this._ktAct(t, "hc", g("hc") === 1 ? 0 : 1)}>${g("hc") === 0 ? "Cooling" : "Heating"}</button>` : g("hc") != null ? `<span class="thx">${g("hc") === 0 ? "Cooling mode" : "Heating mode"}</span>` : "", tb("lock", "Child lock"), tb("boost", "Boost")].filter(Boolean).join(""), thf = xs ? `<div class="thf">${xs}</div>` : "";
+    const sp = [["sp_comfort", "Comfort", "comfort"], ["sp_standby", "Standby", "away"], ["sp_eco", "Economy", "eco"], ["sp_frost", "Frost protection", "frost"]].map(([fn, lb, nk]) => { const v = g(fn); return has(fn) && v != null ? stp(o.names[nk] || lb, fn, v, lim.mn, lim.mx, lim.st, "°") : ""; }).join(""), thsp = sp ? `<div class="thsp">${sp}</div>` : "";
+    const rowB = (title, items) => `<div class="thg"><small>${E(title)}</small><div class="thr">${items.join("")}</div></div>`;
+    let modes = "";
+    if (has("opmode") && can("opmode")) {
+      const sl = t.s.opmode, w = sl.w;
+      if (this._ktGA(w)) modes = rowB("Mode", MODES.map(([n, k]) => `<button class="${om === n ? "on" : ""}" ${this._ktAct(t, "opmode", n)}>${E(this._thName(k))}</button>`));
+      else if (this._h.states[w] && Array.isArray(this._h.states[w].attributes.options)) { const cur2 = this._h.states[sl.r || w] ? this._h.states[sl.r || w].state : ""; modes = rowB("Mode", this._h.states[w].attributes.options.map((m) => `<button class="${cur2 === m ? "on" : ""}" ${this._ktAct(t, "opmode", m)}>${E(this._thName(m))}</button>`)); }
+    } else {
+      const ms = [["m_comfort", "comfort"], ["m_standby", "away"], ["m_eco", "eco"], ["m_frost", "frost"]].filter(([fn]) => can(fn));
+      if (ms.length) modes = rowB("Mode", ms.map(([fn, k]) => `<button class="${g(fn) === 1 ? "on" : ""}" ${this._ktAct(t, fn, 1)}>${E(this._thName(k))}</button>`));
+    }
+    const fn2 = can("fan") ? rowB("Fan", [[0, "Auto"], [1, "1"], [2, "2"], [3, "3"]].map(([n, l]) => `<button class="${g("fan") === n ? "on" : ""}" ${this._ktAct(t, "fan", n)}>${l}</button>`)) : "";
+    const warn = this._kxOk === false && Object.values(t.s || {}).some((x) => this._ktGA(x.w) || this._ktGA(x.r)) ? '<div class="thf"><span class="thx w">KNX is not running in Home Assistant</span></div>' : "";
+    return `<div class="card thm ${off ? "" : "on"}" data-id="kt:${E(t.id)}" style="--dc:${col}"><div class="thh"><div class="thn"><b>${E(t.name || "Thermostat")}</b><small>${E(lab)}</small></div>${edit}${pw}</div><div class="thb">${dial}<div class="thy">${ctl}</div></div>${warn}${thf}${thsp}${modes}${fn2}</div>`;
+  }
+  /* the own thermostats of a room (or all of them) as cards */
+  _ktCards(rid) { const L = this._ktList().filter((t) => (rid ? t.room === rid : true)); return L.length ? `<div class="ktg">${L.map((t) => this._ktCard(t)).join("")}</div>` : ""; }
   _thOn() { return this._thOpts().on; }
   _thStep(a) { return this._thOpts().step || +a.target_temp_step || 0.5; }
   _thF(v) { return this._thOpts().dec === 0 ? String(Math.round(+v)) : this._fmt(v); }
@@ -1786,7 +1881,7 @@ class QuintDashboard extends HTMLElement {
     return `<div class="ov" data-dsh="bg"><div class="dlg"><div class="shd"><span>${E(this._devName(d))}</span><small>${E([dv && dv.manufacturer, dv && dv.model].filter(Boolean).join(" ") || d.ids.length + " entit" + (d.ids.length === 1 ? "y" : "ies"))}</small></div><div class="dsl ${dash ? "dbsh" : ""}">${cards}</div><div class="btns" style="margin-top:16px"><button class="pri" data-dsh="close">Done</button></div></div></div>`;
   }
   _svcsAll() {
-    const o = this._svcOrder(), keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "clock" ? this._clockTile() : x === "camwall" ? this._wallCams().length > 0 : x === "house" ? this._h3dPage() : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
+    const o = this._svcOrder(), keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "clock" ? this._clockTile() : x === "camwall" ? this._wallCams().length > 0 : x === "house" ? this._h3dPage() : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length || (x === "climate" && this._ktList().length > 0)));
     const r = (k) => { const i = o.indexOf(k); return i < 0 ? (k === "house" ? -1 : 1000 + keys.indexOf(k)) : i; };
     return keys.filter((k) => this._svOk(k)).sort((p, q) => r(p) - r(q));
   }
@@ -1824,6 +1919,7 @@ class QuintDashboard extends HTMLElement {
   _entOk(id) { return this._svOk(this._svcOf(id)) && this._rmOk(this._roomOf(id)); }
   _sceneOk(x) { return !this._perm() || (this._rmOk(x.room) && (x.items || []).every((i) => this._entOk(i.e))); }
   _nav(p, x = {}, pop) {
+    if (x && x.kt) { const { kt, ...rest } = x; this._pick = { ...(this._pick || {}), ktsel: kt }; this._dsh = null; x = rest; }
     if (x && x.th) { const { th, ...rest } = x; this._pick = { ...(this._pick || {}), thsel: th }; this._dsh = null; x = rest; }
     if (this._v.p === "settings" && p !== "settings" && this._dirty) { if (!confirm("Discard unsaved settings changes?")) return false; this._revert(); }
     if (p === "settings" && this._v.p !== "settings") { this._snap = JSON.stringify(this._c); this._dirty = false; }
@@ -1868,10 +1964,11 @@ class QuintDashboard extends HTMLElement {
   _click(e) {
     if (this._mv && this._mv.carry) return this._carryClick(e);
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.md || n.dataset.dsh || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.h3d || n.dataset.pic || n.dataset.pin || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.kx || n.dataset.md || n.dataset.dsh || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.h3d || n.dataset.pic || n.dataset.pin || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
+    if (d.kx) { const [id, fn, ...v] = d.kx.split("|"); return this._kxSet(id, fn, v.join("|")); }
     if (d.out) return this._signOut();
     if (d.md) return this._moreInfo(d.md);
     if (d.dsh) { if (d.dsh === "bg" && e.composedPath()[0] !== t) return; this._dsh = d.dsh === "bg" || d.dsh === "close" ? null : d.dsh; return this._draw(true); }
@@ -1964,6 +2061,25 @@ class QuintDashboard extends HTMLElement {
       if (v) cur[d.the] = v; else { delete cur[d.the]; const cm = { ...(this._thOpts().cond || {}) }; if (cm[id]) { cm[id] = { ...cm[id] }; delete cm[id][d.the]; if (!Object.keys(cm[id]).length) delete cm[id]; this._c.thermo = { ...(this._c.thermo || {}), cond: cm }; } }
       if (Object.keys(cur).length) m[id] = cur; else delete m[id];
       this._c.thermo = { ...(this._c.thermo || {}), map: m }; this._save(); this._last = null; this._draw(true); return;
+    }
+    if (adm && d.ktn !== undefined) {
+      const L = this._ktList(), t = L.find((x) => x.id === d.ktid); if (!t) return;
+      const k = d.ktn;
+      const val = e.target.value.trim();
+      if (k === "name") t.name = val.replace(/[<>&"'\\]/g, "").slice(0, 40); else if (k === "room") t.room = val;
+      else if (["min", "max", "step"].includes(k)) { if (val === "" || !Number.isFinite(+val)) delete t[k]; else t[k] = +val; }
+      this._c.kt = L; this._save(); this._last = null; this._draw(true); return;
+    }
+    if (adm && d.kts !== undefined) {
+      const L = this._ktList(), t = L.find((x) => x.id === d.ktid); if (!t) return;
+      const [fn, k] = d.kts.split("|"), v = e.target.value.trim().toLowerCase(), F = this._KF().find((f) => f[0] === fn); if (!F) return;
+      t.s = { ...(t.s || {}) }; const sl = { ...(t.s[fn] || {}) };
+      if (k === "t") { if (this._ktTypes().some((x) => x[0] === v)) sl.t = v; }
+      else if (!v) delete sl[k];
+      else if (this._ktGA(v) || (/^[a-z0-9_]+\.[a-z0-9_]+$/.test(v) && this._h.states[v])) sl[k] = v;
+      else { this._toast("Use a group address like 1/1/5, or an entity of Home Assistant"); this._last = null; this._draw(true); return; }
+      if (!sl.w && !sl.r) delete t.s[fn]; else { sl.t = sl.t || F[5]; t.s[fn] = sl; }
+      this._c.kt = L; this._save(); this._kxt = 0; this._last = null; this._draw(true); return;
     }
     if (adm && d.thc !== undefined) {
       const id = d.tid, fn = d.thc, k = d.thk, m = { ...(this._thOpts().cond || {}) }, cur = { ...(m[id] || {}) }, c0 = { ...(cur[fn] || {}) };
@@ -3535,7 +3651,7 @@ class QuintDashboard extends HTMLElement {
     { const tl = this._roomTiles(rid), ci = sec.findIndex((h) => !/data-sk="(lights|shades|climate)"/.test(h)); sec.splice(ci < 0 ? sec.length : ci, 0, ...tl); }
     if (!sec.length) sec.push(`<div class="bc span2" data-id="a:none"><div class="lbl">Nothing in this room yet.</div></div>`);
     if (adm) sec.push(`<div class="tile add span2" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
-    if (phone) return this._roomPhone({ room, rid, sec, lights, cl, sh, avg, chips, adm, E, L, H, has, dev: this._devRoomCards(rid).length ? `<div class="psec"><span>Devices</span></div>${this._devGrid(this._devRoomCards(rid), true)}` : "" });
+    if (phone) return this._roomPhone({ room, rid, sec, lights, cl, sh, avg, chips, adm, E, L, H, has, dev: (this._ktCards(rid) ? `<div class="psec"><span>Thermostats</span></div>${this._ktCards(rid)}` : "") + (this._devRoomCards(rid).length ? `<div class="psec"><span>Devices</span></div>${this._devGrid(this._devRoomCards(rid), true)}` : "") });
     let body = `<div class="abody">${sec.join("")}</div>`;
     if (this._hmx().on && this._hmx().style === "dash") {
       /* dashboard: one small tile for every device of the room */
@@ -3571,6 +3687,7 @@ class QuintDashboard extends HTMLElement {
       if (adm) cells.push(`<div class="tile add" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
       const sd = this.getAttribute("data-wide") === "1" ? 310 : 0; body = `<div class="abody mxr" style="${this._mxStyle(this._mxCols(cells.length, true, sd), true, sd)}">${cells.join("")}</div>`;
     }
+    if (this._ktCards(rid)) body += `<div class="dvh"><span>Thermostats</span></div>${this._ktCards(rid)}`;
     if (this._devRoomCards(rid).length) body += `<div class="dvh"><span>Devices</span></div>${this._devGrid(this._devRoomCards(rid), false)}`;
     return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}${body}</div></div>`;
   }
@@ -3643,8 +3760,8 @@ class QuintDashboard extends HTMLElement {
     const parts = rs.map((r) => [r, this._ents(s, r.id)]).filter(([, e]) => e.length).map(([r, e]) => sec(r.name, e, r.id));
     const other = this._ents(s).filter((i) => !known.has(this._roomOf(i)));
     if (other.length) parts.push(sec("Other", other, ""));
-    const total = this._ents(s).filter(act).length;
-    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${total} active · grouped by room</div>${parts.join("")}`;
+    const total = this._ents(s).filter(act).length, kt = s === "climate" ? this._ktCards() : "";
+    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${total} active · grouped by room</div>${parts.join("")}${kt ? `<section><div class="rh"><div class="grow"><div class="rn">KNX thermostats</div><div class="lbl">own thermostats from group addresses</div></div></div>${kt}</section>` : ""}`;
   }
   _list(s) {
     return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(calc(${s === "cameras" ? 320 : 200}px * var(--tm,1)),1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
@@ -4234,7 +4351,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["ntf", "Notifications", "choose which alerts you see"], ...(this._look() ? [["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [])] : [["general", "General", "title, background, layout"], ["ntf", "Notifications", "alerts for everyone"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "a card for every device, where it shows"], ["thermo", "Thermostat", "modes, presets, fan, KNX"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["h3d", "3D house", this._h3d().show ? "shown on Home" : "hidden"], ["adv", "Advanced", "auto-return, quiet hours, user limits"], ["health", "Health", this._healthSub()], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["ntf", "Notifications", "choose which alerts you see"], ...(this._look() ? [["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [])] : [["general", "General", "title, background, layout"], ["ntf", "Notifications", "alerts for everyone"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "a card for every device, where it shows"], ["thermo", "Thermostat", "modes, presets, fan, KNX"], ["knxt", "KNX thermostat", "own thermostat from group addresses"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["h3d", "3D house", this._h3d().show ? "shown on Home" : "hidden"], ["adv", "Advanced", "auto-return, quiet hours, user limits"], ["health", "Health", this._healthSub()], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     const tsSeg = (cur, attr, none) => `<div class="seg sm tsz">${Object.entries(TSIZES).map(([k, t]) => `<button class="${cur === k ? "on" : ""}" ${attr}="${attr === "data-s" ? "tsz|" : "tsd|"}${k}">${t.n}</button>`).join("")}${none ? `<button ${attr}="tsd|">Same as shared</button>` : ""}</div>`;
     const SCI = [["aurora", "Aurora", "Soft moving colours with a big clock. Shows home status and notifications"], ["night", "Starry night", "Dark sky with a moon and a dim clock. Easy on the eyes at night"], ["analog", "Classic analog", "A large analog clock with the date, home status and notifications"], ["frame", "Photo frame", "Your own saver photo slowly moving, with the time on top"], ["home", "Home overview", "The essentials at a glance: time, security, lights, temperature, music and notifications"]];
@@ -4468,6 +4585,25 @@ class QuintDashboard extends HTMLElement {
         sec("Preset names", "rename the modes, for example for your KNX system. Empty keeps the standard name",
           nm("comfort", "Comfort") + nm("eco", "Economy") + nm("away", "Standby") + nm("sleep", "Night") + nm("home", "Home") + nm("boost", "Boost")) +
         sec("Preview", first ? E(this._nm(first)) : "", first ? `<div style="padding:4px 2px 8px;max-width:520px">${this._thermo(first)}</div>` : '<div class="lbl" style="padding:6px 4px 12px">No thermostat found in Home Assistant yet.</div>');
+    } else if (tab === "knxt") {
+      const L = this._ktList(), t = this._ktSel(), rooms = this._rooms(), TY = this._ktTypes();
+      body = sec("KNX thermostats", L.length + " own thermostat" + (L.length === 1 ? "" : "s"),
+        `<div class="lbl" style="padding:2px 4px 10px">Build a thermostat like an ABB room temperature controller: type the group addresses of your KNX project (for example 1/1/5) or choose Home Assistant entities. Writing and reading go through the KNX integration of Home Assistant.${this._kxOk === false ? ' <b style="color:#ff8a8a">The KNX integration is not running right now.</b>' : ""}</div>` +
+        (L.length ? `<div class="seg sm" style="flex-wrap:wrap;margin:0 0 10px">${L.map((x) => `<button class="${t && x.id === t.id ? "on" : ""}" data-pick="ktsel|${E(x.id)}">${E(x.name || "Thermostat")}</button>`).join("")}</div>` : "") +
+        `<div class="btns" style="margin:2px 0 8px"><button data-s="ktadd|">Add a thermostat</button>${t ? `<button data-s="ktdel|${E(t.id)}">Delete this thermostat</button>` : ""}</div>`);
+      if (t) {
+        const lim = this._ktLim(t), at = (k) => `data-ktn="${k}" data-ktid="${E(t.id)}"`;
+        body += sec("This thermostat", E(t.name || ""),
+          row("Name", "shown on the card", `<input type="text" ${at("name")} value="${E(t.name || "")}" placeholder="Living room" style="width:200px">`) +
+          row("Room", "the card shows in this room and on the Climate page", `<select ${at("room")} style="width:200px"><option value="">No room</option>${rooms.map((r) => `<option value="${E(r.id)}" ${t.room === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>`) +
+          row("Setpoint range and step", "lowest, highest and the step of the + / − buttons", `<div class="kte"><input class="kn" type="text" inputmode="decimal" ${at("min")} value="${t.min != null ? E(t.min) : ""}" placeholder="${lim.mn}" ><input class="kn" type="text" inputmode="decimal" ${at("max")} value="${t.max != null ? E(t.max) : ""}" placeholder="${lim.mx}" ><input class="kn" type="text" inputmode="decimal" ${at("step")} value="${t.step != null ? E(t.step) : ""}" placeholder="${lim.st}" ></div>`));
+        const groups = [["Main functions", "write address = where Quint sends; status address = where the thermostat reports back (empty: the write address is followed)"], ["Operation mode", "either one address for all modes, or one 1-bit address for each mode"], ["Setpoints of the modes", "the temperature of each mode, with + / − on the card"], ["Information and switches", "shown as small chips and buttons on the card"]];
+        const one = ([fn, nme, rw, , hint, dt]) => { const sl = (t.s || {})[fn] || {}, at2 = (k) => `data-kts="${fn}|${k}" data-ktid="${E(t.id)}"`, v = sl.w || sl.r ? this._ktVal(t, fn) : null;
+          const ctl = `<div class="kte">${rw ? `<input type="text" ${at2("w")} value="${E(sl.w || "")}" placeholder="write 1/1/6" autocomplete="off">` : ""}<input type="text" ${at2("r")} value="${E(sl.r || "")}" placeholder="${rw ? "status 1/1/7" : "address 1/1/5"}" autocomplete="off">${sl.w || sl.r ? `<select ${at2("t")}>${TY.map(([k, n]) => `<option value="${k}" ${(sl.t || dt) === k ? "selected" : ""}>${n}</option>`).join("")}</select>` : ""}${sl.w || sl.r ? `<em>${v != null ? E(String(Math.round(v * 100) / 100)) : "no value yet"}</em>` : ""}</div>`;
+          return row(nme, hint, ctl); };
+        groups.forEach(([tt, sub], gi) => { body += sec(tt, sub, this._KF().filter((f) => f[3] === gi).map(one).join("")); });
+        body += sec("Preview", E(t.name || ""), `<div style="padding:4px 2px 8px;max-width:520px">${this._ktCard(t)}</div>`);
+      }
     } else if (tab === "srooms") {
       const sv = this._svcsAll().filter((k) => k !== "intercom" && k !== "automations" && k !== "camwall" && k !== "clock"), cur = sv.includes(this._sr) ? this._sr : sv[0], rs = (c.rooms || []).filter((r) => r.on !== false), HH = (c.roomHide || {})[cur] || [];
       const cnt = (r) => (isCs(cur) ? this._csItems(r.id, cur).length : this._ents(cur, r.id).length);
