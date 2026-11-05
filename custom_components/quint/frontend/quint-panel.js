@@ -105,7 +105,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.68.0";
+const VER = "1.69.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -251,6 +251,8 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .dkc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;pointer-events:none}.dkc small{font-size:11px;color:var(--dc);font-weight:600}.dkc b{font-size:26px;font-weight:600}.dkc b sup{font-size:12px;vertical-align:top}.dkc span{font-size:11px;color:var(--mu)}
 .dbt.dv img.cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;margin:0;border-radius:0;aspect-ratio:auto;pointer-events:none}
 .dvn{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-between;padding:10px 12px;background:linear-gradient(180deg,transparent 45%,rgba(8,10,18,.8));cursor:pointer}.dvn b{font-size:14px}
+.dbsh{display:flex;flex-direction:column;gap:10px}.dbsh .dsc{margin:0}.dbsh .dbt{min-height:62px}.dbsh .dbt.dl,.dbsh .dbt.dc,.dbsh .dbt.dm{min-height:92px}.dbsh .dbt.dc{min-height:130px}.dbsh .dbt.dk{min-height:230px}.dbsh .dbt.dv{min-height:190px}.dbsh .dbt.dv .dvn{position:absolute}.dbsh .dbt .dbh:not([data-act]){cursor:default}
+.dbr .mxs.k{margin-top:4px}
 .dbw .dw1{display:flex;align-items:center;gap:12px}.dwi{width:44px;height:44px;color:#ffd166;flex:none;font-style:normal}.dwi svg{width:100%;height:100%}.dwc{display:flex;flex-direction:column;flex:1;min-width:0}.dwc b{font-size:19px;font-weight:600}.dwc small{font-size:12px;color:var(--mu)}.dwc small svg{width:11px;height:11px;vertical-align:-1px}
 .dwt{font-size:34px;font-weight:600;line-height:1}.dwt sup{font-size:15px;vertical-align:top}
 .dwk{display:flex;align-items:baseline;gap:12px}.dwk .clk2{font-size:40px;line-height:1;font-weight:600;margin:0}.dwk small{color:var(--mu);font-size:13px}
@@ -1649,9 +1651,11 @@ class QuintDashboard extends HTMLElement {
   _devSheet() {
     if (!this._dsh) return "";
     const d = this._devList().find((x) => x.key === this._dsh); if (!d) return "";
-    const E = (t) => this._esc(t), dv = d.did ? (this._h.devices || {})[d.did] : null;
-    const cards = d.ids.filter((id) => this._h.states[id]).map((id) => `<div class="dsc">${this._devCard(id)}</div>`).join("");
-    return `<div class="ov" data-dsh="bg"><div class="dlg"><div class="shd"><span>${E(d.name)}</span><small>${E([dv && dv.manufacturer, dv && dv.model].filter(Boolean).join(" ") || d.ids.length + " entit" + (d.ids.length === 1 ? "y" : "ies"))}</small></div><div class="dsl">${cards}</div><div class="btns" style="margin-top:16px"><button class="pri" data-dsh="close">Done</button></div></div></div>`;
+    const E = (t) => this._esc(t), dv = d.did ? (this._h.devices || {})[d.did] : null, mo = this._hmx(), dash = mo.on && mo.style === "dash";
+    let ids = d.ids.filter((id) => this._h.states[id]);
+    if (dash) { const CT = ["light", "switch", "fan", "cover", "climate", "media_player", "lock", "alarm_control_panel", "vacuum", "humidifier", "input_boolean", "siren", "camera"], w = ids.filter((id) => CT.includes(id.split(".")[0])); ids = w.length ? w : ids.slice(0, 1); }
+    const cards = ids.map((id) => `<div class="dsc">${dash ? this._dbTile(id, true) : this._devCard(id)}</div>`).join("");
+    return `<div class="ov" data-dsh="bg"><div class="dlg"><div class="shd"><span>${E(d.name)}</span><small>${E([dv && dv.manufacturer, dv && dv.model].filter(Boolean).join(" ") || d.ids.length + " entit" + (d.ids.length === 1 ? "y" : "ies"))}</small></div><div class="dsl ${dash ? "dbsh" : ""}">${cards}</div><div class="btns" style="margin-top:16px"><button class="pri" data-dsh="close">Done</button></div></div></div>`;
   }
   _svcsAll() {
     const o = this._svcOrder(), keys = Object.keys(SV).filter((x) => (x === "intercom" ? this._icOn() : x === "clock" ? this._clockTile() : x === "camwall" ? this._wallCams().length > 0 : x === "house" ? this._h3dPage() : x === "automations" ? this._autoIds().length > 0 : isCs(x) ? this._csHas(x) || (x === "more" && this._admin()) : this._ents(x).length));
@@ -2944,10 +2948,10 @@ class QuintDashboard extends HTMLElement {
     const clk = c.noClock ? "" : `<div class="dwk">${this._clockBlock("tl", "digital")}<small>${E(date)}</small></div>`;
     return `<div class="bc dbt dbw ${w ? "" : "nw"}" data-id="b:clock" style="--c:#e8c98f"><div class="dw1">${top}</div>${clk}${fcH}</div>`;
   }
-  _dbTile(id) {
+  _dbTile(id, sheet) {
     const H = this._h.states, s = H[id]; if (!s) return "";
     const E = (t) => this._esc(t), d = id.split(".")[0], a = s.attributes, st = s.state, svc = this._svcOf(id), S = svc ? SV[svc] : DEVS, off = ["unavailable", "unknown"].includes(st), nm = E(this._nm(id));
-    const key = this._dbKey(id), open = key ? `data-dsh="${E(key)}"` : "", cap = (x) => String(x).charAt(0).toUpperCase() + String(x).slice(1).replace(/_/g, " ");
+    const key = sheet ? "" : this._dbKey(id), open = key ? `data-dsh="${E(key)}"` : "", cap = (x) => String(x).charAt(0).toUpperCase() + String(x).slice(1).replace(/_/g, " ");
     const hdr = (state, act, x) => `<div class="dbh" ${act || open}><i class="dbi">${S.i}</i><span class="dbn"><b>${nm}</b><small>${E(state)}</small></span>${x || ""}</div>`;
     const tile = (cls, inner, on, col) => `<div class="bc dbt ${cls} ${on ? "on" : ""} ${off ? "off" : ""}" data-id="db:${E(id)}" style="--c:${col || S.c}">${inner}</div>`;
     const tog = (dm) => `data-act="${dm}.toggle" data-e="${E(id)}"`, on = st === "on";
@@ -2960,7 +2964,8 @@ class QuintDashboard extends HTMLElement {
     if (["switch", "fan", "input_boolean", "humidifier", "siren"].includes(d)) return tile("d1", hdr(on ? "On" : "Off", tog(d)), on);
     if (d === "cover") {
       const p = a.current_position, closed = st === "closed", state = (cap(st)) + (p != null && !["closed"].includes(st) ? " · " + Math.round(p) + "%" : ""), act = (x, y) => `<button data-act="cover.${x}" data-e="${E(id)}">${y}</button>`;
-      return tile("dc", hdr(state) + (p != null ? this._dbSl(Math.round(p), "cover|set_cover_position|position|1", id, 0, 100, "str") : `<div class="dbb">${act("open_cover", "▲")}${act("stop_cover", "■")}${act("close_cover", "▼")}</div>`), !closed);
+      const btns = `<div class="dbb">${act("open_cover", "▲")}${act("stop_cover", "■")}${act("close_cover", "▼")}</div>`;
+      return tile("dc", hdr(state) + (p != null ? this._dbSl(Math.round(p), "cover|set_cover_position|position|1", id, 0, 100, "str") + (sheet ? btns : "") : btns), !closed);
     }
     if (d === "climate") {
       const tg = a.temperature, cur = a.current_temperature != null ? a.current_temperature : tg, step = a.target_temp_step || 0.5, mn = a.min_temp != null ? +a.min_temp : 7, mx = a.max_temp != null ? +a.max_temp : 35, o = st === "off";
@@ -2973,8 +2978,9 @@ class QuintDashboard extends HTMLElement {
     if (d === "media_player") {
       const pl = st === "playing", act = (x, y, c) => `<button ${c ? `class="${c}"` : ""} data-act="media_player.${x}" data-e="${E(id)}">${y}</button>`;
       const state = pl ? (a.media_title || "Playing") : st === "paused" ? "Paused" : st === "off" ? "Off" : st === "idle" ? "Idle" : cap(st);
-      return tile("dm", hdr(state) + `<div class="dbb">${act("media_previous_track", PREV_I)}${act("media_play_pause", pl ? PAUSE_I : PLAY_I, "pp")}${act("media_next_track", NEXT_I)}</div>`, pl);
+      return tile("dm", hdr(state) + `<div class="dbb">${act("media_previous_track", PREV_I)}${act("media_play_pause", pl ? PAUSE_I : PLAY_I, "pp")}${act("media_next_track", NEXT_I)}</div>` + (sheet && a.volume_level != null ? this._dbSl(Math.round(a.volume_level * 100), "media_player|volume_set|volume_level|100", id, 0, 100) : ""), pl);
     }
+    if (d === "vacuum") { const bt = (x, y) => `<button data-act="vacuum.${x}" data-e="${E(id)}">${y}</button>`; return tile("dm", hdr(cap(st)) + `<div class="dbb">${bt("start", PLAY_I)}${bt("pause", PAUSE_I)}${bt("return_to_base", "⌂")}</div>`, st === "cleaning"); }
     if (d === "camera") {
       const src = a.entity_picture ? this._h.hassUrl(a.entity_picture) : "";
       return src ? tile("dv", `<img class="cam" data-src="${E(src)}" src="${E(src)}" alt=""><div class="dvn" data-cam="${E(id)}"><b>${nm}</b><span class="live">Live</span></div>`, true) : tile("d1", hdr("Camera"), true);
@@ -3378,7 +3384,15 @@ class QuintDashboard extends HTMLElement {
     if (adm) sec.push(`<div class="tile add span2" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
     if (phone) return this._roomPhone({ room, rid, sec, lights, cl, sh, avg, chips, adm, E, L, H, has });
     let body = `<div class="abody">${sec.join("")}</div>`;
-    if (this._hmx().on) {
+    if (this._hmx().on && this._hmx().style === "dash") {
+      /* dashboard: one small tile for every device of the room */
+      const tl = [], sd = this.getAttribute("data-wide") === "1" ? 310 : 0;
+      order.forEach((s) => { if (isCs(s) || !has(room, s)) return; this._sort("room:" + rid + ":" + s, this._ents(s, rid), (i) => "e:" + i).forEach((id) => { const h = this._dbTile(id); if (h) tl.push(h); }); });
+      const cc = [...order.filter((s) => isCs(s) && by[s]).map((s) => by[s]), ...this._roomTiles(rid)];
+      if (adm) tl.push(`<div class="bc dbt d1 dba" data-id="a:add" data-cc="open:${rid}" style="--c:#8d9ab8"><div class="dbh"><i class="dbi">＋</i><span class="dbn"><b>Add card</b><small>your own card in this room</small></span></div></div>`);
+      if (!tl.length && !cc.length) tl.push(`<div class="bc dbt d1" data-id="a:none"><div class="dbh"><span class="dbn"><b>Nothing in this room yet</b></span></div></div>`);
+      body = `<div class="dbr"><div class="mxs g dbd" style="${this._mxStyle(this._dbCols(sd))}">${tl.join("")}</div>${cc.length ? `<div class="mxs k">${cc.join("")}</div>` : ""}</div>`;
+    } else if (this._hmx().on) {
       /* matrix: every card of the room is a cell of the same size */
       const cells = [], cell = (s, id, head, sub, inner) => `<div class="bc" data-sk="${E(s)}" data-id="a:${E(id)}"><div class="bh" ${this._tileGo(s)}><span>${E(head)}</span>${sub ? `<span class="bs">${E(sub)}</span>` : ""}</div>${inner}</div>`;
       order.forEach((s) => {
