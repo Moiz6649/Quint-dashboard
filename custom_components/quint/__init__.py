@@ -13,7 +13,7 @@ from .const import DOMAIN, PANEL_PATH, STATIC_URL, VERSION
 from .neon import async_setup_neon, async_unload_neon
 from .updater import QuintUpdater, read_disk_version
 from .push import QuintPush
-from .util import clean_perms, clean_thermo_map, guess_thermo, is_newer, thermo_call, valid_image, valid_new_user
+from .util import clean_perms, clean_thermo_cond, clean_thermo_map, guess_thermo, is_newer, thermo_call, thermo_cond_ok, valid_image, valid_new_user
 
 
 class QuintConfigView(HomeAssistantView):
@@ -46,6 +46,7 @@ class QuintConfigView(HomeAssistantView):
                 data.pop(key, None)
         if isinstance(data.get("thermo"), dict):
             data["thermo"]["map"] = clean_thermo_map(data["thermo"].get("map"))
+            data["thermo"]["cond"] = clean_thermo_cond(data["thermo"].get("cond"))
         await self._store.async_save(data)
         push = (self._hass.data.get(DOMAIN, {}) if self._hass else {}).get("push")
         if push is not None:
@@ -187,6 +188,11 @@ async def async_thermo_set(hass: HomeAssistant, store: Store, climate: str, fn: 
     ent = (((cfg.get("thermo") or {}).get("map") or {}).get(climate) or {}).get(fn, "")
     if ent and hass.states.get(ent) is None:
         ent = ""
+    cond = (((cfg.get("thermo") or {}).get("cond") or {}).get(climate) or {}).get(fn)
+    if ent and cond:
+        cs = hass.states.get(cond.get("e", ""))
+        if not thermo_cond_ok(cond, cs.state if cs else None):
+            ent = ""
     try:
         domain, service, data = thermo_call(fn, ent, value, climate)
     except ValueError as err:

@@ -105,7 +105,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.75.0";
+const VER = "1.76.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -256,6 +256,8 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .dbr .mxs.k{margin-top:4px}
 .thm{display:flex;flex-direction:column;gap:12px;padding:16px 16px 14px}
 .thh{display:flex;align-items:center;gap:10px}.thn{display:flex;flex-direction:column;flex:1;min-width:0}.thn b{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.thn small{font-size:12px;color:var(--dc)}
+.thh{gap:8px}.thp.the2{background:transparent;opacity:.55;margin-left:auto}.thp.the2:hover{opacity:1}.thh .thn{margin-right:0}.thp.the2+.thp{margin-left:0}
+.cdl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.cdl small{font-size:11px;color:var(--mu)}.cdl input,.cdl select{width:auto;min-width:0}.cdl .cde{width:150px}.cdl .cdv{width:80px}
 .thp{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:var(--tx);display:grid;place-items:center;padding:0;cursor:pointer;flex:none}.thp svg{width:18px;height:18px}.thp.on{background:var(--dc);color:#10131c}
 .thb{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .thd{position:relative;width:132px;height:132px;flex:none}.thd svg{width:100%;height:100%}.thd circle{fill:none;stroke-width:9;stroke-linecap:round}.thd .dvl{stroke:var(--dc)}.thd .dtg{stroke:#fff;stroke-width:13;stroke-linecap:butt}
@@ -1370,7 +1372,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "devcard") { const i = v.lastIndexOf("|"), key = v.slice(0, i), fl = v.slice(i + 1), d = this._devList().find((x) => x.key === key); if (d && (fl === "home" || fl === "room")) this._devCfgSet(key, { [fl]: !this._devCfg(d)[fl] }); this._last = null; }
     else if (a === "devbulk") { const [fl, on] = v.split("|"); if (fl === "home" || fl === "room") this._devList().forEach((d) => this._devCfgSet(d.key, { [fl]: on === "1" })); this._last = null; }
     else if (a === "thermo") { const cur = this._thOpts(); if (cur[v] !== undefined && typeof cur[v] === "boolean") c.thermo = { ...(c.thermo || {}), [v]: !cur[v] }; this._last = null; }
-    else if (a === "thclr") { const m = { ...(this._thOpts().map || {}) }; delete m[v]; c.thermo = { ...(c.thermo || {}), map: m }; this._last = null; }
+    else if (a === "thclr") { const m = { ...(this._thOpts().map || {}) }, cm = { ...(this._thOpts().cond || {}) }; delete m[v]; delete cm[v]; c.thermo = { ...(c.thermo || {}), map: m, cond: cm }; this._last = null; }
     else if (a === "thscan") { this._thScan(v); return; }
     else if (a === "thscanall") { this._thScan(""); return; }
     else if (a === "thstep") { c.thermo = { ...(c.thermo || {}), step: +v || 0 }; this._last = null; }
@@ -1679,7 +1681,7 @@ class QuintDashboard extends HTMLElement {
   }
   /* the Quint card of any entity: the service cards when the entity has a service, a plain Quint card for the rest */
   /* ---------- the full thermostat card (also for KNX): every function the climate device offers ---------- */
-  _thOpts() { const o = this._c.thermo || {}, b = (k) => o[k] !== false; return { on: b("on"), modes: b("modes"), presets: b("presets"), fan: b("fan"), swing: b("swing"), hum: b("hum"), power: b("power"), range: b("range"), step: [0.1, 0.5, 1].includes(+o.step) ? +o.step : 0, dec: +o.dec === 0 ? 0 : 1, names: o.names && typeof o.names === "object" ? o.names : {}, map: o.map && typeof o.map === "object" ? o.map : {} }; }
+  _thOpts() { const o = this._c.thermo || {}, b = (k) => o[k] !== false; return { on: b("on"), modes: b("modes"), presets: b("presets"), fan: b("fan"), swing: b("swing"), hum: b("hum"), power: b("power"), range: b("range"), step: [0.1, 0.5, 1].includes(+o.step) ? +o.step : 0, dec: +o.dec === 0 ? 0 : 1, names: o.names && typeof o.names === "object" ? o.names : {}, map: o.map && typeof o.map === "object" ? o.map : {}, cond: o.cond && typeof o.cond === "object" ? o.cond : {} }; }
   /* the entity the person chose for one thermostat function (temp, hum, target, mode, preset, fan, swing, power, window, valve, shift, action); "" when none or gone */
   _thFns() { return [
     ["temp", "Current temperature", "sensor", "a sensor that measures the room, instead of the one of the thermostat", 0], ["hum", "Humidity", "sensor", "a humidity sensor of the room", 0],
@@ -1692,7 +1694,15 @@ class QuintDashboard extends HTMLElement {
     ["window", "Window contact", "binary", "shows Window open on the card", 2], ["valve", "Valve / heating output", "sensor", "shows the opening of the valve in percent", 2], ["outdoor", "Outdoor temperature", "sensor", "shows the temperature outside", 2], ["floor", "Floor temperature", "sensor", "shows the temperature of the floor (underfloor heating)", 2], ["presence", "Presence", "binary", "shows Occupied or Empty", 2], ["energy", "Power or energy", "sensor", "shows what the heating uses", 2],
     ["lock", "Child lock", "act", "a switch or lock; a button on the card turns the child lock on and off", 2], ["ecosw", "Eco mode switch", "act", "a switch; a button on the card turns eco mode on and off", 2], ["boost", "Boost", "act", "a button or switch; a Boost button on the card", 2]]; }
   _thGroups() { return [["Entity for each function", "optional: choose another Home Assistant entity for a function, for example the separate KNX group addresses. Empty uses the thermostat itself"], ["Preset temperatures", "the temperatures of the operation modes and the wanted humidity, changed with + / − on the card"], ["More information and switches", "small extra chips and buttons on the card"]]; }
-  _thEnt(id, fn) { const e = ((this._thOpts().map || {})[id] || {})[fn]; return e && this._h.states[e] ? e : ""; }
+  /* "only when": the chosen entity is used only while another entity has a given state (is / is not / above / below) */
+  _thCond(id, fn) { return (((this._thOpts().cond || {})[id] || {})[fn]) || null; }
+  _thCondOk(c) {
+    if (!c || !c.e) return true;
+    const st = this._h.states[c.e]; if (!st) return false;
+    const a = String(st.state).toLowerCase(), b = String(c.v == null ? "" : c.v).trim().toLowerCase(), x = parseFloat(st.state), y = parseFloat(c.v);
+    return c.o === "not" ? a !== b : c.o === "gt" ? Number.isFinite(x) && Number.isFinite(y) && x > y : c.o === "lt" ? Number.isFinite(x) && Number.isFinite(y) && x < y : a === b;
+  }
+  _thEnt(id, fn) { const e = ((this._thOpts().map || {})[id] || {})[fn]; return e && this._h.states[e] && this._thCondOk(this._thCond(id, fn)) ? e : ""; }
   /* the Quint backend looks at the entities of the same device and suggests what serves which function; only empty slots are filled */
   async _thScan(id) {
     this._toast("Looking for the entities of the thermostat" + (id ? "" : "s") + "…");
@@ -1752,7 +1762,7 @@ class QuintDashboard extends HTMLElement {
     /* preset temperatures and the wanted humidity: one small stepper each, only for the entities chosen in Settings */
     const spn = [["comfort", "Comfort", "comfort"], ["standby", "Standby", "away"], ["eco", "Economy", "eco"], ["frost", "Frost protection", ""], ["hum_target", "Humidity", ""]].map(([fn, lb, nk]) => { const e = M(fn), v = num(e); if (!e || v == null) return ""; const at = H[e].attributes, ss = +at.step || (fn === "hum_target" ? 5 : 0.5), lo2 = at.min != null ? +at.min : fn === "hum_target" ? 0 : 5, hi2 = at.max != null ? +at.max : fn === "hum_target" ? 100 : 35, cl = (x) => Math.round(Math.max(lo2, Math.min(hi2, x)) * 100) / 100, sd = (x) => sn2(e, cl(x)), u = fn === "hum_target" ? "%" : "°", nm2 = (nk && o.names[nk]) || lb;
       return `<div class="ths"><small>${E(nm2)}</small><div><button ${sd(v - ss)}>−</button><b>${fn === "hum_target" ? Math.round(v) : this._thF(v)}${u}</b><button ${sd(v + ss)}>+</button></div></div>`; }).join(""), thsp = spn ? `<div class="thsp">${spn}</div>` : "";
-    return `<div class="card thm ${off || gone ? "" : "on"}" data-id="th:${E(id)}" style="--dc:${col}"><div class="thh"><div class="thn"><b>${E(this._nm(id))}</b><small>${E(lab)}${a.preset_mode && a.preset_mode !== "none" ? " · " + E(this._thName(a.preset_mode)) : ""}</small></div>${pw}</div><div class="thb">${dial}<div class="thy">${ctl}</div></div>${thf}${thsp}${modes}${pre}${fan}${swg}</div>`;
+    return `<div class="card thm ${off || gone ? "" : "on"}" data-id="th:${E(id)}" style="--dc:${col}"><div class="thh"><div class="thn"><b>${E(this._nm(id))}</b><small>${E(lab)}${a.preset_mode && a.preset_mode !== "none" ? " · " + E(this._thName(a.preset_mode)) : ""}</small></div>${this._admin() ? `<button class="thp the2" data-go='${JSON.stringify({ p: "settings", tab: "thermo", th: id }).replace(/'/g, "&#39;")}' title="Edit entities and conditions">${GEAR_I}</button>` : ""}${pw}</div><div class="thb">${dial}<div class="thy">${ctl}</div></div>${thf}${thsp}${modes}${pre}${fan}${swg}</div>`;
   }
   _devCard(id) {
     if (this._svcOf(id)) return this._card(id);
@@ -1814,6 +1824,7 @@ class QuintDashboard extends HTMLElement {
   _entOk(id) { return this._svOk(this._svcOf(id)) && this._rmOk(this._roomOf(id)); }
   _sceneOk(x) { return !this._perm() || (this._rmOk(x.room) && (x.items || []).every((i) => this._entOk(i.e))); }
   _nav(p, x = {}, pop) {
+    if (x && x.th) { const { th, ...rest } = x; this._pick = { ...(this._pick || {}), thsel: th }; this._dsh = null; x = rest; }
     if (this._v.p === "settings" && p !== "settings" && this._dirty) { if (!confirm("Discard unsaved settings changes?")) return false; this._revert(); }
     if (p === "settings" && this._v.p !== "settings") { this._snap = JSON.stringify(this._c); this._dirty = false; }
     const nv = { p, ...x };
@@ -1950,9 +1961,19 @@ class QuintDashboard extends HTMLElement {
       const v = t.value.trim().toLowerCase(), id = d.tid;
       if (v && !this._h.states[v]) { this._toast("No entity " + v + " in Home Assistant"); this._last = null; this._draw(true); return; }
       const m = { ...(this._thOpts().map || {}) }, cur = { ...(m[id] || {}) };
-      if (v) cur[d.the] = v; else delete cur[d.the];
+      if (v) cur[d.the] = v; else { delete cur[d.the]; const cm = { ...(this._thOpts().cond || {}) }; if (cm[id]) { cm[id] = { ...cm[id] }; delete cm[id][d.the]; if (!Object.keys(cm[id]).length) delete cm[id]; this._c.thermo = { ...(this._c.thermo || {}), cond: cm }; } }
       if (Object.keys(cur).length) m[id] = cur; else delete m[id];
       this._c.thermo = { ...(this._c.thermo || {}), map: m }; this._save(); this._last = null; this._draw(true); return;
+    }
+    if (adm && d.thc !== undefined) {
+      const id = d.tid, fn = d.thc, k = d.thk, m = { ...(this._thOpts().cond || {}) }, cur = { ...(m[id] || {}) }, c0 = { ...(cur[fn] || {}) };
+      let v = t.value.trim();
+      if (k === "e") { v = v.toLowerCase(); if (v && !this._h.states[v]) { this._toast("No entity " + v + " in Home Assistant"); this._last = null; this._draw(true); return; } c0.e = v; if (!v) { delete cur[fn]; } }
+      else if (k === "o") c0.o = ["is", "not", "gt", "lt"].includes(v) ? v : "is";
+      else c0.v = v.replace(/[<>&"'\\]/g, "").slice(0, 40);
+      if (c0.e) { c0.o = c0.o || "is"; cur[fn] = c0; }
+      if (Object.keys(cur).length) m[id] = cur; else delete m[id];
+      this._c.thermo = { ...(this._c.thermo || {}), cond: m }; this._save(); this._last = null; this._draw(true); return;
     }
     if (adm && d.thl) { const th = (this._c.thermo = { ...(this._c.thermo || {}) }); th.names = { ...(th.names || {}), [d.thl]: t.value.trim().replace(/['"<>\\&]/g, "").slice(0, 20) }; this._save(); this._draw(true); return; }
     if (adm && d.svct) { this._c.svcTitle = this._c.svcTitle || {}; this._c.svcTitle[d.svct] = t.value.trim().replace(/['"<>\\&]/g, "").slice(0, 24); this._save(); this._draw(true); return; }
@@ -4436,9 +4457,11 @@ class QuintDashboard extends HTMLElement {
           row("Show", "temperatures with a decimal or in whole degrees", seg([[1, "21.5°"], [0, "22°"]], o.dec, "thdec"))) +
         (first ? (T.length > 1 ? sec("Thermostat", T.length + " thermostats", `<div class="seg sm" style="flex-wrap:wrap;margin:0 0 10px">${T.slice(0, 12).map((i) => `<button class="${i === first ? "on" : ""}" data-pick="thsel|${E(i)}">${E(this._nm(i))}</button>`).join("")}</div>`) : "") +
           (() => { const KD = { sensor: "sensor", binary: "binary_sensor", number: "num", select: "sel", switch: "swi", act: "act" }, PH = { sensor: "sensor.", binary: "binary_sensor.", number: "number.", select: "select.", switch: "switch.", act: "switch. / lock. / button." };
+            const cond = (fn) => { const c = ((o.cond || {})[first] || {})[fn] || {}, bad = c.e && !this._h.states[c.e], at = (k) => `data-thc="${fn}" data-tid="${E(first)}" data-thk="${k}"`;
+              return `<div class="cdl"><small>Only when</small><input class="cde" type="text" ${at("e")} list="thd-all" value="${E(c.e || "")}" placeholder="entity (optional)" autocomplete="off"><select ${at("o")}>${[["is", "is"], ["not", "is not"], ["gt", "above"], ["lt", "below"]].map(([k, n]) => `<option value="${k}" ${(c.o || "is") === k ? "selected" : ""}>${n}</option>`).join("")}</select><input class="cdv" type="text" ${at("v")} value="${E(c.v || "")}" placeholder="value">${c.e ? `<em class="${bad ? "the-bad" : ""}" style="font-style:normal;font-size:11px;color:${bad ? "#ff8a8a" : "var(--mu)"}">${bad ? "not found" : this._thCondOk(c) ? "met now" : "not met now"}</em>` : ""}</div>`; };
             const one = ([fn, nme, kind, hint]) => { const cur = ((o.map || {})[first] || {})[fn] || "", ok = !cur || this._h.states[cur];
-              return row(nme, hint, `<div class="the"><input type="text" data-the="${fn}" data-tid="${E(first)}" list="thd-${KD[kind]}" value="${E(cur)}" placeholder="${E(PH[kind])}" autocomplete="off">${cur ? `<em class="${ok ? "" : "bad"}">${ok ? E(String(this._h.states[cur].state).slice(0, 18)) : "not found"}</em>` : ""}</div>`); };
-            const doms = { sensor: ["sensor"], binary_sensor: ["binary_sensor"], num: ["number", "input_number"], sel: ["select", "input_select"], swi: ["switch", "input_boolean"], act: ["switch", "input_boolean", "lock", "button", "input_button"] }, base = first.split(".")[1] || "";
+              return row(nme, hint, `<div class="the"><input type="text" data-the="${fn}" data-tid="${E(first)}" list="thd-${KD[kind]}" value="${E(cur)}" placeholder="${E(PH[kind])}" autocomplete="off">${cur ? `<em class="${ok ? "" : "bad"}">${ok ? E(String(this._h.states[cur].state).slice(0, 18)) : "not found"}</em>` : ""}</div>${cur ? cond(fn) : ""}`); };
+            const doms = { sensor: ["sensor"], binary_sensor: ["binary_sensor"], num: ["number", "input_number"], sel: ["select", "input_select"], swi: ["switch", "input_boolean"], act: ["switch", "input_boolean", "lock", "button", "input_button"], all: ["sensor", "binary_sensor", "switch", "input_boolean", "input_select", "select", "climate", "lock", "number", "input_number", "weather", "person", "sun"] }, base = first.split(".")[1] || "";
             const dls = Object.keys(doms).map((k) => `<datalist id="thd-${k}">${Object.keys(this._h.states).filter((i) => doms[k].includes(i.split(".")[0])).sort((x, y) => (y.includes(base) ? 1 : 0) - (x.includes(base) ? 1 : 0) || (x < y ? -1 : 1)).slice(0, 400).map((i) => `<option value="${E(i)}">`).join("")}</datalist>`).join("");
             const done = Object.keys((o.map || {})[first] || {}).length;
             return this._thGroups().map(([tt, sub], gi) => sec(tt, gi ? sub : done + " chosen · " + sub, (gi ? "" : `<div class="btns" style="margin:2px 0 8px"><button data-s="thscan|${E(first)}">Find automatically</button>${T.length > 1 ? '<button data-s="thscanall|">Find for all thermostats</button>' : ""}<button data-s="thclr|${E(first)}">Clear all</button></div>`) + this._thFns().filter((f) => f[4] === gi).map(one).join(""))).join("") + dls; })() : "") +

@@ -270,3 +270,42 @@ def thermo_call(fn: str, entity_id: str, value, climate_id: str):
             raise ValueError("Needs on or off")
         return "climate", "turn_on" if want else "turn_off", cid
     raise ValueError("This function needs an entity chosen in Settings")
+
+
+def clean_thermo_cond(raw) -> dict:
+    """Keep only {climate_id: {function: {e, o, v}}}: "use the entity of this function only when entity e is / is not / above / below v"."""
+    import re
+
+    ok = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
+    out: dict = {}
+    if not isinstance(raw, dict):
+        return out
+    for cid, m in list(raw.items())[:200]:
+        if not isinstance(m, dict) or not ok.match(str(cid)):
+            continue
+        row = {}
+        for fn, c in m.items():
+            if fn in THERMO_FUNCS and isinstance(c, dict) and ok.match(str(c.get("e", ""))):
+                row[fn] = {"e": str(c["e"]), "o": c.get("o") if c.get("o") in ("is", "not", "gt", "lt") else "is", "v": str(c.get("v", ""))[:40]}
+        if row:
+            out[str(cid)] = row
+    return out
+
+
+def thermo_cond_ok(cond, state) -> bool:
+    """Is the condition {e, o, v} met, given the state text of its entity (None when the entity is gone)?"""
+    if not cond or not cond.get("e"):
+        return True
+    if state is None:
+        return False
+    a, b = str(state).strip().lower(), str(cond.get("v", "")).strip().lower()
+    op = cond.get("o", "is")
+    if op == "not":
+        return a != b
+    if op in ("gt", "lt"):
+        try:
+            x, y = float(a), float(b)
+        except ValueError:
+            return False
+        return x > y if op == "gt" else x < y
+    return a == b
