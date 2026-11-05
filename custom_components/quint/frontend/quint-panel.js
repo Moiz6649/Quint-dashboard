@@ -46,6 +46,9 @@ const MUSIC_I = ic('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><ci
 const PREV_I = ic('<path d="M19 20L9 12l10-8z"/><path d="M5 19V5"/>');
 const NEXT_I = ic('<path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/>');
 const PLAY_I = ic('<path d="M7 4l13 8-13 8z" fill="currentColor"/>');
+const PWR_I = ic('<path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/>');
+const DB_PERSON = ic('<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>');
+const DB_WARN = ic('<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>');
 const PAUSE_I = ic('<path d="M8 5v14M16 5v14" stroke-width="3"/>');
 const PHONE_I = SV.intercom.i;
 const VIDEO_I = SV.cameras.i;
@@ -102,7 +105,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.67.0";
+const VER = "1.68.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -225,6 +228,33 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .mxs.mcd .cam1{padding:8px}.mxs.mcd .cam1 .cvw{height:100%;aspect-ratio:auto}
 .mxs.mcd .wrow{margin:2px 0}.mxs.mcd .sbig{font-size:60px}
 .mxs.g.mxp{margin-bottom:6px;gap:9px;grid-auto-rows:calc(118px*var(--z,1)*var(--mxk,1))}
+.mxs.g.dbd{gap:12px;grid-template-columns:var(--mxt);grid-auto-rows:calc(62px*var(--mxk,1));grid-auto-flow:dense;zoom:var(--z,1)}
+.mxs.dbd>.bc{zoom:1;height:100%;min-height:0}
+.dbt{padding:9px 12px;border-radius:18px;gap:8px;justify-content:center;overflow:hidden}
+.dbt.d1{grid-row:span 1}.dbt.dl,.dbt.dc,.dbt.dm{grid-row:span 2}.dbt.dk{grid-row:span 3}.dbt.dv{grid-row:span 2;grid-column:span 2;padding:0}.dbt.dbw{grid-column:span 2;grid-row:span 3;justify-content:space-between}.dbt.dbw.nw{grid-row:span 2;justify-content:center}
+.dbt.dba{cursor:pointer;border-style:dashed}.dbt.off{opacity:.55}
+.dbh{display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer}
+.dbi{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.09);color:var(--mu);font-style:normal;font-size:20px}.dbi svg{width:20px;height:20px}
+.dbt.on .dbi{background:color-mix(in srgb,var(--c) 26%,transparent);color:var(--c)}
+.dbn{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}.dbn b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dbn small{font-size:12px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dbt.on .dbn small{color:color-mix(in srgb,var(--c) 70%,var(--tx))}
+.dbt.warn .dbi,.dbt.warn .dbn small{color:var(--warn)}.dbt.bad .dbi,.dbt.bad .dbn small{color:var(--bad)}
+.dbs{position:relative;height:30px;border-radius:12px;background:rgba(255,255,255,.12);overflow:hidden;--v:0%;flex:none}
+.dbs::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--v);background:var(--c)}
+.dbs.str::before{background:repeating-linear-gradient(90deg,var(--c) 0 5px,color-mix(in srgb,var(--c) 68%,#000) 5px 8px)}
+.dbs::after{content:"";position:absolute;top:7px;bottom:7px;left:calc(var(--v) - 9px);width:3px;border-radius:2px;background:rgba(255,255,255,.95);box-shadow:0 0 4px rgba(0,0,0,.35)}
+.dbs input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer;z-index:2}
+.dbb{display:flex;gap:8px;flex:none}.dbb button{flex:1;height:30px;border-radius:10px;border:0;background:rgba(255,255,255,.1);color:var(--tx);font:inherit;font-size:15px;cursor:pointer;display:grid;place-items:center;padding:0}.dbb button svg{width:16px;height:16px}.dbb button:active{transform:scale(.96)}
+.dbb button.pw.on,.dbt.on .dbb button.pp{background:var(--c);color:#10131c}
+.dkh{justify-content:center}.dkh b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dkg{position:relative;flex:1;min-height:0;display:grid;place-items:center}.dkg svg{height:100%;max-height:110px;aspect-ratio:1}
+.dkg circle{fill:none;stroke-width:9;stroke-linecap:round}.dtr{stroke:rgba(255,255,255,.12)}.dvl{stroke:var(--dc)}
+.dkc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;pointer-events:none}.dkc small{font-size:11px;color:var(--dc);font-weight:600}.dkc b{font-size:26px;font-weight:600}.dkc b sup{font-size:12px;vertical-align:top}.dkc span{font-size:11px;color:var(--mu)}
+.dbt.dv img.cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;margin:0;border-radius:0;aspect-ratio:auto;pointer-events:none}
+.dvn{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-between;padding:10px 12px;background:linear-gradient(180deg,transparent 45%,rgba(8,10,18,.8));cursor:pointer}.dvn b{font-size:14px}
+.dbw .dw1{display:flex;align-items:center;gap:12px}.dwi{width:44px;height:44px;color:#ffd166;flex:none;font-style:normal}.dwi svg{width:100%;height:100%}.dwc{display:flex;flex-direction:column;flex:1;min-width:0}.dwc b{font-size:19px;font-weight:600}.dwc small{font-size:12px;color:var(--mu)}.dwc small svg{width:11px;height:11px;vertical-align:-1px}
+.dwt{font-size:34px;font-weight:600;line-height:1}.dwt sup{font-size:15px;vertical-align:top}
+.dwk{display:flex;align-items:baseline;gap:12px}.dwk .clk2{font-size:40px;line-height:1;font-weight:600;margin:0}.dwk small{color:var(--mu);font-size:13px}
+.dwf{display:flex;justify-content:space-between;gap:6px}.dwf>div{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;font-size:12px}.dwf span{color:var(--mu)}.dwf i{width:22px;height:22px;font-style:normal;color:var(--tx)}.dwf i svg{width:100%;height:100%}.dwf b{font-weight:600}
 :host([data-dev="phone"]) .mxs.g{gap:9px}:host([data-dev="phone"]) .bc.mxc{padding:12px 13px}:host([data-dev="phone"]) .mxv{font-size:calc(23px*var(--z,1)*var(--mxk,1))}:host([data-dev="phone"]) .mxc .clk2{font-size:calc(26px*var(--z,1)*var(--mxk,1))}
 .bc.mxc>.mxt,.bc.mxc>.mxb{position:relative;z-index:1}
 .bc.mxc.hasbg{background:#0b0e16}.bc.mxc .cam.mxbg{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0;aspect-ratio:auto;object-fit:cover;opacity:.42;z-index:0;pointer-events:none;cursor:inherit}
@@ -1371,6 +1401,7 @@ class QuintDashboard extends HTMLElement {
     if (d.sdq !== undefined && this._sd) { this._sd.q = t.value.toLowerCase(); this._draw(true); }
     if (d.pbr) { this._bgLocal({ [d.pbr]: +t.value }); }
     if (d.dfilter !== undefined) { this._dflt = t.value; this._draw(true); }
+    if (d.slider && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains("dbs")) t.parentNode.style.setProperty("--v", Math.max(0, Math.min(100, ((+t.value - +t.min) / (+t.max - +t.min)) * 100)) + "%");
   }
   async _loadCfg() {
     try {
@@ -2827,7 +2858,7 @@ class QuintDashboard extends HTMLElement {
       <div class="btns" style="margin-top:16px"><button class="pri" data-pers="close">Done</button></div></div></div>`;
   }
   /* ---------- matrix home: all tiles the same size on a grid ---------- */
-  _hmx() { const o = this._c.hmx || {}; return { on: o.on !== false, style: o.style === "tiles" ? "tiles" : "cards", cols: [2, 3, 4, 5, 6].includes(+o.cols) ? +o.cols : 0, size: ["s", "m", "l"].includes(o.size) ? o.size : "m" }; }
+  _hmx() { const o = this._c.hmx || {}; return { on: o.on !== false, style: o.style === "tiles" ? "tiles" : o.style === "dash" ? "dash" : "cards", cols: [2, 3, 4, 5, 6].includes(+o.cols) ? +o.cols : 0, size: ["s", "m", "l"].includes(o.size) ? o.size : "m" }; }
   /* what a service shows on its cell: a big value, a caption and whether it is active */
   _mxInfo(k) {
     const H = this._h.states, st = (i) => H[i].state, E = (t) => this._esc(t), S = SV[k] || { n: k, c: "#8d9ab8", i: "" };
@@ -2892,13 +2923,91 @@ class QuintDashboard extends HTMLElement {
     return +Math.max(1, Math.min(1.6, ((area - 16 * (cols - 1)) / cols) / (340 * z))).toFixed(2);
   }
   _mxStyle(cols, cards, side) { const mo = this._hmx(), n = cols || this._mxCols(0) || 3; return `--mxk:${{ s: 0.86, m: 1, l: 1.2 }[mo.size]};--mxt:repeat(${n},minmax(0,1fr));${cards ? `--mxz:${this._mxZ(n, side)};` : ""}`; }
+  /* ---------- the Dashboard tile layout: one small tile for each device ---------- */
+  _dbCols(side) {
+    const mo = this._hmx(); if (mo.cols) return mo.cols;
+    const w = this._w || 1024, wide = this.getAttribute("data-wide") === "1", area = (wide ? w - 88 : w - 56) - (side || 0), z = this._z || 1, k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1;
+    return Math.max(2, Math.min(10, Math.floor((area / z + 12) / (190 * k + 12))));
+  }
+  _dbKey(id) { const d = this._devList().find((x) => x.ids.includes(id)); return d ? d.key : ""; }
+  _dbSl(v, spec, id, min, max, cls) { return `<div class="dbs ${cls || ""}" style="--v:${Math.max(0, Math.min(100, max > min ? ((v - min) / (max - min)) * 100 : 0))}%"><input type=range min=${min} max=${max} value=${v} data-slider="${spec}" data-e="${this._esc(id)}"></div>`; }
+  _dbWeather() {
+    const c = this._c, H = this._h.states, E = (t) => this._esc(t), wid = c.noWeather ? "" : Object.keys(H).find((i) => i.startsWith("weather.")), w = wid && H[wid].attributes.temperature != null ? H[wid] : null;
+    if (!w && c.noClock) return "";
+    const lang = (this._h.locale && this._h.locale.language) || undefined, now = new Date(), date = now.toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" });
+    let top = "", fcH = "";
+    if (w) {
+      const a = w.attributes, cond = WX[w.state] || String(w.state).replace(/[-_]/g, " "), fc = a.forecast && a.forecast.length ? a.forecast.slice(0, 5) : this._fcast(wid);
+      top = `<i class="dwi">${this._wxIcon(w.state)}</i><div class="dwc"><b>${E(cond)}</b><small>${a.humidity != null ? E(DROP_I + " " + Math.round(a.humidity) + "%") : E(date)}</small></div><div class="dwt">${this._fmt(a.temperature)}<sup>°</sup></div>`.replace(E(DROP_I), DROP_I);
+      fcH = fc.length ? `<div class="dwf">${fc.slice(0, 5).map((d) => { const dt = new Date(d.datetime); return `<div><span>${E(dt.toLocaleDateString(lang, { weekday: "short" }))}</span><i>${this._wxIcon(d.condition)}</i><b>${d.temperature != null ? Math.round(d.temperature) + "°" : ""}</b></div>`; }).join("")}</div>` : "";
+    }
+    const clk = c.noClock ? "" : `<div class="dwk">${this._clockBlock("tl", "digital")}<small>${E(date)}</small></div>`;
+    return `<div class="bc dbt dbw ${w ? "" : "nw"}" data-id="b:clock" style="--c:#e8c98f"><div class="dw1">${top}</div>${clk}${fcH}</div>`;
+  }
+  _dbTile(id) {
+    const H = this._h.states, s = H[id]; if (!s) return "";
+    const E = (t) => this._esc(t), d = id.split(".")[0], a = s.attributes, st = s.state, svc = this._svcOf(id), S = svc ? SV[svc] : DEVS, off = ["unavailable", "unknown"].includes(st), nm = E(this._nm(id));
+    const key = this._dbKey(id), open = key ? `data-dsh="${E(key)}"` : "", cap = (x) => String(x).charAt(0).toUpperCase() + String(x).slice(1).replace(/_/g, " ");
+    const hdr = (state, act, x) => `<div class="dbh" ${act || open}><i class="dbi">${S.i}</i><span class="dbn"><b>${nm}</b><small>${E(state)}</small></span>${x || ""}</div>`;
+    const tile = (cls, inner, on, col) => `<div class="bc dbt ${cls} ${on ? "on" : ""} ${off ? "off" : ""}" data-id="db:${E(id)}" style="--c:${col || S.c}">${inner}</div>`;
+    const tog = (dm) => `data-act="${dm}.toggle" data-e="${E(id)}"`, on = st === "on";
+    if (off) return tile("d1", hdr("Offline"), false);
+    if (d === "light") {
+      const br = a.brightness, pct = br != null ? Math.round(br / 2.55) : 0, dim = !(a.supported_color_modes || []).every((m) => m === "onoff"), col = on && Array.isArray(a.rgb_color) ? `rgb(${a.rgb_color.slice(0, 3).join(",")})` : "";
+      const state = on ? (br != null ? pct + "%" : "On") : "Off";
+      return dim ? tile("dl", hdr(state, tog("light")) + this._dbSl(on ? pct : 0, "light|turn_on|brightness_pct|1", id, 1, 100), on, col) : tile("d1", hdr(state, tog("light")), on, col);
+    }
+    if (["switch", "fan", "input_boolean", "humidifier", "siren"].includes(d)) return tile("d1", hdr(on ? "On" : "Off", tog(d)), on);
+    if (d === "cover") {
+      const p = a.current_position, closed = st === "closed", state = (cap(st)) + (p != null && !["closed"].includes(st) ? " · " + Math.round(p) + "%" : ""), act = (x, y) => `<button data-act="cover.${x}" data-e="${E(id)}">${y}</button>`;
+      return tile("dc", hdr(state) + (p != null ? this._dbSl(Math.round(p), "cover|set_cover_position|position|1", id, 0, 100, "str") : `<div class="dbb">${act("open_cover", "▲")}${act("stop_cover", "■")}${act("close_cover", "▼")}</div>`), !closed);
+    }
+    if (d === "climate") {
+      const tg = a.temperature, cur = a.current_temperature != null ? a.current_temperature : tg, step = a.target_temp_step || 0.5, mn = a.min_temp != null ? +a.min_temp : 7, mx = a.max_temp != null ? +a.max_temp : 35, o = st === "off";
+      const col = o ? "#8d9ab8" : a.hvac_action === "heating" ? "#ff8a3d" : a.hvac_action === "cooling" ? "#4da3ff" : S.c, R = 46, C = 2 * Math.PI * R, arc = C * 0.75, f = cur != null && mx > mn ? Math.max(0, Math.min(1, (cur - mn) / (mx - mn))) : 0;
+      const lab = o ? "Off" : a.hvac_action === "heating" ? "Heating" : a.hvac_action === "cooling" ? "Cooling" : cap(st), x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
+      const bt = (act, extra, label, cls) => `<button class="${cls || ""}" data-act="${act}" data-e="${E(id)}" ${extra || ""}>${label}</button>`;
+      const ctl = tg != null && !o ? bt("climate.set_temperature", `data-x='${x(tg - step)}'`, "−") + bt("climate.set_temperature", `data-x='${x(+tg + step)}'`, "+") : "";
+      return tile("dk", `<div class="dbh dkh" ${open}><b>${nm}</b></div><div class="dkg" style="--dc:${col}"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="${R}" class="dtr" stroke-dasharray="${arc} ${C}" transform="rotate(135 60 60)"/><circle cx="60" cy="60" r="${R}" class="dvl" stroke-dasharray="${arc * f} ${C}" transform="rotate(135 60 60)"/></svg><div class="dkc"><small>${E(lab)}</small><b>${cur != null ? this._fmt(cur) : "–"}<sup>°</sup></b>${tg != null && !o ? `<span>◎ ${this._fmt(tg)}°</span>` : ""}</div></div><div class="dbb">${ctl}${bt(o ? "climate.turn_on" : "climate.turn_off", "", PWR_I, o ? "" : "pw")}</div>`, !o, col);
+    }
+    if (d === "media_player") {
+      const pl = st === "playing", act = (x, y, c) => `<button ${c ? `class="${c}"` : ""} data-act="media_player.${x}" data-e="${E(id)}">${y}</button>`;
+      const state = pl ? (a.media_title || "Playing") : st === "paused" ? "Paused" : st === "off" ? "Off" : st === "idle" ? "Idle" : cap(st);
+      return tile("dm", hdr(state) + `<div class="dbb">${act("media_previous_track", PREV_I)}${act("media_play_pause", pl ? PAUSE_I : PLAY_I, "pp")}${act("media_next_track", NEXT_I)}</div>`, pl);
+    }
+    if (d === "camera") {
+      const src = a.entity_picture ? this._h.hassUrl(a.entity_picture) : "";
+      return src ? tile("dv", `<img class="cam" data-src="${E(src)}" src="${E(src)}" alt=""><div class="dvn" data-cam="${E(id)}"><b>${nm}</b><span class="live">Live</span></div>`, true) : tile("d1", hdr("Camera"), true);
+    }
+    if (["lock", "alarm_control_panel", "binary_sensor"].includes(d) && (d !== "binary_sensor" || svc === "security")) {
+      const [t, cl] = this._sec(id), dc = a.device_class, I = d === "lock" ? S.i : d === "alarm_control_panel" ? SHIELD_I : ["motion", "occupancy", "presence"].includes(dc) ? DB_PERSON : ["smoke", "gas", "carbon_monoxide", "moisture", "safety", "problem", "tamper"].includes(dc) ? DB_WARN : ICONS.door;
+      return tile("d1 " + (cl === "b" ? "bad" : cl === "w" ? "warn" : ""), hdr(t, "", "").replace(S.i, I), !cl);
+    }
+    const r = this._devState({ main: id });
+    return tile("d1", hdr(r.v), r.on);
+  }
+  _dbCells(key) {
+    const k = key.slice(2), H = this._h.states, E = (t) => this._esc(t);
+    if (k === "camwall" || k === "house") return [];
+    if (k === "intercom") return this._icList().map((ic) => { const ring = this._ringing(ic), dr = this._icDoor(ic); return `<div class="bc dbt d1 ${ring ? "on ringing" : ""}" data-id="db:ic:${E(ic.id)}" ${this._tileGo(k)} style="--c:${SV.intercom.c}"><div class="dbh"><i class="dbi">${SV.intercom.i}</i><span class="dbn"><b>${E(this._icName(ic))}</b><small>${ring ? "Ringing" : dr ? E(dr.word) : "Ready"}</small></span></div></div>`; });
+    if (["lights", "climate", "media", "shades", "security", "cameras"].includes(k)) {
+      const ids = this._tileIds(k), explicit = Array.isArray((this._c.tiles || {})[k]), lim = explicit ? 40 : k === "lights" ? 8 : 12;
+      const out = ids.slice(0, lim).map((i) => this._dbTile(i)).filter(Boolean);
+      if (ids.length > lim) out.push(`<div class="bc dbt d1" data-id="db:more:${E(k)}" ${this._tileGo(k)} style="--c:${SV[k].c}"><div class="dbh"><i class="dbi">${SV[k].i}</i><span class="dbn"><b>${ids.length - lim} more</b><small>${E(SV[k].n)}</small></span></div></div>`);
+      return out;
+    }
+    const o = this._mxInfo(k), S = SV[k] || { c: "#8d9ab8", i: "" };
+    return [`<div class="bc dbt d1 ${o.on ? "on" : ""} ${o.cls || ""}" data-id="db:s:${E(k)}" ${this._tileGo(k)} style="--c:${S.c}"><div class="dbh"><i class="dbi">${S.i}</i><span class="dbn"><b>${E(o.n)}</b><small>${E([o.v, o.l].filter(Boolean).join(" · "))}</small></span></div></div>`];
+  }
   _mxBuild(keys0, partsOf, addH) {
     let keys = keys0.slice();
     const mo = this._hmx(), segs = [];
     if (!this._hlayStored() && keys.includes("b:scenes")) { keys = keys.filter((k) => k !== "b:scenes"); let j = -1; keys.forEach((k, i) => { if (k[0] === "s") j = i; }); keys.splice(j + 1, 0, "b:scenes"); }   // not arranged yet: the scenes sit under the tiles
     const add = (t, h) => { const l = segs[segs.length - 1]; if (l && l.t === t && t !== "b") l.h.push(h); else segs.push({ t, h: [h] }); };
-    const cards = mo.style === "cards"; this._mcd = cards;
+    const cards = mo.style === "cards", dash = mo.style === "dash"; this._mcd = cards;
     keys.forEach((key) => {
+      if (dash && key[0] === "s") { if (key === "s:more" && !this._csHas("more")) return; this._dbCells(key).forEach((h) => add("g", h)); return; }
+      if (dash && key === "b:clock") { const w = this._dbWeather(); if (w) add("g", w); return; }
       if (cards && key === "s:more" && !this._csHas("more")) return;
       if (cards && (key[0] === "s" || (key[0] === "b" && key !== "b:house"))) partsOf(key).forEach((p) => add("g", p.h));
       else if (key === "b:clock") this._mxCells("s:clock").forEach((h) => add("g", h.replace(/data-hi="s:clock"/, 'data-hi="b:clock"')));
@@ -2909,8 +3018,8 @@ class QuintDashboard extends HTMLElement {
     this._mcd = false;
     const gs = segs.filter((g) => g.t === "g"), big = gs.reduce((a, g) => (!a || g.h.length > a.h.length ? g : a), null);
     if (addH) { if (big) big.h.push(addH); else segs.push({ t: "g", h: [addH] }); }
-    const st = this._mxStyle(this._mxCols(Math.max(0, ...segs.filter((g) => g.t === "g").map((g) => g.h.length)), cards), cards);
-    return segs.map((g) => `<div class="mxs ${g.t}${cards && g.t === "g" ? " mcd" : ""}" style="${st}">${g.h.join("")}</div>`).join("");
+    const st = dash ? this._mxStyle(this._dbCols()) : this._mxStyle(this._mxCols(Math.max(0, ...segs.filter((g) => g.t === "g").map((g) => g.h.length)), cards), cards);
+    return segs.map((g) => `<div class="mxs ${g.t}${cards && g.t === "g" ? " mcd" : ""}${dash && g.t === "g" ? " dbd" : ""}" style="${st}">${g.h.join("")}</div>`).join("");
   }
   _bento(k) { const r = this._bentoOne(k); return (Array.isArray(r) ? r : [r]).map((p) => ({ ...p, h: p.h.replace(/^<div /, `<div data-sk="${this._esc(k)}" data-hi="s:${this._esc(k)}" style="--sc:${(SV[k] || {}).c || "#8d9ab8"}" `) })); }
   _bentoOne(k) {
@@ -3046,7 +3155,7 @@ class QuintDashboard extends HTMLElement {
     };
     parts.forEach((p) => { if (p.wide) { flush(); bento += `<div class="bwide">${p.h}</div>`; } else grp.push(p); });
     flush();
-    const addMx = adm && mxo.on && !phone ? `<div class="bc mxc mxadd" data-cc="open:home"><div class="mxt"><i class="mxi">＋</i></div><div class="mxb"><span class="mxn">Add card</span><small class="mxl">your own card on the home page</small></div></div>` : "";
+    const addMx = adm && mxo.on && !phone && mxo.style === "dash" ? `<div class="bc dbt d1 dba" data-cc="open:home" style="--c:#8d9ab8"><div class="dbh"><i class="dbi">＋</i><span class="dbn"><b>Add card</b><small>your own card on the home page</small></span></div></div>` : adm && mxo.on && !phone ? `<div class="bc mxc mxadd" data-cc="open:home"><div class="mxt"><i class="mxi">＋</i></div><div class="mxb"><span class="mxn">Add card</span><small class="mxl">your own card on the home page</small></div></div>` : "";
     let any = parts.length > 0; if (mxo.on && !phone) { bento = this._mxBuild(keys, partsOf, addMx); any = !!bento; }
     if (!any) bento = phone ? "" : '<div class="bc">Nothing to show yet.</div>';
     const add = mxo.on && !phone ? "" : adm ? `<div class="grid addg"><div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div></div>` : "";
@@ -4183,7 +4292,7 @@ class QuintDashboard extends HTMLElement {
       body = sec("Home screen", "what the home page shows",
         row("Clock", "the clock tile on the home page", tg(!c.noClock, 'data-s="flag|noClock"')) +
         row("Clock style", "digital numbers or an analog face, for the home clock and the clock saver", `<div class="seg sm">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${(c.cks === "analog" ? "analog" : "digital") === k ? "on" : ""}" data-s="cks|${k}">${n}</button>`).join("")}</div>`) +
-        row("Tile layout", "Matrix cards: every card is the same size on a grid and keeps its controls. Compact tiles: a small tile with the state and one quick button. Flow: each card takes the height it needs", `<div class="seg sm">${[["cards", "Matrix cards"], ["tiles", "Compact tiles"], ["flow", "Flow"]].map(([k, n]) => `<button class="${(this._hmx().on ? this._hmx().style : "flow") === k ? "on" : ""}" data-s="hmx|mode|${k}">${n}</button>`).join("")}</div>`) +
+        row("Tile layout", "Dashboard: one tile for each device, small tiles with a switch, a brightness bar for lights, a position bar for shades and a round gauge for climate. Matrix cards: every card is the same size on a grid and keeps its controls. Compact tiles: a small tile with the state and one quick button. Flow: each card takes the height it needs", `<div class="seg sm">${[["dash", "Dashboard"], ["cards", "Matrix cards"], ["tiles", "Compact tiles"], ["flow", "Flow"]].map(([k, n]) => `<button class="${(this._hmx().on ? this._hmx().style : "flow") === k ? "on" : ""}" data-s="hmx|mode|${k}">${n}</button>`).join("")}</div>`) +
         (this._hmx().on ? row("Matrix columns", "how many tiles sit side by side. Auto fits the screen", `<div class="seg sm">${[[0, "Auto"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"]].map(([k, n]) => `<button class="${this._hmx().cols === k ? "on" : ""}" data-s="hmx|cols|${k}">${n}</button>`).join("")}</div>`) +
         row("Matrix tile size", "the size of every tile", `<div class="seg sm">${[["s", "Small"], ["m", "Medium"], ["l", "Large"]].map(([k, n]) => `<button class="${this._hmx().size === k ? "on" : ""}" data-s="hmx|size|${k}">${n}</button>`).join("")}</div>`) : "") +
         row("Home page layout", "everyone can drag every item (clock, weather, greeting, scenes, tiles, cards) to any place: hold for 2 seconds. What you arrange here is the layout everyone starts with", '<button class="sbtn" data-s="hbreset|">Reset the shared layout</button>') +
