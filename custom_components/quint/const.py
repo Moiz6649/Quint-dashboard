@@ -1,5 +1,5 @@
 """Constants for Quint Dashboard."""
 DOMAIN = "quint"
-VERSION = "1.71.0"
+VERSION = "1.72.0"
 PANEL_PATH = "quint"
 STATIC_URL = "/quint_static"
