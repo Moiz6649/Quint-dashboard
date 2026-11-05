@@ -105,7 +105,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.70.0";
+const VER = "1.71.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -1283,7 +1283,9 @@ class QuintDashboard extends HTMLElement {
     if (Array.isArray(o.hbOrder)) c.hbOrder = o.hbOrder.filter((x) => ["clock", "wx", "greet", "scenes"].includes(x));
     if (o.tiles) c.tiles = { ...(c.tiles || {}), ...o.tiles };
     if (Array.isArray(o.devTypes)) c.devTypes = o.devTypes.filter((x) => typeof x === "string").slice(0, 40);
-    if (typeof o.noDevHome === "boolean") c.noDevHome = o.noDevHome;
+    if (["tile", "card", "mini"].includes(o.devLook)) c.devLook = o.devLook;
+    if (["name", "room", "type"].includes(o.devSort)) c.devSort = o.devSort;
+    if (o.devShow && typeof o.devShow === "object") c.devShow = { room: o.devShow.room !== false, sub: !!o.devShow.sub, ctl: o.devShow.ctl !== false };
     if (o.intercoms) c.intercoms = o.intercoms; else if (o.intercom) { c.intercoms = [{ id: "ic1", ...o.intercom }]; delete c.intercom; }
     if (Array.isArray(o.scenes)) o.scenes.forEach((x) => { if (x && x.id && !(c.scenes || []).some((y) => y.id === x.id)) (c.scenes = c.scenes || []).push(x); });
     ["noClock", "noScenes", "noWeather", "noRooms"].forEach((k) => { if (typeof o[k] === "boolean") c[k] = o[k]; });
@@ -1352,6 +1354,9 @@ class QuintDashboard extends HTMLElement {
       else { const cur = new Set(Array.isArray(c.devTypes) ? c.devTypes : []); cur.has(v) ? cur.delete(v) : cur.add(v); c.devTypes = [...cur]; }
       this._last = null;
     }
+    else if (a === "devlook") { if (["tile", "card", "mini"].includes(v)) c.devLook = v; this._last = null; }
+    else if (a === "devsort") { if (["name", "room", "type"].includes(v)) c.devSort = v; this._last = null; }
+    else if (a === "devshow") { if (["room", "sub", "ctl"].includes(v)) { const cur = this._devOpts(); c.devShow = { room: cur.room, sub: cur.sub, ctl: cur.ctl, [v]: !cur[v] }; } this._last = null; }
     else if (a === "hmx") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.hmx = c.hmx || {}); if (k === "on") o.on = x === "1"; else if (k === "mode") { o.on = true; if (x === "dash" || x === "tiles") o.style = x; } else if (k === "cols") o.cols = +x; else if (k === "size" && ["s", "m", "l"].includes(x)) o.size = x; this._last = null; }
     else if (a === "tsz") { if (TSIZES[v]) { c.tsz = v; delete c.tszd; } }
     else if (a === "tszd0") { delete c.tszd; delete c.tsz; }
@@ -1598,11 +1603,10 @@ class QuintDashboard extends HTMLElement {
     return Object.values(m).sort((a, b) => b.count - a.count || a.n.localeCompare(b.n));
   }
   /* the devices of the types the administrator chose: they get a card by themselves */
-  _devSel() { const t = this._c.devTypes; if (!Array.isArray(t) || !t.length) return []; return this._devList().filter((d) => t.includes(this._devType(d)[0])); }
+  _devSel() { const t = this._c.devTypes; if (!Array.isArray(t) || !t.length) return []; return this._devOrder(this._devList().filter((d) => t.includes(this._devType(d)[0]))); }
   _devSection(phone) {
-    if (this._c.noDevHome) return "";
     const L = this._devSel(); if (!L.length) return "";
-    return `<div class="dvh"><span>Devices</span><button data-go='{"p":"devices"}'>All ›</button></div><div class="mxs g dvg${phone ? " mxp" : ""}" style="${this._mxStyle(this._mxCols(L.length))}">${this._devCells(L, phone)}</div>`;
+    return `<div class="dvh"><span>Devices</span><button data-go='{"p":"devices"}'>All ›</button></div>${this._devGrid(L, phone)}`;
   }
   _devState(d) {
     const H = this._h.states, id = d.main, s = H[id], dom = id.split(".")[0], a = s.attributes, st = s.state, un = a.unit_of_measurement;
@@ -1617,23 +1621,39 @@ class QuintDashboard extends HTMLElement {
     if (dom === "binary_sensor") { const dc = a.device_class; const t = this._sec(id)[0]; return { v: SEC_BS.includes(dc) ? t : st === "on" ? "On" : "Off", on: st === "on" }; }
     return { v: st === "on" ? "On" : st === "off" ? "Off" : st, on: st === "on" };
   }
+  _devOpts() {
+    const c = this._c, sh = c.devShow || {};
+    return { look: ["tile", "card", "mini"].includes(c.devLook) ? c.devLook : "tile", room: sh.room !== false, sub: !!sh.sub, ctl: sh.ctl !== false, sort: ["name", "room", "type"].includes(c.devSort) ? c.devSort : "name" };
+  }
+  _devOrder(list) {
+    const o = this._devOpts(), rooms = this._rooms(), rn = (d) => { const r = rooms.find((x) => x.id === d.room); return r ? r.name : "\uffff"; };
+    if (o.sort === "room") return list.slice().sort((a, b) => rn(a).localeCompare(rn(b)) || a.name.localeCompare(b.name));
+    if (o.sort === "type") return list.slice().sort((a, b) => this._devType(a)[1].localeCompare(this._devType(b)[1]) || a.name.localeCompare(b.name));
+    return list;
+  }
   _devCells(list, phone) {
-    const E = (t) => this._esc(t), rooms = this._rooms();
+    const E = (t) => this._esc(t), rooms = this._rooms(), o = this._devOpts();
     return list.map((d) => {
-      const sv = this._svcOf(d.main), S = sv ? SV[sv] : DEVS, dom = d.main.split(".")[0], r = this._devState(d), room = rooms.find((x) => x.id === d.room);
-      const tog = ["light", "switch", "fan", "input_boolean"].includes(dom) && r.v !== "Offline" ? this._sw(r.on, dom + ".toggle", [d.main]) : "";
-      return this._mxCell("s:devices", { id: "dv:" + d.key, n: r.v, v: d.name, l: [room ? room.name : "", d.sub].filter(Boolean).join(" · "), on: r.on, cls: "dvn" + (r.v === "Offline" ? " off" : ""), go: `data-dsh="${E(d.key)}"`, i: S.i, c: S.c, x: tog || "", nohi: true });
+      const room = rooms.find((x) => x.id === d.room), cap = [o.room && room ? room.name : "", o.sub ? d.sub : ""].filter(Boolean).join(" · ");
+      if (o.look !== "card") return this._dbTile(d.main, false, { name: d.name, note: cap, flat: o.look === "mini" || !o.ctl });
+      const sv = this._svcOf(d.main), S = sv ? SV[sv] : DEVS, dom = d.main.split(".")[0], r = this._devState(d);
+      const tog = o.ctl && ["light", "switch", "fan", "input_boolean"].includes(dom) && r.v !== "Offline" ? this._sw(r.on, dom + ".toggle", [d.main]) : "";
+      return this._mxCell("s:devices", { id: "dv:" + d.key, n: r.v, v: d.name, l: cap, on: r.on, cls: "dvn" + (r.v === "Offline" ? " off" : ""), go: `data-dsh="${E(d.key)}"`, i: S.i, c: S.c, x: tog || "", nohi: true });
     }).join("");
   }
+  _devGrid(list, phone, cols) {
+    if (!list.length) return "";
+    const o = this._devOpts(), cells = this._devCells(list, phone);
+    return o.look === "card" ? `<div class="mxs g dvg${phone ? " mxp" : ""}" style="${this._mxStyle(cols || this._mxCols(list.length))}">${cells}</div>` : `<div class="mxs g dbd" style="${this._mxStyle(cols || this._dbCols())}">${cells}</div>`;
+  }
   _devPage() {
-    const E = (t) => this._esc(t), phone = this.getAttribute("data-dev") === "phone", dsel = this._devSel(), all = dsel.length ? dsel : this._devList(), rooms = this._rooms();
+    const E = (t) => this._esc(t), phone = this.getAttribute("data-dev") === "phone", dsel = this._devSel(), all = dsel.length ? dsel : this._devOrder(this._devList()), rooms = this._rooms();
     this._pick = this._pick || {}; const sel = this._pick.dva || "";
     const areas = rooms.filter((r) => all.some((d) => d.room === r.id)), noRoom = all.some((d) => !d.room || !rooms.some((r) => r.id === d.room));
     const chips = [["", "All"], ...areas.map((r) => [r.id, r.name]), ...(noRoom ? [["_", "No room"]] : [])];
     const list = !sel ? all : sel === "_" ? all.filter((d) => !d.room || !rooms.some((r) => r.id === d.room)) : all.filter((d) => d.room === sel);
     const bar = chips.length > 2 ? `<div class="chips dvc">${chips.map(([k, n]) => `<button class="scb ${sel === k ? "on" : ""}" data-pick="dva|${E(k)}"><span>${E(n)}</span></button>`).join("")}</div>` : "";
-    const st = this._mxStyle(this._mxCols(list.length));
-    return `${this._top()}<h1>${DEVS.i} Devices</h1><div class="lbl" style="margin:2px 2px 12px">${all.length} device${all.length === 1 ? "" : "s"}${dsel.length ? " of the types chosen in Settings → Devices" : " found by Home Assistant"}. Tap one to open its card.</div>${bar}${list.length ? `<div class="mxs g dvg${phone ? " mxp" : ""}" style="${st}">${this._devCells(list, phone)}</div>` : `<div class="bc" style="max-width:520px"><div class="lbl">No devices here.</div></div>`}`;
+    return `${this._top()}<h1>${DEVS.i} Devices</h1><div class="lbl" style="margin:2px 2px 12px">${all.length} device${all.length === 1 ? "" : "s"}${dsel.length ? " of the types chosen in Settings → Devices" : " found by Home Assistant"}. Tap one to open its card.</div>${bar}${list.length ? this._devGrid(list, phone) : `<div class="bc" style="max-width:520px"><div class="lbl">No devices here.</div></div>`}`;
   }
   /* the Quint card of any entity: the service cards when the entity has a service, a plain Quint card for the rest */
   _devCard(id) {
@@ -1651,7 +1671,7 @@ class QuintDashboard extends HTMLElement {
   _devSheet() {
     if (!this._dsh) return "";
     const d = this._devList().find((x) => x.key === this._dsh); if (!d) return "";
-    const E = (t) => this._esc(t), dv = d.did ? (this._h.devices || {})[d.did] : null, mo = this._hmx(), dash = mo.on && mo.style === "dash";
+    const E = (t) => this._esc(t), dv = d.did ? (this._h.devices || {})[d.did] : null, dash = true;
     let ids = d.ids.filter((id) => this._h.states[id]);
     if (dash) { const CT = ["light", "switch", "fan", "cover", "climate", "media_player", "lock", "alarm_control_panel", "vacuum", "humidifier", "input_boolean", "siren", "camera"], w = ids.filter((id) => CT.includes(id.split(".")[0])); ids = w.length ? w : ids.slice(0, 1); }
     const cards = ids.map((id) => `<div class="dsc">${dash ? this._dbTile(id, true) : this._devCard(id)}</div>`).join("");
@@ -2948,14 +2968,15 @@ class QuintDashboard extends HTMLElement {
     const clk = c.noClock ? "" : `<div class="dwk">${this._clockBlock("tl", "digital")}<small>${E(date)}</small></div>`;
     return `<div class="bc dbt dbw ${w ? "" : "nw"}" data-id="b:clock" style="--c:#e8c98f"><div class="dw1">${top}</div>${clk}${fcH}</div>`;
   }
-  _dbTile(id, sheet) {
+  _dbTile(id, sheet, o) {
     const H = this._h.states, s = H[id]; if (!s) return "";
-    const E = (t) => this._esc(t), d = id.split(".")[0], a = s.attributes, st = s.state, svc = this._svcOf(id), S = svc ? SV[svc] : DEVS, off = ["unavailable", "unknown"].includes(st), nm = E(this._nm(id));
+    const E = (t) => this._esc(t), d = id.split(".")[0], a = s.attributes, st = s.state, svc = this._svcOf(id), S = svc ? SV[svc] : DEVS, off = ["unavailable", "unknown"].includes(st), nm = E((o && o.name) || this._nm(id));
     const key = sheet ? "" : this._dbKey(id), open = key ? `data-dsh="${E(key)}"` : "", cap = (x) => String(x).charAt(0).toUpperCase() + String(x).slice(1).replace(/_/g, " ");
-    const hdr = (state, act, x) => `<div class="dbh" ${act || open}><i class="dbi">${S.i}</i><span class="dbn"><b>${nm}</b><small>${E(state)}</small></span>${x || ""}</div>`;
+    const hdr = (state, act, x) => `<div class="dbh" ${act || open}><i class="dbi">${S.i}</i><span class="dbn"><b>${nm}</b><small>${E(o && o.note ? state + " · " + o.note : state)}</small></span>${x || ""}</div>`;
     const tile = (cls, inner, on, col) => `<div class="bc dbt ${cls} ${on ? "on" : ""} ${off ? "off" : ""}" data-id="db:${E(id)}" style="--c:${col || S.c}">${inner}</div>`;
     const tog = (dm) => `data-act="${dm}.toggle" data-e="${E(id)}"`, on = st === "on";
     if (off) return tile("d1", hdr("Offline"), false);
+    if (o && o.flat) { const r = this._devState({ main: id }); return tile("d1", hdr(r.v, ["light", "switch", "fan", "input_boolean", "humidifier", "siren"].includes(d) ? tog(d) : ""), r.on); }
     if (d === "light") {
       const br = a.brightness, pct = br != null ? Math.round(br / 2.55) : 0, dim = !(a.supported_color_modes || []).every((m) => m === "onoff"), col = on && Array.isArray(a.rgb_color) ? `rgb(${a.rgb_color.slice(0, 3).join(",")})` : "";
       const state = on ? (br != null ? pct + "%" : "On") : "Off";
@@ -4080,7 +4101,7 @@ class QuintDashboard extends HTMLElement {
     const sec = (t, note, rows) => `<div class="ssec"><div class="shd"><span>${t}</span>${note ? `<small>${note}</small>` : ""}</div>${rows}</div>`;
     const tg = (on, a) => `<button class="sw ${on ? "on" : ""}" ${a}></button>`;
     const up = (a, v, off) => `<button class="ib2" data-s="${a}|${v}" ${off ? "disabled" : ""}>${a.endsWith("up") ? "▲" : "▼"}</button>`;
-    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["ntf", "Notifications", "choose which alerts you see"], ...(this._look() ? [["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [])] : [["general", "General", "title, background, layout"], ["ntf", "Notifications", "alerts for everyone"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "cards by type, room and visibility"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["h3d", "3D house", this._h3d().show ? "shown on Home" : "hidden"], ["adv", "Advanced", "auto-return, quiet hours, user limits"], ["health", "Health", this._healthSub()], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
+    const tabs = !this._admin() ? [...(this._mgr() ? [["users", "Users", "add users, limit services and rooms"], ["updates", "Updates", "automatic updates and restart"]] : []), ["scenes", "Scenes", "add your own scenes"], ["ntf", "Notifications", "choose which alerts you see"], ...(this._look() ? [["rphoto", "Room photos", "pick a photo per room"], ["bg", "Background", "change it on this device"]] : [])] : [["general", "General", "title, background, layout"], ["ntf", "Notifications", "alerts for everyone"], ["pages", "Pages", "services, order, titles"], ["rooms", "Rooms", "floors, order and names"], ["rphoto", "Room photos", "background of each room"], ["devices", "Devices", "how device cards look, which are made"], ["rdev", "Room devices", "hide or show devices room by room"], ["srooms", "Service rooms", "hide unused rooms in each service"], ["home", "Home page", "clock, weather, services"], ["tiles", "Home tiles", "choose devices per tile"], ["wall", "Camera wall", "many cameras on one screen"], ["intercom", "Intercoms", "cameras, door, calls"], ["autos", "Automations", "choose what users can run"], ["users", "Users", "add users, limit services and rooms"], ["access", "Access", "default page and lock users"], ["h3d", "3D house", this._h3d().show ? "shown on Home" : "hidden"], ["adv", "Advanced", "auto-return, quiet hours, user limits"], ["health", "Health", this._healthSub()], ["updates", "Updates", "automatic updates and restart"], ["scenes", "Scenes", "add and edit scenes"], ["bg", "Background", "your own on this device"], ["cards", "Cards", "custom cards you added"]];
     const adm = this._admin();
     const tsSeg = (cur, attr, none) => `<div class="seg sm tsz">${Object.entries(TSIZES).map(([k, t]) => `<button class="${cur === k ? "on" : ""}" ${attr}="${attr === "data-s" ? "tsz|" : "tsd|"}${k}">${t.n}</button>`).join("")}${none ? `<button ${attr}="tsd|">Same as shared</button>` : ""}</div>`;
     const SCI = [["aurora", "Aurora", "Soft moving colours with a big clock. Shows home status and notifications"], ["night", "Starry night", "Dark sky with a moon and a dim clock. Easy on the eyes at night"], ["analog", "Classic analog", "A large analog clock with the date, home status and notifications"], ["frame", "Photo frame", "Your own saver photo slowly moving, with the time on top"], ["home", "Home overview", "The essentials at a glance: time, security, lights, temperature, music and notifications"]];
@@ -4261,17 +4282,22 @@ class QuintDashboard extends HTMLElement {
       body = sec("Room photos", adm ? "shared by every user; the switch turns the photo on in that room's page" : "shown at the top of the room's page, saved on this device only",
         c.rooms.map((r, i) => { const im = loc[r.id] || (this._rsrv || {})[r.id] || ""; return row(E(r.name), "", `${im ? `<img class="rpv" src="${im}">` : ""}<input type="file" accept="image/*" data-rimg="${E(r.id)}" style="max-width:190px;color:var(--mu);font-size:12px">${im ? `<button class="ib2" data-rimgb="${E(r.id)}" title="Remove photo">✕</button>` : ""}${adm ? tg(!!r.pic, `data-tog="rpic:${i}"`) : ""}`); }).join("") || '<div class="lbl" style="padding:6px 4px 12px">No rooms yet.</div>');
     } else if (tab === "devices") {
-      const q = (this._dflt || "").toLowerCase(), H = c.hide || [];
-      const list = Object.keys(this._h.states).filter((i) => this._svcOf(i)).filter((i) => !q || i.includes(q) || this._nm(i).toLowerCase().includes(q));
-      const T = this._devTypes(), sel = Array.isArray(c.devTypes) ? c.devTypes : [], nSel = this._devSel().length;
-      body = sec("Device cards", "choose the kinds of devices that get a card by themselves. Each device of Home Assistant of that kind becomes a Quint card on the home page, and a tap opens its Quint card with the controls",
-        (T.length ? T.map((t) => row(E(t.n), t.count + " device" + (t.count === 1 ? "" : "s"), tg(sel.includes(t.k), `data-s="devtype|${E(t.k)}"`))).join("") : '<div class="lbl" style="padding:6px 4px 12px">Home Assistant has not told Quint about any devices yet.</div>') +
-        `<div class="btns" style="margin-top:6px"><button data-s="devtype|*all">Choose all</button><button data-s="devtype|*none">Choose none</button></div>`) +
-        sec("Where they show", nSel ? nSel + " card" + (nSel === 1 ? "" : "s") + " are made now" : "nothing is chosen yet",
-          row("On the home page", "a Devices section below the tiles. Phones show it below the menu", tg(!c.noDevHome, 'data-s="flag|noDevHome"')) +
-          row("All devices page", "a page with these cards, with a filter for each room", '<button class="sbtn" data-go=\'{"p":"devices"}\'>Open</button>')) +
-        sec("Devices", `${Math.min(list.length, 500)} of ${list.length} shown`, row("Search", "filter by name or entity id", `<input type="text" data-dfilter value="${E(this._dflt || "")}" placeholder="light.kitchen">`) +
-        list.slice(0, 500).map((id) => row(`${SV[this._svcOf(id)].i} ${E(this._nm(id))}`, E(id), `<select data-map="${E(id)}"><option value="">(no room)</option>${c.rooms.map((r) => `<option value="${E(r.id)}" ${this._roomOf(id) === r.id ? "selected" : ""}>${E(r.name)}</option>`).join("")}</select>${tg(!H.includes(id), `data-tog="hide:${E(id)}"`)}`)).join(""));
+      const T = this._devTypes(), sel = Array.isArray(c.devTypes) ? c.devTypes : [], dl = this._devSel(), o = this._devOpts();
+      const seg = (list, cur, a) => `<div class="seg sm" style="flex-wrap:wrap">${list.map(([k, n]) => `<button class="${cur === k ? "on" : ""}" data-s="${a}|${k}">${n}</button>`).join("")}</div>`;
+      const pv = (dl.length ? dl : this._devOrder(this._devList())).slice(0, 4);
+      body = sec("How the cards look", "one look for every device card, on the home page and on the Devices page",
+          row("Card look", "Tile: a small tile with its own controls (a bar for lights, buttons for shades, a gauge for climate). Big card: a large card with the state in big letters. Mini: a one-line tile that shows only the state", seg([["tile", "Tile"], ["card", "Big card"], ["mini", "Mini"]], o.look, "devlook")) +
+          row("Order", "how the cards are sorted", seg([["name", "Name"], ["room", "Room"], ["type", "Type"]], o.sort, "devsort"))) +
+        sec("What the card shows", "switch off what you do not want to see",
+          row("Room name", "the room the device is in", tg(o.room, 'data-s="devshow|room"')) +
+          row("Maker and model", "for example Shelly 2PM Gen4", tg(o.sub, 'data-s="devshow|sub"')) +
+          row("Controls", "the switch, the bar, the buttons or the gauge on the card. Off shows only the state", tg(o.ctl, 'data-s="devshow|ctl"'))) +
+        sec("Preview", dl.length ? "the first cards of your devices" : "choose the device types below to see your own devices",
+          pv.length ? `<div style="padding:4px 2px 8px">${this._devGrid(pv, false, 2)}</div>` : '<div class="lbl" style="padding:6px 4px 12px">Home Assistant has not told Quint about any devices yet.</div>') +
+        sec("Device types", dl.length ? dl.length + " card" + (dl.length === 1 ? "" : "s") + " made by themselves" : "nothing is chosen yet",
+          '<div class="lbl" style="padding:4px 4px 10px">Quint makes one card for every device that Home Assistant has of the kinds you switch on. A new device gets its card by itself. The cards show on the home page, and the All link there opens the Devices page.</div>' +
+          (T.length ? T.map((t) => row(E(t.n), t.count + " device" + (t.count === 1 ? "" : "s"), tg(sel.includes(t.k), `data-s="devtype|${E(t.k)}"`))).join("") : '<div class="lbl" style="padding:6px 4px 12px">Home Assistant has not told Quint about any devices yet.</div>') +
+          `<div class="btns" style="margin-top:6px"><button data-s="devtype|*all">Choose all</button><button data-s="devtype|*none">Choose none</button><button data-go='{"p":"devices"}'>Open the Devices page</button></div>`);
     } else if (tab === "srooms") {
       const sv = this._svcsAll().filter((k) => k !== "intercom" && k !== "automations" && k !== "camwall" && k !== "clock"), cur = sv.includes(this._sr) ? this._sr : sv[0], rs = (c.rooms || []).filter((r) => r.on !== false), HH = (c.roomHide || {})[cur] || [];
       const cnt = (r) => (isCs(cur) ? this._csItems(r.id, cur).length : this._ents(cur, r.id).length);
