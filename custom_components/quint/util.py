@@ -73,3 +73,103 @@ def valid_new_user(name: object, username: object, password: object) -> str:
     if not isinstance(password, str) or len(password) < 8 or len(password) > 200:
         return "The password needs at least 8 characters"
     return ""
+
+
+# ---------- thermostat: which entity does which function ----------
+THERMO_FUNCS = ("temp", "hum", "target", "mode", "preset", "fan", "swing", "power", "window", "valve", "shift", "action")
+
+_THERMO_WORDS = {
+    "shift": ("shift", "offset", "verschieb", "korrektur", "correction"),
+    "target": ("setpoint", "set_point", "target", "soll", "sollwert", "solltemp"),
+    "valve": ("valve", "ventil", "output", "stellgr", "stellwert", "heating_out", "position"),
+    "action": ("action", "status", "state_text", "zustand"),
+    "preset": ("preset", "operation", "betriebsart", "komfort", "comfort", "eco", "standby"),
+    "mode": ("hvac", "mode", "heizen", "kuehlen", "cooling_heating", "season", "umschalt"),
+    "fan": ("fan", "luefter", "lüfter", "ventilator", "speed", "stufe"),
+    "swing": ("swing", "louver", "lamelle", "oscill", "vane"),
+    "power": ("power", "on_off", "onoff", "ein_aus", "einaus", "enable", "aktiv"),
+}
+
+
+def _has(text: str, words) -> bool:
+    return any(w in text for w in words)
+
+
+def guess_thermo_function(item: dict):
+    """Which thermostat function an entity of the same device probably serves, or None.
+    item: {entity_id, device_class, name}"""
+    eid = str(item.get("entity_id") or "")
+    domain = eid.split(".")[0]
+    dc = str(item.get("device_class") or "")
+    text = f"{eid} {item.get('name') or ''}".lower().replace(" ", "_")
+    if domain == "sensor":
+        if dc == "temperature":
+            return "temp"
+        if dc == "humidity":
+            return "hum"
+        if _has(text, _THERMO_WORDS["valve"]):
+            return "valve"
+        if _has(text, _THERMO_WORDS["action"]):
+            return "action"
+        if _has(text, ("temperature", "temperatur", "ist_temp")):
+            return "temp"
+        return None
+    if domain == "binary_sensor":
+        return "window" if dc in ("window", "door", "opening", "garage_door") or _has(text, ("window", "fenster", "contact")) else None
+    if domain in ("number", "input_number"):
+        if _has(text, _THERMO_WORDS["shift"]):
+            return "shift"
+        if _has(text, _THERMO_WORDS["target"]):
+            return "target"
+        return None
+    if domain in ("select", "input_select"):
+        for fn in ("preset", "fan", "swing", "mode"):
+            if _has(text, _THERMO_WORDS[fn]):
+                return fn
+        return None
+    if domain in ("switch", "input_boolean"):
+        return "power" if _has(text, _THERMO_WORDS["power"]) else None
+    return None
+
+
+def guess_thermo(climate_id: str, entities: list[dict]) -> dict:
+    """Suggest the entity of every thermostat function from the entities that belong to the same device.
+    entities: [{entity_id, device_id, device_class, name}], the climate itself is in the list.
+    Returns {"entities": {fn: entity_id}, "candidates": {fn: [entity_id, ...]}}."""
+    me = next((e for e in entities if e.get("entity_id") == climate_id), None)
+    did = me.get("device_id") if me else None
+    base = climate_id.split(".", 1)[1] if "." in climate_id else climate_id
+    related = []
+    for e in entities:
+        eid = str(e.get("entity_id") or "")
+        if eid == climate_id or not eid:
+            continue
+        same_dev = bool(did) and e.get("device_id") == did
+        same_name = len(base) > 3 and base in eid.split(".", 1)[-1]
+        if same_dev or same_name:
+            related.append(e)
+    found: dict[str, str] = {}
+    cand: dict[str, list[str]] = {}
+    for e in sorted(related, key=lambda x: str(x.get("entity_id"))):
+        fn = guess_thermo_function(e)
+        if fn:
+            cand.setdefault(fn, []).append(e["entity_id"])
+            found.setdefault(fn, e["entity_id"])
+    return {"entities": found, "candidates": cand}
+
+
+def clean_thermo_map(raw) -> dict:
+    """Keep only {climate_id: {function: entity_id}} with known functions and valid entity ids."""
+    out: dict = {}
+    if not isinstance(raw, dict):
+        return out
+    import re
+
+    ok = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
+    for cid, m in list(raw.items())[:200]:
+        if not isinstance(m, dict) or not ok.match(str(cid)):
+            continue
+        row = {fn: str(v) for fn, v in m.items() if fn in THERMO_FUNCS and ok.match(str(v))}
+        if row:
+            out[str(cid)] = row
+    return out

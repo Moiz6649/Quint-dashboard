@@ -13,7 +13,7 @@ from .const import DOMAIN, PANEL_PATH, STATIC_URL, VERSION
 from .neon import async_setup_neon, async_unload_neon
 from .updater import QuintUpdater, read_disk_version
 from .push import QuintPush
-from .util import clean_perms, is_newer, valid_image, valid_new_user
+from .util import clean_perms, clean_thermo_map, guess_thermo, is_newer, valid_image, valid_new_user
 
 
 class QuintConfigView(HomeAssistantView):
@@ -44,6 +44,8 @@ class QuintConfigView(HomeAssistantView):
                 data[key] = old[key]
             else:
                 data.pop(key, None)
+        if isinstance(data.get("thermo"), dict):
+            data["thermo"]["map"] = clean_thermo_map(data["thermo"].get("map"))
         await self._store.async_save(data)
         push = (self._hass.data.get(DOMAIN, {}) if self._hass else {}).get("push")
         if push is not None:
@@ -149,6 +151,45 @@ class QuintUsersView(HomeAssistantView):
             return self.json({"ok": True})
 
         return self.json_message("Unknown action", 400)
+
+
+class QuintThermoView(HomeAssistantView):
+    """Thermostat helper: finds the entities of the same device that serve the thermostat functions
+    (current temperature, humidity, setpoint, modes, presets, fan, swing, power, window, valve, shift)."""
+
+    url = "/api/quint/thermo"
+    name = "api:quint:thermo"
+    requires_auth = True
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self._hass = hass
+
+    async def get(self, request):
+        user = request.get("hass_user")
+        if user is None or not user.is_admin:
+            return self.json_message("Admin required", 403)
+        from homeassistant.helpers import entity_registry as er
+
+        reg = er.async_get(self._hass)
+        items = [
+            {
+                "entity_id": e.entity_id,
+                "device_id": e.device_id,
+                "device_class": e.device_class or e.original_device_class or "",
+                "name": e.name or e.original_name or "",
+            }
+            for e in reg.entities.values()
+            if not e.disabled
+        ]
+        known = {e["entity_id"] for e in items}
+        for st in self._hass.states.async_all():
+            if st.entity_id not in known:
+                items.append(
+                    {"entity_id": st.entity_id, "device_id": None, "device_class": st.attributes.get("device_class") or "", "name": st.attributes.get("friendly_name") or ""}
+                )
+        only = request.query.get("climate")
+        ids = [only] if only else sorted(i["entity_id"] for i in items if i["entity_id"].startswith("climate."))
+        return self.json({cid: guess_thermo(cid, items) for cid in ids})
 
 
 class QuintVersionView(HomeAssistantView):
@@ -310,6 +351,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         store = Store(hass, 1, f"{DOMAIN}.config")
         hass.http.register_view(QuintConfigView(store, hass))
         hass.http.register_view(QuintPushView(hass))
+        hass.http.register_view(QuintThermoView(hass))
         data["push"] = QuintPush(hass, store)
         updater = QuintUpdater(hass, store)
         data["updater"] = updater
