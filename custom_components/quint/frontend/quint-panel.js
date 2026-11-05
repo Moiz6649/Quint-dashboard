@@ -101,7 +101,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.62.0";
+const VER = "1.63.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -198,6 +198,16 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .ptg.scq .ptl{aspect-ratio:auto;height:54px;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;padding:0 12px}
 .ptg.scq .ptl i{flex:none;padding:0;display:grid;place-items:center;width:26px;height:26px;font-size:24px}
 .ptg.scq .ptl i svg{width:100%;height:100%}.ptg.scq .ptl span{padding:0;flex:1;min-width:0;font-size:14px}
+.mxs.g.mcd{grid-auto-rows:calc(300px*var(--mxk,1));zoom:var(--z,1)}.mxs.mcd .hbt .clk2{font-size:54px}
+.mxs.mcd>.bc{zoom:1;height:100%;min-height:0;overflow:auto;scrollbar-width:none;grid-column:auto}.mxs.mcd>.bc::-webkit-scrollbar{display:none}
+.mxs.mcd>.bc.mxc{overflow:hidden}.mxs.mcd>.bc.wide{grid-column:auto}
+.mxs.mcd .hbt .ckr{flex-wrap:wrap;gap:10px 16px}.mxs.mcd>.hbt:not(.h3b){justify-content:center}
+.mxs.mcd .scn{display:flex;flex-direction:column;height:100%;min-height:0}.mxs.mcd .scg{flex:1;min-height:0;max-height:none;margin-top:10px;align-content:start}
+.mxs.mcd .md{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 14px;align-items:center}
+.mxs.mcd .art{width:56px;height:56px}.mxs.mcd .mt{min-width:0}.mxs.mcd .mt .tt{font-size:22px}
+.mxs.mcd .mc{grid-column:1/-1;justify-content:center;gap:22px}.mxs.mcd .vol{grid-column:1/-1;flex:none;min-width:0}
+.mxs.mcd .cam1{padding:8px}.mxs.mcd .cam1 .cvw{height:100%;aspect-ratio:auto}
+.mxs.mcd .wrow{margin:2px 0}.mxs.mcd .sbig{font-size:60px}
 .mxs.g.mxp{margin-bottom:6px;gap:9px;grid-auto-rows:calc(118px*var(--z,1)*var(--mxk,1))}
 :host([data-dev="phone"]) .mxs.g{gap:9px}:host([data-dev="phone"]) .bc.mxc{padding:12px 13px}:host([data-dev="phone"]) .mxv{font-size:calc(23px*var(--z,1)*var(--mxk,1))}:host([data-dev="phone"]) .mxc .clk2{font-size:calc(26px*var(--z,1)*var(--mxk,1))}
 .bc.mxc>.mxt,.bc.mxc>.mxb{position:relative;z-index:1}
@@ -1287,7 +1297,7 @@ class QuintDashboard extends HTMLElement {
       else if (k === "auto") w.ids = [];
       else if (k === "up" || k === "dn") { const l = [...(w.ids || [])], j = l.indexOf(id); if (j >= 0) { this._swap(l, j, k === "up" ? -1 : 1); w.ids = l; } }
     }
-    else if (a === "hmx") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.hmx = c.hmx || {}); if (k === "on") o.on = x === "1"; else if (k === "cols") o.cols = +x; else if (k === "size" && ["s", "m", "l"].includes(x)) o.size = x; this._last = null; }
+    else if (a === "hmx") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.hmx = c.hmx || {}); if (k === "on") o.on = x === "1"; else if (k === "mode") { o.on = x !== "flow"; if (x !== "flow") o.style = x; } else if (k === "cols") o.cols = +x; else if (k === "size" && ["s", "m", "l"].includes(x)) o.size = x; this._last = null; }
     else if (a === "tsz") { if (TSIZES[v]) { c.tsz = v; delete c.tszd; } }
     else if (a === "tszd0") { delete c.tszd; delete c.tsz; }
     else if (a === "scr") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.scr = c.scr || {}); if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (["idle"].includes(k)) o.idle = x; else o[k] = +x; this._wkT = 0; this._ambHide(); }
@@ -2693,7 +2703,7 @@ class QuintDashboard extends HTMLElement {
       <div class="btns" style="margin-top:16px"><button class="pri" data-pers="close">Done</button></div></div></div>`;
   }
   /* ---------- matrix home: all tiles the same size on a grid ---------- */
-  _hmx() { const o = this._c.hmx || {}; return { on: o.on !== false, cols: [2, 3, 4, 5, 6].includes(+o.cols) ? +o.cols : 0, size: ["s", "m", "l"].includes(o.size) ? o.size : "m" }; }
+  _hmx() { const o = this._c.hmx || {}; return { on: o.on !== false, style: o.style === "tiles" ? "tiles" : "cards", cols: [2, 3, 4, 5, 6].includes(+o.cols) ? +o.cols : 0, size: ["s", "m", "l"].includes(o.size) ? o.size : "m" }; }
   /* what a service shows on its cell: a big value, a caption and whether it is active */
   _mxInfo(k) {
     const H = this._h.states, st = (i) => H[i].state, E = (t) => this._esc(t), S = SV[k] || { n: k, c: "#8d9ab8", i: "" };
@@ -2742,12 +2752,12 @@ class QuintDashboard extends HTMLElement {
   }
   /* the whole matrix: runs of cells become grids, scenes, the 3D house and your own cards sit full width in between */
   /* how many tiles sit side by side: as many as fit, but never a last row that is nearly empty (8 tiles on a wide screen: 4 and 4, not 6 and 2) */
-  _mxCols(n) {
+  _mxCols(n, cards) {
     const mo = this._hmx(); if (mo.cols) return mo.cols;
     const w = this._w || 1024, dev = this.getAttribute("data-dev") || "desktop";
     if (dev === "phone") return w >= 560 ? 3 : 2;
     const wide = this.getAttribute("data-wide") === "1", area = wide ? w - 88 : w - 56, k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1, z = this._z || 1;
-    const max = Math.max(2, Math.min(8, Math.floor((area + 16) / (176 * z * k + 16)))), lo = Math.max(2, Math.ceil(max * 0.6));
+    const max = Math.max(2, Math.min(8, Math.floor((area + 16) / ((cards ? 300 : 176) * z * k + 16)))), lo = Math.max(2, Math.ceil(max * 0.6));
     let best = max, be = 1e9;
     for (let c = max; c >= lo; c--) { const e = (c - (n % c)) % c; if (e < be) { be = e; best = c; } }
     return best;
@@ -2758,16 +2768,19 @@ class QuintDashboard extends HTMLElement {
     const mo = this._hmx(), segs = [];
     if (!this._hlayStored() && keys.includes("b:scenes")) { keys = keys.filter((k) => k !== "b:scenes"); let j = -1; keys.forEach((k, i) => { if (k[0] === "s") j = i; }); keys.splice(j + 1, 0, "b:scenes"); }   // not arranged yet: the scenes sit under the tiles
     const add = (t, h) => { const l = segs[segs.length - 1]; if (l && l.t === t && t !== "b") l.h.push(h); else segs.push({ t, h: [h] }); };
+    const cards = mo.style === "cards"; this._mcd = cards;
     keys.forEach((key) => {
-      if (key === "b:clock") this._mxCells("s:clock").forEach((h) => add("g", h.replace(/data-hi="s:clock"/, 'data-hi="b:clock"')));
+      if (cards && (key[0] === "s" || (key[0] === "b" && key !== "b:house"))) partsOf(key).forEach((p) => add("g", p.h));
+      else if (key === "b:clock") this._mxCells("s:clock").forEach((h) => add("g", h.replace(/data-hi="s:clock"/, 'data-hi="b:clock"')));
       else if (key[0] === "b") partsOf(key).forEach((p) => add("b", p.h));
       else if (key[0] === "s") this._mxCells(key).forEach((h) => add("g", h));
       else partsOf(key).forEach((p) => add("k", p.h));
     });
+    this._mcd = false;
     const gs = segs.filter((g) => g.t === "g"), big = gs.reduce((a, g) => (!a || g.h.length > a.h.length ? g : a), null);
     if (addH) { if (big) big.h.push(addH); else segs.push({ t: "g", h: [addH] }); }
-    const st = this._mxStyle(this._mxCols(Math.max(0, ...segs.filter((g) => g.t === "g").map((g) => g.h.length))));
-    return segs.map((g) => `<div class="mxs ${g.t}" style="${st}">${g.h.join("")}</div>`).join("");
+    const st = this._mxStyle(this._mxCols(Math.max(0, ...segs.filter((g) => g.t === "g").map((g) => g.h.length)), cards));
+    return segs.map((g) => `<div class="mxs ${g.t}${cards && g.t === "g" ? " mcd" : ""}" style="${st}">${g.h.join("")}</div>`).join("");
   }
   _bento(k) { const r = this._bentoOne(k); return (Array.isArray(r) ? r : [r]).map((p) => ({ ...p, h: p.h.replace(/^<div /, `<div data-sk="${this._esc(k)}" data-hi="s:${this._esc(k)}" `) })); }
   _bentoOne(k) {
@@ -2785,13 +2798,13 @@ class QuintDashboard extends HTMLElement {
     if (k === "lights") {
       const explicit = Array.isArray(tiles.lights), gr = explicit && ids.length <= 5 ? ids.map((i) => ({ id: i, name: this._nm(i), ids: [i] })) : this._groups("lights", ids);
       const onN = ids.filter((i) => st(i) === "on").length, dimOf = (g) => g.ids.some((i) => !(H[i].attributes.supported_color_modes || []).every((m) => m === "onoff"));
-      const rows = gr.slice(0, 5).map((g) => {
+      const lim = this._mcd ? 2 : 5, rows = gr.slice(0, lim).map((g) => {
         const on = g.ids.filter((i) => st(i) === "on"), br = on.map((i) => H[i].attributes.brightness).filter((b) => b != null), pct = br.length ? Math.round(br.reduce((a, b) => a + b, 0) / br.length / 2.55) : 0;
         const sub = !on.length ? "Off" : g.ids.length > 1 ? `${on.length} of ${g.ids.length} on${br.length ? " · " + pct + "%" : ""}` : br.length ? pct + "%" : "On";
         return `<div class="lt" data-id="lr:${E(g.id)}"><div class="lt1"><div class="ltn"><b>${E(g.name)}</b><small>${sub}</small></div>${this._sw(on.length > 0, on.length ? "light.turn_off" : "light.turn_on", g.ids)}</div>${dimOf(g) ? `<input type=range min=1 max=100 value=${Math.max(1, pct)} data-slider="light|turn_on|brightness_pct|1" data-e="${g.ids.join(",")}">` : ""}</div>`;
       }).join("");
       const ent = ids.join(",");
-      return wrap("", `${hd(ids.length ? `${onN} of ${ids.length} on` : "")}${ids.length ? `<div class="lts">${rows}</div>${gr.length > 5 ? `<div class="lbl" ${go} style="cursor:pointer;margin-top:10px">+ ${gr.length - 5} more ›</div>` : ""}<div class="btn2"><button data-act="light.turn_on" data-e="${ent}">All on</button><button data-act="light.turn_off" data-e="${ent}">All off</button></div>` : none}`, "", 1.6 + Math.min(5, gr.length) * 1.5);
+      return wrap("", `${hd(ids.length ? `${onN} of ${ids.length} on` : "")}${ids.length ? `<div class="lts">${rows}</div>${gr.length > lim ? `<div class="lbl" ${go} style="cursor:pointer;margin-top:10px">+ ${gr.length - lim} more ›</div>` : ""}<div class="btn2"><button data-act="light.turn_on" data-e="${ent}">All on</button><button data-act="light.turn_off" data-e="${ent}">All off</button></div>` : none}`, "", 1.6 + Math.min(5, gr.length) * 1.5);
     }
     if (k === "cameras") {
       const out = ids.map((id) => {
@@ -2802,7 +2815,7 @@ class QuintDashboard extends HTMLElement {
     }
     if (k === "security") {
       if (!ids.length) return wrap("", `${hd("", SHIELD_I)}${none}`);
-      const dom = (i) => i.split(".")[0], isM = (i) => ["motion", "occupancy", "presence"].includes(H[i].attributes.device_class), lim = Array.isArray(tiles.security) ? 6 : 4;
+      const dom = (i) => i.split(".")[0], isM = (i) => ["motion", "occupancy", "presence"].includes(H[i].attributes.device_class), lim = this._mcd ? 3 : Array.isArray(tiles.security) ? 6 : 4;
       const al = ids.filter((i) => dom(i) === "alarm_control_panel"), lk = ids.filter((i) => dom(i) === "lock"), oth = ids.filter((i) => !al.includes(i) && !lk.includes(i));
       const rows = [...al, ...lk, ...oth.filter((i) => !isM(i)), ...oth.filter(isM)].slice(0, lim).map((i) => { const [t, cl] = this._sec(i); return `<div class="rw" data-id="sr:${i}"><span class="nmx">${E(this._nm(i))}</span><span class="v ${cl}">${E(t)}</span></div>`; }).join("");
       const lv = ids.map((i) => this._sec(i)[1]), nb = lv.filter((x) => x === "b").length, nw = lv.filter((x) => x === "w").length, cls = nb ? "b" : nw ? "w" : "";
@@ -2831,8 +2844,8 @@ class QuintDashboard extends HTMLElement {
     if (k === "shades") {
       if (!ids.length) return wrap("", `${hd("")}${none}`);
       const pos = ids.map((i) => H[i].attributes.current_position).filter((p) => p != null), avg = pos.length ? Math.round(pos.reduce((a, b) => a + b, 0) / pos.length) : null;
-      const all = ids.join(","), shown = ids.slice(0, 4);
-      return wrap("", `${hd(avg != null ? `${ids.length} window${ids.length === 1 ? "" : "s"} · ${avg}% open` : `${ids.length} window${ids.length === 1 ? "" : "s"}`)}<div class="wrow">${shown.map((i) => this._winMini(i)).join("")}</div>${ids.length > 4 ? `<div class="lbl" ${go} style="cursor:pointer;text-align:center;margin-top:2px">+ ${ids.length - 4} more ›</div>` : ""}<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div>`);
+      const all = ids.join(","), nsh = this._mcd ? 1 : 4, shown = ids.slice(0, nsh);
+      return wrap("", `${hd(avg != null ? `${ids.length} window${ids.length === 1 ? "" : "s"} · ${avg}% open` : `${ids.length} window${ids.length === 1 ? "" : "s"}`)}<div class="wrow">${shown.map((i) => this._winMini(i)).join("")}</div>${ids.length > nsh ? `<div class="lbl" ${go} style="cursor:pointer;text-align:center;margin-top:2px">+ ${ids.length - nsh} more ›</div>` : ""}<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close</button></div>`);
     }
     const t = this._stats(k);
     return wrap("", `${hd("", S.i)}<div class="cnt">${t.big}</div><div class="cap2">${t.big ? t.lbl : "No cards yet · tap to open"}</div>`);
@@ -4004,7 +4017,7 @@ class QuintDashboard extends HTMLElement {
       body = sec("Home screen", "what the home page shows",
         row("Clock", "the clock tile on the home page", tg(!c.noClock, 'data-s="flag|noClock"')) +
         row("Clock style", "digital numbers or an analog face, for the home clock and the clock saver", `<div class="seg sm">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${(c.cks === "analog" ? "analog" : "digital") === k ? "on" : ""}" data-s="cks|${k}">${n}</button>`).join("")}</div>`) +
-        row("Tile layout", "Matrix puts every tile on a grid, all the same size, with its state and a quick button. Flow lets each tile take the height it needs", `<div class="seg sm">${[["1", "Matrix"], ["0", "Flow"]].map(([k, n]) => `<button class="${(this._hmx().on ? "1" : "0") === k ? "on" : ""}" data-s="hmx|on|${k}">${n}</button>`).join("")}</div>`) +
+        row("Tile layout", "Matrix cards: every card is the same size on a grid and keeps its controls. Compact tiles: a small tile with the state and one quick button. Flow: each card takes the height it needs", `<div class="seg sm">${[["cards", "Matrix cards"], ["tiles", "Compact tiles"], ["flow", "Flow"]].map(([k, n]) => `<button class="${(this._hmx().on ? this._hmx().style : "flow") === k ? "on" : ""}" data-s="hmx|mode|${k}">${n}</button>`).join("")}</div>`) +
         (this._hmx().on ? row("Matrix columns", "how many tiles sit side by side. Auto fits the screen", `<div class="seg sm">${[[0, "Auto"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"]].map(([k, n]) => `<button class="${this._hmx().cols === k ? "on" : ""}" data-s="hmx|cols|${k}">${n}</button>`).join("")}</div>`) +
         row("Matrix tile size", "the size of every tile", `<div class="seg sm">${[["s", "Small"], ["m", "Medium"], ["l", "Large"]].map(([k, n]) => `<button class="${this._hmx().size === k ? "on" : ""}" data-s="hmx|size|${k}">${n}</button>`).join("")}</div>`) : "") +
         row("Home page layout", "everyone can drag every item (clock, weather, greeting, scenes, tiles, cards) to any place: hold for 2 seconds. What you arrange here is the layout everyone starts with", '<button class="sbtn" data-s="hbreset|">Reset the shared layout</button>') +
