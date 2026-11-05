@@ -101,7 +101,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.61.0";
+const VER = "1.62.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -187,6 +187,42 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .bento{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:16px;align-items:start}
 .bcol{display:flex;flex-direction:column;gap:16px;min-width:0}
 .bwide{margin-top:16px}
+/* matrix home: every tile is the same size and sits on a grid */
+.mxs{display:grid;gap:16px;margin-bottom:16px;min-width:0}
+.mxs{--mxt:repeat(auto-fill,minmax(calc(176px*var(--z,1)*var(--mxk,1)),1fr))}
+.mxs.g{grid-template-columns:var(--mxt);grid-auto-rows:calc(142px*var(--z,1)*var(--mxk,1))}
+.mxs.b .bc{zoom:1}.mxs.b .bc.hbt:not(.h3b){background:none;border:0;padding:0;box-shadow:none;backdrop-filter:none}.mxs.b .scg{grid-template-columns:var(--mxt)!important;gap:16px;max-height:none;overflow:visible}.mxs.b .scn .cap{margin-bottom:10px}
+.mxs.k{grid-template-columns:repeat(auto-fill,minmax(calc(270px*var(--z,1)),1fr));align-items:start}
+.mxs.b{display:block}
+.ptg.scq{grid-template-columns:repeat(var(--mxn,2),minmax(0,1fr))}
+.ptg.scq .ptl{aspect-ratio:auto;height:54px;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;padding:0 12px}
+.ptg.scq .ptl i{flex:none;padding:0;display:grid;place-items:center;width:26px;height:26px;font-size:24px}
+.ptg.scq .ptl i svg{width:100%;height:100%}.ptg.scq .ptl span{padding:0;flex:1;min-width:0;font-size:14px}
+.mxs.g.mxp{margin-bottom:6px;gap:9px;grid-auto-rows:calc(118px*var(--z,1)*var(--mxk,1))}
+:host([data-dev="phone"]) .mxs.g{gap:9px}:host([data-dev="phone"]) .bc.mxc{padding:12px 13px}:host([data-dev="phone"]) .mxv{font-size:calc(23px*var(--z,1)*var(--mxk,1))}:host([data-dev="phone"]) .mxc .clk2{font-size:calc(26px*var(--z,1)*var(--mxk,1))}
+.bc.mxc>.mxt,.bc.mxc>.mxb{position:relative;z-index:1}
+.bc.mxc.hasbg{background:#0b0e16}.bc.mxc .cam.mxbg{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0;aspect-ratio:auto;object-fit:cover;opacity:.42;z-index:0;pointer-events:none;cursor:inherit}
+.bc.mxc.hasbg::before{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(8,10,18,.12) 0%,rgba(8,10,18,.82) 100%);pointer-events:none}
+.bc.mxc.hasbg .mxv,.bc.mxc.hasbg .mxn,.bc.mxc.hasbg .mxl{text-shadow:0 1px 8px rgba(0,0,0,.7)}
+.mxq2{display:inline-flex;gap:6px}
+.mxq{width:calc(32px*var(--z,1)*var(--mxk,1));height:calc(32px*var(--z,1)*var(--mxk,1));border-radius:50%;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c);display:inline-grid;place-items:center;padding:0;font:inherit;font-size:calc(17px*var(--z,1)*var(--mxk,1));line-height:1;cursor:pointer;flex:none}
+.mxq svg{width:50%;height:50%}.mxq:active{transform:scale(.92)}.mxc.on .mxq{background:var(--c);color:#10131c}
+.bc.mxc{zoom:1;padding:calc(14px*var(--z,1)*var(--mxk,1)) calc(16px*var(--z,1)*var(--mxk,1));justify-content:space-between;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .2s,box-shadow .2s;--c:#8d9ab8}
+.bc.mxc:hover{transform:translateY(-2px)}
+.bc.mxc.on{border-color:color-mix(in srgb,var(--c) 55%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent),0 10px 30px -14px var(--c)}
+.bc.mxc.warn{border-color:var(--wn,#f5a623)}.bc.mxc.bad{border-color:var(--er,#ff5d5d)}.bc.mxc.ringing{border-color:var(--ok)}
+.mxt{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mxi{width:calc(38px*var(--z,1)*var(--mxk,1));height:calc(38px*var(--z,1)*var(--mxk,1));border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.08);background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);flex:none;font-style:normal}
+.mxi svg{width:55%;height:55%}.mxi .si{width:55%;height:55%}
+.mxc.on .mxi{background:var(--c);color:#10131c}
+.mxb{display:flex;flex-direction:column;min-width:0;gap:1px}
+.mxv{font-size:calc(26px*var(--z,1)*var(--mxk,1));font-weight:700;line-height:1.1;letter-spacing:-.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mxn{font-size:calc(14px*var(--z,1)*var(--mxk,1));font-weight:600;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mxl{font-size:calc(12px*var(--z,1)*var(--mxk,1));color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mxc .clk2{font-size:calc(32px*var(--z,1)*var(--mxk,1));line-height:1.05;font-weight:700;margin:0;padding:0}
+.mxc .mxwx{display:inline-flex;align-items:center;gap:6px;font-size:calc(13px*var(--z,1)*var(--mxk,1));color:var(--mu)}.mxc .mxwx svg{width:1.3em;height:1.3em}
+.mxdot{width:10px;height:10px;border-radius:50%;background:var(--mu);opacity:.5}.mxc.on .mxdot{background:var(--c);opacity:1;box-shadow:0 0 10px var(--c)}.mxc.warn .mxdot{background:var(--wn,#f5a623);opacity:1}.mxc.bad .mxdot{background:var(--er,#ff5d5d);opacity:1}
+.mxc .sw{margin:0}.bc.mxadd{background:none;border-style:dashed;--c:#8d9ab8}.bc.mxadd .mxi{font-size:22px;font-weight:300}
 .bc.cam1{padding:8px}
 .cam1 .cvw{aspect-ratio:16/9;min-height:0;flex:none}
 .wallpage{max-width:none;padding-top:0;padding-bottom:20px}
@@ -1251,6 +1287,7 @@ class QuintDashboard extends HTMLElement {
       else if (k === "auto") w.ids = [];
       else if (k === "up" || k === "dn") { const l = [...(w.ids || [])], j = l.indexOf(id); if (j >= 0) { this._swap(l, j, k === "up" ? -1 : 1); w.ids = l; } }
     }
+    else if (a === "hmx") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.hmx = c.hmx || {}); if (k === "on") o.on = x === "1"; else if (k === "cols") o.cols = +x; else if (k === "size" && ["s", "m", "l"].includes(x)) o.size = x; this._last = null; }
     else if (a === "tsz") { if (TSIZES[v]) { c.tsz = v; delete c.tszd; } }
     else if (a === "tszd0") { delete c.tszd; delete c.tsz; }
     else if (a === "scr") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.scr = c.scr || {}); if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (["idle"].includes(k)) o.idle = x; else o[k] = +x; this._wkT = 0; this._ambHide(); }
@@ -2655,6 +2692,83 @@ class QuintDashboard extends HTMLElement {
       ${this._pbControls(u, b)}
       <div class="btns" style="margin-top:16px"><button class="pri" data-pers="close">Done</button></div></div></div>`;
   }
+  /* ---------- matrix home: all tiles the same size on a grid ---------- */
+  _hmx() { const o = this._c.hmx || {}; return { on: o.on !== false, cols: [2, 3, 4, 5, 6].includes(+o.cols) ? +o.cols : 0, size: ["s", "m", "l"].includes(o.size) ? o.size : "m" }; }
+  /* what a service shows on its cell: a big value, a caption and whether it is active */
+  _mxInfo(k) {
+    const H = this._h.states, st = (i) => H[i].state, E = (t) => this._esc(t), S = SV[k] || { n: k, c: "#8d9ab8", i: "" };
+    const ids = isCs(k) ? [] : this._tileIds(k), off = (i) => ["off", "unavailable", "unknown"].includes(st(i));
+    const o = { v: "", n: S.n, l: "", on: false, cls: "", x: "" };
+    if (k === "lights") { const on = ids.filter((i) => st(i) === "on"); o.v = !ids.length ? "–" : on.length ? on.length + " on" : "All off"; o.l = ids.length ? "of " + ids.length + " light" + (ids.length === 1 ? "" : "s") : "no lights chosen"; o.on = on.length > 0; if (ids.length) o.x = this._sw(on.length > 0, on.length ? "light.turn_off" : "light.turn_on", ids); }
+    else if (k === "security") {
+      const lv = ids.map((i) => this._sec(i)[1]), nb = lv.filter((x) => x === "b").length, nw = lv.filter((x) => x === "w").length, al = ids.find((i) => i.startsWith("alarm_control_panel."));
+      o.v = !ids.length ? "–" : nb ? "Alarm" : nw ? nw + " open" : "Secure"; o.l = al ? this._sec(al)[0] : nw || nb ? "check the doors" : "all closed & locked"; o.on = !!ids.length && !nb && !nw; o.cls = nb ? "bad" : nw ? "warn" : "";
+    }
+    else if (k === "cameras") { const n = ids.filter((i) => !["unavailable", "unknown"].includes(st(i))).length; o.v = ids.length ? n + " online" : "–"; o.l = ids.length ? "of " + ids.length + " camera" + (ids.length === 1 ? "" : "s") : "none chosen"; o.on = n > 0;
+      const pv = ids.find((i) => !["unavailable", "unknown"].includes(st(i)) && H[i].attributes.entity_picture);
+      if (pv) { const src = this._h.hassUrl(H[pv].attributes.entity_picture); o.bgh = `<img class="cam mxbg" data-src="${E(src)}" src="${E(src)}" alt="">`; o.cls = "hasbg"; } }
+    else if (k === "climate") {
+      if (!ids.length) { o.v = "–"; o.l = "none chosen"; }
+      else { const id = ids.find((i) => !off(i)) || ids[0], a = H[id].attributes, cur = a.current_temperature != null ? a.current_temperature : a.temperature; o.v = cur != null ? this._fmt(cur) + "°" : st(id); o.l = off(id) ? "Off" : (a.hvac_action === "heating" ? "Heating to " : a.hvac_action === "cooling" ? "Cooling to " : "Set to ") + (a.temperature != null ? this._fmt(a.temperature) + "°" : st(id)); o.on = !off(id);
+        if (a.temperature != null && !off(id)) { const step = a.target_temp_step || 0.5, x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`; o.x = `<span class="mxq2"><button class="mxq" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+a.temperature - step)}' title="Cooler">−</button><button class="mxq" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+a.temperature + step)}' title="Warmer">+</button></span>`; } }
+    }
+    else if (k === "media") {
+      const pl = ids.filter((i) => st(i) === "playing"), pk = pl[0] || ids.find((i) => st(i) === "paused") || ids.find((i) => !off(i)); o.v = !ids.length ? "–" : pl.length ? "Playing" : pk && st(pk) === "paused" ? "Paused" : "Idle"; o.l = pk ? (H[pk].attributes.media_title || this._nm(pk)) : ids.length ? "nothing playing" : "none chosen"; o.on = pl.length > 0;
+      if (pk) o.x = `<button class="mxq" data-act="media_player.media_play_pause" data-e="${pk}" title="${pl.length ? "Pause" : "Play"}">${pl.length ? PAUSE_I : PLAY_I}</button>`;
+    }
+    else if (k === "shades") { const pos = ids.map((i) => H[i].attributes.current_position).filter((p) => p != null), avg = pos.length ? Math.round(pos.reduce((a, b) => a + b, 0) / pos.length) : null; o.v = !ids.length ? "–" : avg != null ? avg + "% open" : ids.filter((i) => ["open", "opening"].includes(st(i))).length + " open"; o.l = ids.length ? ids.length + " window" + (ids.length === 1 ? "" : "s") : "none chosen"; o.on = ids.some((i) => ["open", "opening"].includes(st(i))); if (ids.length) { const all = ids.join(","); o.x = `<span class="mxq2"><button class="mxq" data-act="cover.open_cover" data-e="${all}" title="Open all">▲</button><button class="mxq" data-act="cover.close_cover" data-e="${all}" title="Close all">▼</button></span>`; } }
+    else if (k === "automations") { const a = this._autoIds(), nA = a.filter((i) => i.startsWith("automation.")).length, onN = a.filter((i) => i.startsWith("automation.") && st(i) === "on").length; o.v = nA ? onN + " of " + nA : a.length + ""; o.l = nA ? "automations on" : "scripts"; o.on = onN > 0; }
+    else { const t = this._stats(k); o.v = t.big === 0 || t.big ? t.big + "" : "–"; o.l = t.lbl; o.on = !!t.on; }
+    return o;
+  }
+  _mxCell(key, extra) {
+    const E = (t) => this._esc(t), k = key.slice(2), S = SV[k] || { n: k, c: "#8d9ab8", i: "" }, o = extra || this._mxInfo(k);
+    const at = `data-sk="${E(k)}" ${o.nohi ? "" : `data-hi="${E(key)}"`} data-id="mx:${E(extra && extra.id ? extra.id : k)}"`;
+    return `<div class="bc mxc ${o.on ? "on" : ""} ${o.cls || ""}" ${at} ${o.go || this._tileGo(k)} style="--c:${o.c || S.c}">${o.bgh || ""}<div class="mxt"><i class="mxi">${o.i || S.i}</i>${o.x || '<span class="mxdot"></span>'}</div><div class="mxb"><b class="mxv">${o.vh || E(o.v)}</b><span class="mxn">${E(o.n)}</span>${o.l ? `<small class="mxl">${E(o.l)}</small>` : ""}</div></div>`;
+  }
+  /* the cells of one home item (a service can be several: one per intercom) */
+  _mxCells(key) {
+    const k = key.slice(2), E = (t) => this._esc(t);
+    if (k === "camwall" || k === "house") return [];
+    if (k === "intercom") return this._icList().map((ic) => {
+      const ring = this._ringing(ic), dr = this._icDoor(ic);
+      return this._mxCell(key, { id: "ic:" + ic.id, n: this._icName(ic), v: ring ? "Ringing" : dr ? dr.word : "Ready", l: ring ? "someone is at the door" : "door station", on: ring || !!(dr && !dr.open && dr.lockish), cls: ring ? "ringing" : dr && dr.open ? "warn" : "" });
+    });
+    if (k === "clock") {
+      const c = this._c, wx = c.noWeather ? null : this._wx(), date = new Date().toLocaleDateString((this._h.locale && this._h.locale.language) || undefined, { weekday: "short", day: "numeric", month: "short" });
+      return [this._mxCell(key, { id: "clock", n: date, v: "", vh: c.noClock ? (wx ? E(wx.t) : E(date)) : this._clockBlock("tl", "digital"), l: "", x: wx ? `<span class="mxwx">${wx.ic}<span>${wx.t}</span></span>` : "", go: 'data-nogo="1"', i: SV.clock.i, c: SV.clock.c })];
+    }
+    return [this._mxCell(key)];
+  }
+  /* the whole matrix: runs of cells become grids, scenes, the 3D house and your own cards sit full width in between */
+  /* how many tiles sit side by side: as many as fit, but never a last row that is nearly empty (8 tiles on a wide screen: 4 and 4, not 6 and 2) */
+  _mxCols(n) {
+    const mo = this._hmx(); if (mo.cols) return mo.cols;
+    const w = this._w || 1024, dev = this.getAttribute("data-dev") || "desktop";
+    if (dev === "phone") return w >= 560 ? 3 : 2;
+    const wide = this.getAttribute("data-wide") === "1", area = wide ? w - 88 : w - 56, k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1, z = this._z || 1;
+    const max = Math.max(2, Math.min(8, Math.floor((area + 16) / (176 * z * k + 16)))), lo = Math.max(2, Math.ceil(max * 0.6));
+    let best = max, be = 1e9;
+    for (let c = max; c >= lo; c--) { const e = (c - (n % c)) % c; if (e < be) { be = e; best = c; } }
+    return best;
+  }
+  _mxStyle(cols) { const mo = this._hmx(); return `--mxk:${{ s: 0.86, m: 1, l: 1.2 }[mo.size]};--mxt:repeat(${cols || this._mxCols(0) || 3},minmax(0,1fr));`; }
+  _mxBuild(keys0, partsOf, addH) {
+    let keys = keys0.slice();
+    const mo = this._hmx(), segs = [];
+    if (!this._hlayStored() && keys.includes("b:scenes")) { keys = keys.filter((k) => k !== "b:scenes"); let j = -1; keys.forEach((k, i) => { if (k[0] === "s") j = i; }); keys.splice(j + 1, 0, "b:scenes"); }   // not arranged yet: the scenes sit under the tiles
+    const add = (t, h) => { const l = segs[segs.length - 1]; if (l && l.t === t && t !== "b") l.h.push(h); else segs.push({ t, h: [h] }); };
+    keys.forEach((key) => {
+      if (key === "b:clock") this._mxCells("s:clock").forEach((h) => add("g", h.replace(/data-hi="s:clock"/, 'data-hi="b:clock"')));
+      else if (key[0] === "b") partsOf(key).forEach((p) => add("b", p.h));
+      else if (key[0] === "s") this._mxCells(key).forEach((h) => add("g", h));
+      else partsOf(key).forEach((p) => add("k", p.h));
+    });
+    const gs = segs.filter((g) => g.t === "g"), big = gs.reduce((a, g) => (!a || g.h.length > a.h.length ? g : a), null);
+    if (addH) { if (big) big.h.push(addH); else segs.push({ t: "g", h: [addH] }); }
+    const st = this._mxStyle(this._mxCols(Math.max(0, ...segs.filter((g) => g.t === "g").map((g) => g.h.length))));
+    return segs.map((g) => `<div class="mxs ${g.t}" style="${st}">${g.h.join("")}</div>`).join("");
+  }
   _bento(k) { const r = this._bentoOne(k); return (Array.isArray(r) ? r : [r]).map((p) => ({ ...p, h: p.h.replace(/^<div /, `<div data-sk="${this._esc(k)}" data-hi="s:${this._esc(k)}" `) })); }
   _bentoOne(k) {
     const c = this._c, H = this._h.states, st = (i) => H[i].state, S = SV[k], go = this._tileGo(k), E = (t) => this._esc(t), tiles = c.tiles || {};
@@ -2778,7 +2892,7 @@ class QuintDashboard extends HTMLElement {
       const x = homeIdx[key]; return x ? [{ h: this._ccHtml("home", x.it, x.i, true), w: 2.6, wide: false }] : [];
     };
     const phone = this.getAttribute("data-dev") === "phone";
-    const parts = this._hlist().filter((k) => !phone || k[0] !== "b").flatMap(partsOf), n = this._cols(), cr = this._credit(), adm = this._admin();
+    const keys = this._hlist().filter((k) => !phone || k[0] !== "b"), mxo = this._hmx(), parts = mxo.on && !phone ? [] : keys.flatMap(partsOf), n = this._cols(), cr = this._credit(), adm = this._admin();
     this._colsN = n;
     let bento = "", grp = [], seg = 0;
     const flush = () => {
@@ -2789,9 +2903,11 @@ class QuintDashboard extends HTMLElement {
     };
     parts.forEach((p) => { if (p.wide) { flush(); bento += `<div class="bwide">${p.h}</div>`; } else grp.push(p); });
     flush();
-    if (!parts.length) bento = phone ? "" : '<div class="bc">Nothing to show yet.</div>';
-    const add = adm ? `<div class="grid addg"><div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div></div>` : "";
-    if (phone) return this._homePhone({ house: this._h3dHome() ? this._h3dBox("phone") : "", g: g + (who ? ", " + E(who) : ""), date, sc, bento: bento + add, hasFav: parts.length > 0 || adm, cr });
+    const addMx = adm && mxo.on && !phone ? `<div class="bc mxc mxadd" data-cc="open:home"><div class="mxt"><i class="mxi">＋</i></div><div class="mxb"><span class="mxn">Add card</span><small class="mxl">your own card on the home page</small></div></div>` : "";
+    let any = parts.length > 0; if (mxo.on && !phone) { bento = this._mxBuild(keys, partsOf, addMx); any = !!bento; }
+    if (!any) bento = phone ? "" : '<div class="bc">Nothing to show yet.</div>';
+    const add = mxo.on && !phone ? "" : adm ? `<div class="grid addg"><div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div></div>` : "";
+    if (phone) return this._homePhone({ house: this._h3dHome() ? this._h3dBox("phone") : "", g: g + (who ? ", " + E(who) : ""), date, sc, bento: bento + add, hasFav: any || adm, cr });
     return `<div class="home"><div class="hh">${this._brand()}</div><div class="hgr gr">${g}${who ? ", " + E(who) : ""}</div>${this._h3dSwitch() ? `<div class="h3swr">${this._h3dSwitch()}</div>` : ""}<div class="hall" data-hz="a">${bento}${add}</div>${cr ? `<div class="crm">${cr}</div>` : ""}</div>`;
   }
   /* the Home page as the 3D house: a slim line (greeting, time, weather, switch) above the house, which fills the rest */
@@ -2885,14 +3001,26 @@ class QuintDashboard extends HTMLElement {
     }
     const clk = c.noClock ? "" : `<div class="hck">${this._clockBlock("tl")}<div class="dt">${E(o.date)}</div></div>`;
     const stl = (s) => { const at = s.ha ? `data-act="scene.turn_on" data-e="${s.ha}"` : `data-sc="run|${E(s.key)}"`; return `<button class="ptl sct ${s.on ? "on" : ""}" data-id="sc:${E(s.key)}" ${at}><i>${GRID_I}</i><span>${E(s.nm)}</span></button>`; };
-    const scn = c.noScenes ? "" : `<div class="psec"><span>Scenes</span></div>${o.sc.length ? `<div class="ptg">${o.sc.map(stl).join("")}</div>` : `<div class="hintx">${adm ? "Add scenes in Settings → Scenes." : "No scenes yet."}</div>`}`;
+    const mxOn = this._hmx().on, scx = mxOn ? ` scq" style="--mxn:${this._mxCols(0)}` : "";
+    const scn = c.noScenes ? "" : `<div class="psec"><span>Scenes</span></div>${o.sc.length ? `<div class="ptg${scx}">${o.sc.map(stl).join("")}</div>` : `<div class="hintx">${adm ? "Add scenes in Settings → Scenes." : "No scenes yet."}</div>`}`;
     const tl = (k, go, ico, nm, sub) => `<button class="ptl" data-id="pm:${E(k)}" ${go}><i>${ico}</i><span>${E(nm)}</span>${sub ? `<small>${E(sub)}</small>` : ""}</button>`;
     const mt = [];
     if (!(c.noRooms || !this._rooms().length)) mt.push(tl("room", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", `${this._rooms().length} rooms`));
     this._svcs().forEach((k) => { const n = k === "lights" ? this._ents("lights").filter((i) => H[i].state === "on").length : 0; mt.push(tl(k, this._tileGo(k), SV[k].i, SV[k].n, k === "lights" && n ? n + " on" : "")); });
     const sys = [tl("settings", `data-go='{"p":"settings"}'`, GEAR_I, "Settings", ""), tl("bg", `data-pers="open"`, PALETTE_I, "Background", "")];
+    let menu = `<div class="ptg">${mt.join("")}</div>`;
+    if (this._hmx().on) {
+      const cells = [], nR = this._rooms().length;
+      if (!(c.noRooms || !nR)) cells.push(this._mxCell("s:rooms", { id: "rooms", n: "Rooms", v: String(nR), l: "choose a room", go: `data-go='{"p":"room"}'`, i: ICONS.door, c: "#8d9ab8", nohi: true }));
+      this._svcs().forEach((k) => {
+        if (k === "camwall") cells.push(this._mxCell("s:" + k, { id: k, n: SV[k].n, v: String(this._wallCams().length), l: "cameras on one screen", nohi: true }));
+        else if (k === "house") cells.push(this._mxCell("s:" + k, { id: k, n: SV[k].n, v: "3D", l: "open the house", nohi: true }));
+        else this._mxCells("s:" + k).forEach((h) => cells.push(h.replace(/ data-hi="[^"]*"/, "")));
+      });
+      if (cells.length) menu = `<div class="mxs g mxp" style="${this._mxStyle(this._mxCols(cells.length))}">${cells.join("")}</div>`;
+    }
     if (o.houseFull) hero = "";
-    return `<div class="home phh"><div class="phero ${o.houseFull ? "ph3" : ""}" data-id="ph:hero"><div class="hgr2">${o.g}</div>${hero}${clk}</div>${o.houseFull ? `${o.sw ? `<div class="h3swr">${o.sw}</div>` : ""}<div class="phouse full">${o.houseFull}</div>` : ""}${o.house ? `<div class="psec"><span>3D house</span></div><div class="phouse">${o.house}</div>` : ""}${scn}<div class="psec"><span>Menu</span></div><div class="ptg">${mt.join("")}</div><div class="psep"></div><div class="ptg sys">${sys.join("")}</div>${o.hasFav ? `<div class="psec"><span>Favourites</span></div><div class="hall" data-hz="a">${o.bento}</div>` : ""}${o.cr ? `<div class="crm">${o.cr}</div>` : ""}</div>`;
+    return `<div class="home phh"><div class="phero ${o.houseFull ? "ph3" : ""}" data-id="ph:hero"><div class="hgr2">${o.g}</div>${hero}${clk}</div>${o.houseFull ? `${o.sw ? `<div class="h3swr">${o.sw}</div>` : ""}<div class="phouse full">${o.houseFull}</div>` : ""}${o.house ? `<div class="psec"><span>3D house</span></div><div class="phouse">${o.house}</div>` : ""}${scn}<div class="psec"><span>Menu</span></div>${menu}<div class="psep"></div><div class="ptg sys">${sys.join("")}</div>${o.hasFav ? `<div class="psec"><span>Favourites</span></div><div class="hall" data-hz="a">${o.bento}</div>` : ""}${o.cr ? `<div class="crm">${o.cr}</div>` : ""}</div>`;
   }
   _roomsGrid() {
     const rs = this._rooms(), H = this._h.states, E = (t) => this._esc(t), L = this._svcs(), fl = this._c.floors || [];
@@ -3876,6 +4004,9 @@ class QuintDashboard extends HTMLElement {
       body = sec("Home screen", "what the home page shows",
         row("Clock", "the clock tile on the home page", tg(!c.noClock, 'data-s="flag|noClock"')) +
         row("Clock style", "digital numbers or an analog face, for the home clock and the clock saver", `<div class="seg sm">${[["digital", "Digital"], ["analog", "Analog"]].map(([k, n]) => `<button class="${(c.cks === "analog" ? "analog" : "digital") === k ? "on" : ""}" data-s="cks|${k}">${n}</button>`).join("")}</div>`) +
+        row("Tile layout", "Matrix puts every tile on a grid, all the same size, with its state and a quick button. Flow lets each tile take the height it needs", `<div class="seg sm">${[["1", "Matrix"], ["0", "Flow"]].map(([k, n]) => `<button class="${(this._hmx().on ? "1" : "0") === k ? "on" : ""}" data-s="hmx|on|${k}">${n}</button>`).join("")}</div>`) +
+        (this._hmx().on ? row("Matrix columns", "how many tiles sit side by side. Auto fits the screen", `<div class="seg sm">${[[0, "Auto"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"]].map(([k, n]) => `<button class="${this._hmx().cols === k ? "on" : ""}" data-s="hmx|cols|${k}">${n}</button>`).join("")}</div>`) +
+        row("Matrix tile size", "the size of every tile", `<div class="seg sm">${[["s", "Small"], ["m", "Medium"], ["l", "Large"]].map(([k, n]) => `<button class="${this._hmx().size === k ? "on" : ""}" data-s="hmx|size|${k}">${n}</button>`).join("")}</div>`) : "") +
         row("Home page layout", "everyone can drag every item (clock, weather, greeting, scenes, tiles, cards) to any place: hold for 2 seconds. What you arrange here is the layout everyone starts with", '<button class="sbtn" data-s="hbreset|">Reset the shared layout</button>') +
         row("Weather line", "temperature, condition and sunset", tg(!c.noWeather, 'data-s="flag|noWeather"')) +
         row("Scenes", "the scene buttons", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
