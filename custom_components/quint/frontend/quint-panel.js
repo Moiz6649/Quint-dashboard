@@ -101,7 +101,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.63.0";
+const VER = "1.64.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -206,6 +206,9 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .mxs.mcd .md{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 14px;align-items:center}
 .mxs.mcd .art{width:56px;height:56px}.mxs.mcd .mt{min-width:0}.mxs.mcd .mt .tt{font-size:22px}
 .mxs.mcd .mc{grid-column:1/-1;justify-content:center;gap:22px}.mxs.mcd .vol{grid-column:1/-1;flex:none;min-width:0}
+.abody.mxr{grid-template-columns:var(--mxt);grid-auto-rows:calc(330px*var(--mxk,1));align-items:stretch;grid-auto-flow:row;zoom:var(--z,1)}
+.abody.mxr>.bc,.abody.mxr>.tile{zoom:1;height:100%;min-height:0;overflow:auto;scrollbar-width:none;grid-column:auto;grid-row:auto}.abody.mxr>.bc::-webkit-scrollbar{display:none}
+.abody.mxr .cl{margin-top:auto;margin-bottom:auto}.abody.mxr .bc .grid,.abody.mxr .shg{grid-template-columns:minmax(0,1fr)}.abody.mxr>.tile.add{min-height:0}
 .mxs.mcd .cam1{padding:8px}.mxs.mcd .cam1 .cvw{height:100%;aspect-ratio:auto}
 .mxs.mcd .wrow{margin:2px 0}.mxs.mcd .sbig{font-size:60px}
 .mxs.g.mxp{margin-bottom:6px;gap:9px;grid-auto-rows:calc(118px*var(--z,1)*var(--mxk,1))}
@@ -2752,14 +2755,14 @@ class QuintDashboard extends HTMLElement {
   }
   /* the whole matrix: runs of cells become grids, scenes, the 3D house and your own cards sit full width in between */
   /* how many tiles sit side by side: as many as fit, but never a last row that is nearly empty (8 tiles on a wide screen: 4 and 4, not 6 and 2) */
-  _mxCols(n, cards) {
+  _mxCols(n, cards, side) {
     const mo = this._hmx(); if (mo.cols) return mo.cols;
     const w = this._w || 1024, dev = this.getAttribute("data-dev") || "desktop";
     if (dev === "phone") return w >= 560 ? 3 : 2;
-    const wide = this.getAttribute("data-wide") === "1", area = wide ? w - 88 : w - 56, k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1, z = this._z || 1;
+    const wide = this.getAttribute("data-wide") === "1", area = (wide ? w - 88 : w - 56) - (side || 0), k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1, z = this._z || 1;
     const max = Math.max(2, Math.min(8, Math.floor((area + 16) / ((cards ? 300 : 176) * z * k + 16)))), lo = Math.max(2, Math.ceil(max * 0.6));
     let best = max, be = 1e9;
-    for (let c = max; c >= lo; c--) { const e = (c - (n % c)) % c; if (e < be) { be = e; best = c; } }
+    for (let c = max; c >= lo; c--) { const e = (c - (n % c)) % c; if (e <= 1 || c <= 3) return c; if (e < be) { be = e; best = c; } }
     return best;
   }
   _mxStyle(cols) { const mo = this._hmx(); return `--mxk:${{ s: 0.86, m: 1, l: 1.2 }[mo.size]};--mxt:repeat(${cols || this._mxCols(0) || 3},minmax(0,1fr));`; }
@@ -3106,7 +3109,8 @@ class QuintDashboard extends HTMLElement {
     const mySc = this._c.noScenes ? [] : this._myScenes().filter((x) => x.room === rid && this._sceneOk(x));
     const chips = scenes.length || mySc.length ? `<div class="chips">${mySc.map((x) => `<button class="scb ${this._sceneOn(x) ? "on" : ""}" data-id="sc:${x.sc}:${x.id}" data-sc="run|${x.sc}:${x.id}"><i></i><span>${E(x.name)}</span></button>`).join("")}${scenes.map((i) => `<button class="scb" data-id="sc:${i}" data-act="scene.turn_on" data-e="${i}"><i></i><span>${E(this._nm(i))}</span></button>`).join("")}</div>` : "";
     const sec = [];
-    [...L.filter((x) => ["lights", "shades", "climate"].includes(x)).sort((p, q) => ["lights", "shades", "climate"].indexOf(p) - ["lights", "shades", "climate"].indexOf(q)), ...L.filter((x) => !["lights", "shades", "climate"].includes(x))].forEach((s) => {
+    const order = [...L.filter((x) => ["lights", "shades", "climate"].includes(x)).sort((p, q) => ["lights", "shades", "climate"].indexOf(p) - ["lights", "shades", "climate"].indexOf(q)), ...L.filter((x) => !["lights", "shades", "climate"].includes(x))], by = {}, push = (s, h) => { sec.push(h); by[s] = h; };
+    order.forEach((s) => {
       if (!has(room, s)) return;
       if (isCs(s) && !this._csItems(rid, s).some((x) => !x.it.tile)) return;
       if (s === "lights") {
@@ -3114,10 +3118,10 @@ class QuintDashboard extends HTMLElement {
           const a = H[i].attributes, isOn = st(i) === "on", b = a.brightness || 0, dim = !(a.supported_color_modes || []).every((m) => m === "onoff") && st(i) !== "unavailable";
           return `<div class="lr" data-id="l:${i}"><button class="ln" data-act="light.toggle" data-e="${i}">${E(this._nm(i))}</button>${dim ? `<input type=range min=1 max=255 value=${b} data-slider="light|turn_on|brightness|1" data-e="${i}"><span class="lp">${isOn ? Math.round(b / 2.55) + "%" : "Off"}</span>` : `<span></span>${this._sw(isOn, "light.toggle", [i])}`}</div>`;
         }).join("");
-        sec.push(`<div class="bc tall" data-sk="lights" data-id="a:lights"><div class="bh" ${this._tileGo(s)}><span>${SV.lights.n}</span><span class="bs">${onL.length} on</span></div>${rows}</div>`);
+        push(s, `<div class="bc tall" data-sk="lights" data-id="a:lights"><div class="bh" ${this._tileGo(s)}><span>${SV.lights.n}</span><span class="bs">${onL.length} on</span></div>${rows}</div>`);
       } else if (s === "shades") {
         const all = sh.join(",");
-        sec.push(`<div class="bc span2" data-sk="shades" data-id="a:shades"><div class="bh" ${this._tileGo(s)}><span>${SV.shades.n}</span><span class="bs">${sh.length} window${sh.length === 1 ? "" : "s"}${avg != null ? " · " + avg + "% open" : ""}</span></div><div class="shg">${sh.map((i) => this._kw("e:" + i, this._shadeCard(i))).join("")}</div>${sh.length > 1 ? `<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open all</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close all</button></div>` : ""}</div>`);
+        push(s, `<div class="bc span2" data-sk="shades" data-id="a:shades"><div class="bh" ${this._tileGo(s)}><span>${SV.shades.n}</span><span class="bs">${sh.length} window${sh.length === 1 ? "" : "s"}${avg != null ? " · " + avg + "% open" : ""}</span></div><div class="shg">${sh.map((i) => this._kw("e:" + i, this._shadeCard(i))).join("")}</div>${sh.length > 1 ? `<div class="btn3"><button data-act="cover.open_cover" data-e="${all}">Open all</button><button data-act="cover.set_cover_position" data-e="${all}" data-x='{"position":50}'>Half</button><button data-act="cover.close_cover" data-e="${all}">Close all</button></div>` : ""}</div>`);
       } else if (s === "climate") {
         const x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
         const rows = cl.map((id) => {
@@ -3126,17 +3130,44 @@ class QuintDashboard extends HTMLElement {
           const txt = `${a.current_temperature != null ? this._fmt(a.current_temperature) + "° now" : st(id)}${off ? " · off" : tg != null ? " · " + verb + this._fmt(tg) + "°" : ""}`;
           return `<div class="cl" data-id="cl:${E(id)}"><div>${cl.length > 1 ? `<div class="lbl" style="margin:0 0 2px">${E(this._nm(id))}</div>` : ""}<div class="cap2" style="margin:0;font-size:15px">${E(txt)}</div></div>${tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : ""}</div>`;
         }).join("");
-        sec.push(`<div class="bc" data-sk="climate" data-id="a:climate"><div class="bh" ${this._tileGo(s)}><span>${SV.climate.n}</span>${cl.length > 1 ? `<span class="bs">${cl.length} thermostats</span>` : ""}</div>${rows}</div>`);
+        push(s, `<div class="bc" data-sk="climate" data-id="a:climate"><div class="bh" ${this._tileGo(s)}><span>${SV.climate.n}</span>${cl.length > 1 ? `<span class="bs">${cl.length} thermostats</span>` : ""}</div>${rows}</div>`);
       } else {
         const inner = isCs(s) ? this._customCards(rid, "room:" + rid + ":" + s, s, false, true) : this._cardsOf(this._ents(s, rid), "room:" + rid + ":" + s);
-        sec.push(`<div class="bc ${s === "media" || s === "cameras" ? "span2" : ""}" data-sk="${E(s)}" data-id="a:${E(s)}"><div class="bh" ${this._tileGo(s)}><span>${SV[s].n}</span></div><div class="grid" data-grid="room:${rid}:${s}">${inner}</div></div>`);
+        push(s, `<div class="bc ${s === "media" || s === "cameras" ? "span2" : ""}" data-sk="${E(s)}" data-id="a:${E(s)}"><div class="bh" ${this._tileGo(s)}><span>${SV[s].n}</span></div><div class="grid" data-grid="room:${rid}:${s}">${inner}</div></div>`);
       }
     });
     { const tl = this._roomTiles(rid), ci = sec.findIndex((h) => !/data-sk="(lights|shades|climate)"/.test(h)); sec.splice(ci < 0 ? sec.length : ci, 0, ...tl); }
     if (!sec.length) sec.push(`<div class="bc span2" data-id="a:none"><div class="lbl">Nothing in this room yet.</div></div>`);
     if (adm) sec.push(`<div class="tile add span2" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
     if (phone) return this._roomPhone({ room, rid, sec, lights, cl, sh, avg, chips, adm, E, L, H, has });
-    return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}<div class="abody">${sec.join("")}</div></div></div>`;
+    let body = `<div class="abody">${sec.join("")}</div>`;
+    if (this._hmx().on) {
+      /* matrix: every card of the room is a cell of the same size */
+      const cells = [], cell = (s, id, head, sub, inner) => `<div class="bc" data-sk="${E(s)}" data-id="a:${E(id)}"><div class="bh" ${this._tileGo(s)}><span>${E(head)}</span>${sub ? `<span class="bs">${E(sub)}</span>` : ""}</div>${inner}</div>`;
+      order.forEach((s) => {
+        if (!has(room, s)) return;
+        if (isCs(s)) { if (this._csItems(rid, s).some((x) => !x.it.tile) && by[s]) cells.push(by[s]); return; }
+        if (s === "lights") { if (by[s]) cells.push(by[s]); return; }
+        if (s === "climate") {
+          const x = (v) => `{"temperature":${Math.round(v * 10) / 10}}`;
+          cl.forEach((id) => {
+            const a = H[id].attributes, off = ["off", "unavailable", "unknown"].includes(st(id)), tg = a.temperature, step = a.target_temp_step || 0.5, cur = a.current_temperature != null ? a.current_temperature : tg;
+            const verb = a.hvac_action === "heating" ? "Heating to " : a.hvac_action === "cooling" ? "Cooling to " : "Set to ";
+            const btn = tg != null && !off ? `<div class="rbs"><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(tg - step)}'>−</button><button class="rb2" data-act="climate.set_temperature" data-e="${id}" data-x='${x(+tg + step)}'>+</button></div>` : "";
+            cells.push(cell(s, "climate:" + id, SV.climate.n, cl.length > 1 ? this._nm(id) : "", `<div class="cl" data-id="cl:${E(id)}"><div><div class="sbig">${cur != null ? this._fmt(cur) : "–"}<sup>°</sup></div><div class="cap2">${E(off ? "Off" : tg != null ? verb + this._fmt(tg) + "°" : st(id))}${a.current_humidity != null ? E(" · humidity " + a.current_humidity + "%") : ""}</div></div>${btn}</div>`));
+          });
+          return;
+        }
+        if (s !== "shades" && s !== "media" && s !== "cameras") { if (by[s]) cells.push(by[s]); return; }
+        const ids = this._sort("room:" + rid + ":" + s, this._ents(s, rid), (i) => "e:" + i);
+        ids.forEach((id) => cells.push(cell(s, s + ":" + id, SV[s].n, "", s === "shades" ? `<div class="shg">${this._kw("e:" + id, this._shadeCard(id))}</div>` : `<div class="grid">${this._kw("e:" + id, this._card(id))}</div>`)));
+      });
+      cells.push(...this._roomTiles(rid));
+      if (!cells.length) cells.push(`<div class="bc" data-id="a:none"><div class="lbl">Nothing in this room yet.</div></div>`);
+      if (adm) cells.push(`<div class="tile add" data-id="a:add" data-cc="open:${rid}"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div>`);
+      body = `<div class="abody mxr" style="${this._mxStyle(this._mxCols(cells.length, true, this.getAttribute("data-wide") === "1" ? 310 : 0))}">${cells.join("")}</div>`;
+    }
+    return `<div class="area"><div class="rl">${this._brand()}<div class="cap rcap">Rooms</div>${floorBar}<div class="rlist">${list}</div><div class="ft"><span class="tm">@@T@@</span>${wx ? " · " + wx.s : ""}</div></div><div class="rm2"><div class="ah"><div><h1>${E(room.name)}</h1>${sub ? `<div class="sub">${E(sub)}</div>` : ""}</div>${lights.length ? `<div class="ahb"><button class="ob2" data-act="light.turn_off" data-e="${lights.join(",")}">All off</button></div>` : ""}</div>${chips}${body}</div></div>`;
   }
   /* ---------- camera wall: one screen with 1 to 32 cameras ---------- */
   _wallCfg() { const w = this._c.wall || {}; return { n: Math.max(1, Math.min(32, Math.round(+w.n) || 4)), ids: Array.isArray(w.ids) ? w.ids : [], live: w.live !== false, max: [4, 8, 12, 16].includes(+w.max) ? +w.max : 0, names: w.names !== false }; }
