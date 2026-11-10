@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.79.0";
+const VER = "1.79.1";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -197,7 +197,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .mxs{--mxt:repeat(auto-fill,minmax(calc(176px*var(--z,1)*var(--mxk,1)),1fr))}
 .mxs.g{grid-template-columns:var(--mxt);grid-auto-rows:calc(142px*var(--z,1)*var(--mxk,1))}
 .mxs.b .bc{zoom:1}.mxs.b .bc.hbt:not(.h3b){background:none;border:0;padding:0;box-shadow:none;backdrop-filter:none}.mxs.b .scg{grid-template-columns:var(--mxt)!important;gap:16px;max-height:none;overflow:visible}.mxs.b .scn .cap{margin-bottom:10px}
-.mxs.k{grid-template-columns:repeat(auto-fill,minmax(calc(270px*var(--z,1)),1fr));align-items:start}
+.mxs.k{grid-template-columns:repeat(auto-fill,minmax(calc(340px*var(--z,1)),1fr));align-items:start}
 .mxs.b{display:block}
 .ptg.scq{grid-template-columns:repeat(var(--mxn,2),minmax(0,1fr))}
 .ptg.scq .ptl{aspect-ratio:auto;height:54px;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;padding:0 12px}
@@ -2353,7 +2353,7 @@ class QuintDashboard extends HTMLElement {
   _hlist() {
     const it = this._hItems(), all = new Set([...it.b, ...it.s, ...it.c]), st = this._hlayStored(), out = [], seen = new Set();
     if (st) st.forEach((k) => { if (all.has(k) && !seen.has(k)) { seen.add(k); out.push(k); } });
-    [...it.b, ...it.s, ...it.c].forEach((k) => { if (!seen.has(k)) out.push(k); });
+    [...it.b, ...it.s, ...it.c].forEach((k) => { if (seen.has(k)) return; const si = k[0] === "c" ? out.indexOf("b:scenes") : -1, la = out.reduce((m, x, n) => (x[0] === "s" || x[0] === "c" ? n : m), -1); if (si > la && la >= 0) out.splice(si, 0, k); else out.push(k); });   // a new card goes after the tiles, above the scenes
     return out;
   }
   _hMove(from, to) {
@@ -3471,7 +3471,7 @@ class QuintDashboard extends HTMLElement {
   _mxBuild(keys0, partsOf, addH) {
     let keys = keys0.slice();
     const mo = this._hmx(), segs = [];
-    if (!this._hlayStored() && keys.includes("b:scenes")) { keys = keys.filter((k) => k !== "b:scenes"); let j = -1; keys.forEach((k, i) => { if (k[0] === "s") j = i; }); keys.splice(j + 1, 0, "b:scenes"); }   // not arranged yet: the scenes sit under the tiles
+    if (!this._hlayStored() && keys.includes("b:scenes")) { keys = keys.filter((k) => k !== "b:scenes"); let j = -1; keys.forEach((k, i) => { if (k[0] === "s" || k[0] === "c") j = i; }); keys.splice(j + 1, 0, "b:scenes"); }   // not arranged yet: the scenes sit under the tiles and cards
     const add = (t, h) => { const l = segs[segs.length - 1]; if (l && l.t === t && t !== "b") l.h.push(h); else segs.push({ t, h: [h] }); };
     const cards = mo.style === "cards", dash = mo.style === "dash"; this._mcd = cards;
     keys.forEach((key) => {
