@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.80.0";
+const VER = "1.80.1";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -1927,7 +1927,7 @@ class QuintDashboard extends HTMLElement {
   _secCards(o) {
     const cc = (this._c.custom.security || []).map((it, i) => ({ it, i })).filter((x) => this._admin() || !x.it.off), adm = this._admin();
     if (!o.page && !cc.length && !adm) return "";
-    return `<div class="secw">${o.page ? this._secCard() : ""}${cc.map(({ it, i }) => this._ccHtml("security", it, i, false)).join("")}</div>${adm ? `<div class="btns" style="justify-content:flex-start;margin:6px 0 14px"><button class="sbtn" data-cc="open:security">＋ Add card to this page</button></div>` : ""}`;
+    return `<div class="secw">${o.page ? this._secCard() : ""}${cc.map(({ it, i }) => this._ccHtml("security", it, i, false)).join("")}</div>`;
   }
   _secPage() {
     const o = this._secOpts(), list = this._ents("security");
@@ -2195,7 +2195,7 @@ class QuintDashboard extends HTMLElement {
     if (d.go) { const { p, ...x } = JSON.parse(d.go); return this._nav(p, x); }
     if (d.cc) {
       const [k, r, i] = d.cc.split(":");
-      if (k === "open") { const cv = this._v.svc || ""; this._dlg = { room: r, place: r, mode: r === "security" ? "security" : "entity", tap: "details", sn: cv.startsWith("cs:") ? cv.slice(3) : cv === "more" ? "More" : "" }; return this._draw(true); }
+      if (k === "open") { const cv = this._v.svc || ""; this._dlg = { back: this._v.p === "settings" ? { ...this._v } : null, room: r, place: r, mode: r === "security" ? "security" : "entity", tap: "details", sn: cv.startsWith("cs:") ? cv.slice(3) : cv === "more" ? "More" : "" }; return this._draw(true); }
       if (k === "cancel") { this._dlg = null; return this._draw(true); }
       if (k === "pin") { const it = (this._c.custom[r] || [])[+i]; if (it) { if (it.tile) delete it.tile; else it.tile = true; this._save(this._v.p !== "settings"); this._syncTpl(); } return this._draw(true); }
       if (k === "vis") { const it = (this._c.custom[r] || [])[+i]; if (it) { if (it.off) delete it.off; else it.off = true; this._save(this._v.p !== "settings"); this._syncTpl(); } return this._draw(true); }
@@ -2619,7 +2619,7 @@ class QuintDashboard extends HTMLElement {
     if (this._csRoom(place) && D.tile === "1") item.tile = true;
     (this._c.custom[place] = this._c.custom[place] || []).push(item);
     this._save(true); this._dlg = null; this._syncTpl();
-    this._v = place === "home" ? { p: "home" } : place === "security" ? { p: "security" } : item.tile ? { p: "room", room: place } : { p: "rooms", svc: this._csKey(item) };
+    this._v = D.back ? D.back : place === "home" ? { p: "home" } : place === "security" ? { p: "security" } : item.tile ? { p: "room", room: place } : { p: "rooms", svc: this._csKey(item) };
     this._last = null; this._draw(true);
   }
   async _mountLv() {
@@ -4815,10 +4815,13 @@ class QuintDashboard extends HTMLElement {
     } else if (tab === "security") {
       const o = this._secOpts(), S = this._h.states, all = this._secAll(), GL = Object.fromEntries(this._secParts());
       const sw = (on, a) => tg(on, `data-s="${a}"`);
-      body = sec("Security card", "one card for alarm, locks and sensors", row("Card on the Security page", "shown at the top of the Security page", sw(o.page, "secb|page")) +
-          row("Title", "the name on the card", `<input type="text" data-sect="1" value="${E(o.title)}" style="width:200px" maxlength="30">`) +
-          row("Recent activity", "the latest changes at the bottom of the card", `<div class="seg sm">${[[0, "Off"], [3, "3"], [5, "5"], [10, "10"]].map(([v, n]) => `<button class="${o.recent === v ? "on" : ""}" data-s="secr|${v}">${n}</button>`).join("")}</div>`) +
-          `<div class="lbl" style="padding:8px 4px 2px">To put the card on the Home page or in a room: Add card, then choose Security card.</div>`) +
+      const xc = (c.custom.security || []).map((it, i) => ({ it, i })), pn = (it) => { const on = this._secParts().filter(([k]) => it.parts && it.parts[k]).map(([, n]) => n); return on.length === this._secParts().length ? "everything" : on.join(", ") || "nothing chosen"; };
+      body = sec("Cards on the Security page", "the cards shown on the Security page. Add as many as you need: each one shows what you choose and can have its own devices. Cards can also go on the Home page or in a room (Add card there)",
+          row(E(o.title) + " · main card", "alarm, locks and sensors. Set up below", sw(o.page, "secb|page")) +
+          (xc.map(({ it, i }) => row(E(it.name || "Security card"), E(it.type === "security" ? pn(it) + (it.extra && it.extra.length ? " · " + it.extra.length + " own devices" : "") : it.type), `<div class="the" style="gap:10px">${tg(!it.off, `data-cc="vis:security:${i}"`)}<button class="ib2" data-cc="del:security:${i}" title="Delete">✕</button></div>`)).join("")) +
+          `<div class="btns"><button class="pri" data-cc="open:security">＋ Add card</button></div>`) +
+        sec("Main card", "the first card on the Security page", row("Title", "the name on the card", `<input type="text" data-sect="1" value="${E(o.title)}" style="width:200px" maxlength="30">`) +
+          row("Recent activity", "the latest changes at the bottom of the card", `<div class="seg sm">${[[0, "Off"], [3, "3"], [5, "5"], [10, "10"]].map(([v, n]) => `<button class="${o.recent === v ? "on" : ""}" data-s="secr|${v}">${n}</button>`).join("")}</div>`)) +
         sec("What the card shows", "", this._secParts().map(([k, n]) => row(n, "", sw(o.show[k], "secp|" + k))).join("")) +
         sec("Alarm and locks", "", row("Arm buttons", "which modes the alarm panel card offers (only the ones the panel supports)", `<div class="seg sm" style="flex-wrap:wrap">${this._secModes().map(([k, n]) => `<button class="${o.modes.includes(k) ? "on" : ""}" data-s="secm|${k}">${n}</button>`).join("")}</div>`) +
           row("Ask before disarm or unlock", "a confirmation (and the code, when the panel or lock needs one). The code is typed each time and is never saved", sw(o.confirm, "secb|confirm")) +
