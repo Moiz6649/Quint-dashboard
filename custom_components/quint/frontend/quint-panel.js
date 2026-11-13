@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.81.1";
+const VER = "1.82.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -477,6 +477,7 @@ ha-icon{--mdc-icon-size:24px;display:inline-flex}.tpl{cursor:pointer;min-height:
 .btn2 button{padding:11px 6px;border-radius:9px;border:1px solid rgba(255,255,255,.26);background:none;font-size:13px;font-weight:600}.btn2 button:active{background:var(--ac);color:#000}
 .seg.sm{margin-top:12px;padding:3px;flex-wrap:wrap;gap:3px}.seg.sm button{flex:1 1 auto;padding:8px 12px;font-size:12px;white-space:nowrap}
 /* ===== intercom ===== */
+.abk{border:1px solid var(--bd);border-radius:14px;padding:8px 12px 10px;margin:8px 0}.abk .abh{display:flex;align-items:center;margin-bottom:2px}.abk input[type=time],.abk input[type=number]{color-scheme:dark;background:rgba(0,0,0,.28);color:inherit;border:1px solid var(--bd);border-radius:10px;padding:11px 12px;font:inherit}.abk input,.abk select,.abk textarea{width:100%;margin:3px 0}.abc{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.abc button{padding:8px 12px;font-size:12px;background:rgba(255,255,255,.09);border:0;border-radius:10px;color:inherit}.abc button.pri{background:var(--ac);color:#1a1408}.abk .rb2{background:rgba(255,255,255,.09);border:0;border-radius:50%;color:inherit}.abt{font-size:15px;margin:18px 0 2px;display:flex;gap:8px;align-items:baseline}
 .aul{display:flex;flex-direction:column}
 .aur{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--bd)}.aur:first-child{border-top:0}
 .aur .nm2{font-size:15px;font-weight:600}.runb{width:34px;height:34px;border-radius:50%;font-size:12px;padding:0;flex:none}
@@ -2171,13 +2172,14 @@ class QuintDashboard extends HTMLElement {
   _click(e) {
     if (this._mv && this._mv.carry) return this._carryClick(e);
     if (this._sup && Date.now() < this._sup) return;
-    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.kx || n.dataset.sa || n.dataset.sp || n.dataset.sx || n.dataset.more || n.dataset.md || n.dataset.dsh || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.h3d || n.dataset.pic || n.dataset.pin || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
+    const t = e.composedPath().find((n) => n.dataset && (n.dataset.go || n.dataset.kx || n.dataset.sa || n.dataset.sp || n.dataset.sx || n.dataset.ab || n.dataset.more || n.dataset.md || n.dataset.dsh || n.dataset.act || n.dataset.tog || n.dataset.cc || n.dataset.tpl || n.dataset.s || n.dataset.cam || n.dataset.sc !== undefined || n.dataset.ic || n.dataset.pers || n.dataset.h3d || n.dataset.pic || n.dataset.pin || n.dataset.more || n.dataset.ntf || n.dataset.pb || n.dataset.pick || n.dataset.rimgb || n.dataset.um || n.dataset.out));
     if (!t) return;
     const d = t.dataset;
     if ((d.cc || d.s || (d.tog && !d.tog.startsWith("menu"))) && !this._admin()) return;
     if (d.sa) return this._secAct(d.sa);
     if (d.sp) return this._spKey(d.sp);
     if (d.sx) return this._sxKey(d.sx);
+    if (d.ab) return this._abKey(d.ab);
     if (d.more) return this._moreInfo(d.more);
     if (d.kx) { const [id, fn, ...v] = d.kx.split("|"); return this._kxSet(id, fn, v.join("|")); }
     if (d.out) return this._signOut();
@@ -2273,6 +2275,7 @@ class QuintDashboard extends HTMLElement {
       if (Object.keys(cur).length) m[id] = cur; else delete m[id];
       this._c.thermo = { ...(this._c.thermo || {}), map: m }; this._save(); this._last = null; this._draw(true); return;
     }
+    if (adm && d.abf !== undefined && this._ab) { this._abSync(); const m = /^(trig|cond|act)\.(\d+)\.(t|cmd)$/.exec(d.abf); if (m) { const b = this._ab[m[1]][+m[2]]; if (m[3] === "t") { const keep = { entity: b.entity }; this._ab[m[1]][+m[2]] = { ...this._abDef(m[1], b.t), ...(["state", "num"].includes(b.t) || m[1] === "act" ? keep : {}) }; } this._last = null; this._draw(true); } return; }
     if (adm && d.sxd !== undefined && this._sx) { this._sx.dom = t.value; const l = this.shadowRoot.getElementById("sx-l"); if (l) l.innerHTML = this._opts(t.value); return; }
     if (d.sas !== undefined) { this._sasq = t.value; this._last = null; return this._draw(true); }
     if (adm && d.secd !== undefined) { this._secDom = t.value; const l = this.shadowRoot.getElementById("secx-l"); if (l) l.innerHTML = this._opts(t.value); return; }
@@ -3031,17 +3034,161 @@ class QuintDashboard extends HTMLElement {
     return svc === "cameras" ? all.filter((i) => !icc.includes(i)).slice(0, 2) : all;
   }
   _autoIds() { const H = this._h.states; return (this._c.autos || []).filter((i) => H[i]); }
-  _autoRow(id) {
-    const s = this._h.states[id], E = (t) => this._esc(t), d = id.split(".")[0], on = s.state === "on";
+  _autoRow(id, edit) {
+    const s = this._h.states[id], E = (t) => this._esc(t), d = id.split(".")[0], on = s.state === "on", mg = edit && d === "automation" && s.attributes.id ? `<button class="rb2 runb" data-ab="edit:${E(id)}" title="Edit">✎</button><button class="rb2 runb" data-ab="del:${E(id)}" title="Delete">🗑</button>` : "";
     const run = `<button class="rb2 runb" data-act="${d === "script" ? "script.turn_on" : "automation.trigger"}" data-e="${E(id)}" title="Run now">▶</button>`;
     const last = d === "automation" && s.attributes.last_triggered ? new Date(s.attributes.last_triggered).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-    return `<div class="aur" data-id="au:${E(id)}"><div class="grow"><div class="nm2">${E(this._nm(id))}</div><div class="lbl">${d === "script" ? (on ? "Running" : "Script") : last ? "Last run " + E(last) : "Never run"}</div></div>${run}${d === "automation" ? this._sw(on, "automation.toggle", [id]) : ""}</div>`;
+    return `<div class="aur" data-id="au:${E(id)}"><div class="grow"><div class="nm2">${E(this._nm(id))}</div><div class="lbl">${d === "script" ? (on ? "Running" : "Script") : last ? "Last run " + E(last) : "Never run"}</div></div>${mg}${run}${d === "automation" ? this._sw(on, "automation.toggle", [id]) : ""}</div>`;
   }
   _autoCard(big) {
     const ids = this._autoIds(), E = (t) => this._esc(t), shown = big ? ids : ids.slice(0, 6), onN = ids.filter((i) => this._h.states[i].state === "on" && i.startsWith("automation.")).length, nA = ids.filter((i) => i.startsWith("automation.")).length;
-    return `<div class="bc" data-id="b:automations"><div class="bh" ${this._tileGo("automations")}><span>${E(SV.automations.n)}</span><span class="bs">${nA ? onN + " of " + nA + " on" : ids.length + " scripts"}</span></div><div class="aul">${shown.map((i) => this._autoRow(i)).join("")}</div>${!big && ids.length > 6 ? `<div class="lbl" ${this._tileGo("automations")} style="cursor:pointer;margin-top:10px">+ ${ids.length - 6} more ›</div>` : ""}</div>`;
+    return `<div class="bc" data-id="b:automations"><div class="bh" ${this._tileGo("automations")}><span>${E(SV.automations.n)}</span><span class="bs">${nA ? onN + " of " + nA + " on" : ids.length + " scripts"}</span></div><div class="aul">${shown.map((i) => this._autoRow(i, big && this._admin())).join("")}${big && !shown.length ? '<div class="lbl" style="padding:10px 0">No automations chosen yet. Create one with the button above, or choose existing ones in Settings, Automations.</div>' : ""}</div>${!big && ids.length > 6 ? `<div class="lbl" ${this._tileGo("automations")} style="cursor:pointer;margin-top:10px">+ ${ids.length - 6} more ›</div>` : ""}</div>`;
   }
-  _autoPage() { return `${this._top()}<h1>${SV.automations.i} ${this._esc(SV.automations.n)}</h1><div style="max-width:780px;margin-top:10px">${this._autoCard(true)}</div>`; }
+  _autoPage() { return `${this._top()}<h1>${SV.automations.i} ${this._esc(SV.automations.n)}</h1>${this._admin() ? `<div class="btns" style="justify-content:flex-start;margin:4px 0 0"><button class="pri" data-ab="open" style="flex:none;padding:11px 22px">＋ New automation</button></div>` : ""}<div style="max-width:780px;margin-top:10px">${this._autoCard(true)}</div>`; }
+
+  /* ---- Automation builder: creates a real Home Assistant automation with the same call the HA editor uses (admin only) ---- */
+  _abKinds() {
+    return {
+      trig: [["state", "State change"], ["time", "At a time"], ["sun", "Sunrise or sunset"], ["num", "Number goes above or below"], ["start", "Home Assistant starts"]],
+      cond: [["state", "Entity is in a state"], ["time", "Time of day or weekday"], ["num", "Number is above or below"], ["sun", "Sun is up or down"]],
+      act: [["on", "Turn on"], ["off", "Turn off"], ["toggle", "Toggle"], ["light", "Light with brightness"], ["cover", "Shade or cover"], ["climate", "Set temperature"], ["lock", "Lock or unlock"], ["scene", "Run a scene or script"], ["notify", "Send a notification"], ["delay", "Wait"], ["service", "Any Home Assistant service"]],
+    };
+  }
+  _abDef(kind, t) {
+    const D = { trig: { time: { at: "07:00" }, sun: { ev: "sunset", off: 0 } }, cond: { time: { wd: [] }, sun: { sun: "above_horizon" } }, act: { cover: { cmd: "open" }, lock: { cmd: "lock" }, delay: { sec: 5 }, light: { pct: 100 }, climate: { temp: 21 } } };
+    return { t, ...((D[kind] || {})[t] || {}) };
+  }
+  _abNew() { this._ab = { id: "", name: "", mode: "single", trig: [{ t: "state" }], cond: [], act: [{ t: "on" }], err: "" }; this._last = null; this._draw(true); }
+  _abSync() {
+    const X = this._ab; if (!X) return;
+    this.shadowRoot.querySelectorAll("[data-abf]").forEach((el) => {
+      const p = el.dataset.abf.split("."), v = el.tagName === "TEXTAREA" ? el.value : String(el.value).replace(/[<>{}]/g, "");
+      if (p.length === 1) X[p[0]] = v; else if (X[p[0]] && X[p[0]][+p[1]]) X[p[0]][+p[1]][p[2]] = v;
+    });
+  }
+  _abBuild() {
+    const X = this._ab, S = this._h.states, pad = (n) => String(n).padStart(2, "0");
+    const ent = (v) => { v = String(v || "").trim().toLowerCase(); return S[v] ? v : null; }, num = (v) => (v === "" || v == null || isNaN(+v) ? null : +v), hms = (v) => (/^\d{1,2}:\d{2}(:\d{2})?$/.test(String(v || "")) ? (String(v).length <= 5 ? v + ":00" : v) : null);
+    const name = String(X.name || "").trim(); if (!name) return { err: "Give the automation a name" };
+    if (!X.trig.length) return { err: "Add at least one trigger under When" };
+    if (!X.act.length) return { err: "Add at least one action under Do" };
+    const tr = [], co = [], ac = [], NEED = "pick an entity from the list";
+    for (const [i, b] of X.trig.entries()) {
+      const n = "When " + (i + 1) + ": ";
+      if (b.t === "state") { const e = ent(b.entity); if (!e) return { err: n + NEED }; const o = { platform: "state", entity_id: e }; if (b.from) o.from = String(b.from).trim(); if (b.to) o.to = String(b.to).trim(); const f = num(b.for); if (f > 0) o.for = { seconds: Math.round(f) }; tr.push(o); }
+      else if (b.t === "time") { const a = hms(b.at); if (!a) return { err: n + "set the time" }; tr.push({ platform: "time", at: a }); }
+      else if (b.t === "sun") { const m = Math.round(num(b.off) || 0), o = { platform: "sun", event: b.ev === "sunrise" ? "sunrise" : "sunset" }; if (m) o.offset = (m < 0 ? "-" : "") + pad(Math.floor(Math.abs(m) / 60)) + ":" + pad(Math.abs(m) % 60) + ":00"; tr.push(o); }
+      else if (b.t === "num") { const e = ent(b.entity), a = num(b.above), c = num(b.below); if (!e) return { err: n + NEED }; if (a == null && c == null) return { err: n + "set above, below or both" }; const o = { platform: "numeric_state", entity_id: e }; if (a != null) o.above = a; if (c != null) o.below = c; tr.push(o); }
+      else if (b.t === "start") tr.push({ platform: "homeassistant", event: "start" });
+    }
+    for (const [i, b] of X.cond.entries()) {
+      const n = "Only if " + (i + 1) + ": ";
+      if (b.t === "state") { const e = ent(b.entity); if (!e) return { err: n + NEED }; if (!String(b.state || "").trim()) return { err: n + "type the state, for example on or home" }; co.push({ condition: "state", entity_id: e, state: String(b.state).trim() }); }
+      else if (b.t === "time") { const a = b.after ? hms(b.after) : null, c = b.before ? hms(b.before) : null, w = Array.isArray(b.wd) ? b.wd : []; if (!a && !c && !w.length) return { err: n + "set a time or pick weekdays" }; const o = { condition: "time" }; if (a) o.after = a; if (c) o.before = c; if (w.length) o.weekday = w; co.push(o); }
+      else if (b.t === "num") { const e = ent(b.entity), a = num(b.above), c = num(b.below); if (!e) return { err: n + NEED }; if (a == null && c == null) return { err: n + "set above, below or both" }; const o = { condition: "numeric_state", entity_id: e }; if (a != null) o.above = a; if (c != null) o.below = c; co.push(o); }
+      else if (b.t === "sun") co.push({ condition: "state", entity_id: "sun.sun", state: b.sun === "below_horizon" ? "below_horizon" : "above_horizon" });
+    }
+    for (const [i, b] of X.act.entries()) {
+      const n = "Do " + (i + 1) + ": ", e = ent(b.entity);
+      if (["on", "off", "toggle"].includes(b.t)) { if (!e) return { err: n + NEED }; ac.push({ service: b.t === "toggle" ? "homeassistant.toggle" : "homeassistant.turn_" + b.t, target: { entity_id: e } }); }
+      else if (b.t === "light") { if (!e) return { err: n + NEED }; const q = num(b.pct), o = { service: "light.turn_on", target: { entity_id: e } }; if (q != null) o.data = { brightness_pct: Math.max(1, Math.min(100, Math.round(q))) }; ac.push(o); }
+      else if (b.t === "cover") { if (!e) return { err: n + NEED }; if (b.cmd === "pos") { const q = num(b.pos); if (q == null) return { err: n + "set the position in %" }; ac.push({ service: "cover.set_cover_position", target: { entity_id: e }, data: { position: Math.max(0, Math.min(100, Math.round(q))) } }); } else ac.push({ service: "cover." + (b.cmd === "close" ? "close_cover" : b.cmd === "stop" ? "stop_cover" : "open_cover"), target: { entity_id: e } }); }
+      else if (b.t === "climate") { if (!e) return { err: n + NEED }; const q = num(b.temp); if (q == null) return { err: n + "set the temperature" }; ac.push({ service: "climate.set_temperature", target: { entity_id: e }, data: { temperature: q } }); }
+      else if (b.t === "lock") { if (!e) return { err: n + NEED }; ac.push({ service: b.cmd === "unlock" ? "lock.unlock" : "lock.lock", target: { entity_id: e } }); }
+      else if (b.t === "scene") { if (!e) return { err: n + NEED }; ac.push({ service: e.startsWith("script.") ? "script.turn_on" : "scene.turn_on", target: { entity_id: e } }); }
+      else if (b.t === "notify") { const sv = String(b.svc || "").trim().toLowerCase(); if (!/^notify\.[a-z0-9_]+$/.test(sv)) return { err: n + "pick the notify service, for example notify.mobile_app_phone" }; if (!String(b.msg || "").trim()) return { err: n + "type the message" }; const o = { service: sv, data: { message: String(b.msg).trim() } }; if (String(b.title || "").trim()) o.data.title = String(b.title).trim(); ac.push(o); }
+      else if (b.t === "delay") { const q = num(b.sec); if (!(q > 0)) return { err: n + "set the seconds to wait" }; ac.push({ delay: { hours: Math.floor(q / 3600), minutes: Math.floor((q % 3600) / 60), seconds: Math.round(q % 60) } }); }
+      else if (b.t === "service") {
+        const sv = String(b.svc || "").trim().toLowerCase(); if (!/^[a-z_]+\.[a-z0-9_]+$/.test(sv)) return { err: n + "write the service as domain.service, for example light.turn_on" };
+        const o = { service: sv }; if (String(b.entity || "").trim()) { if (!e) return { err: n + NEED }; o.target = { entity_id: e }; }
+        if (String(b.data || "").trim()) { try { const j = JSON.parse(b.data); if (!j || typeof j !== "object" || Array.isArray(j)) throw 0; o.data = j; } catch (_) { return { err: n + "the data must be JSON, for example {\"brightness\": 120}" }; } }
+        ac.push(o);
+      }
+    }
+    const mode = ["single", "restart", "queued", "parallel"].includes(X.mode) ? X.mode : "single";
+    return { cfg: { alias: name, description: "Created in Quint", mode, trigger: tr, condition: co, action: ac, variables: { quint: { v: 1, name, mode, trig: X.trig, cond: X.cond, act: X.act } } } };
+  }
+  async _abKey(k) {
+    if (!this._admin()) return;
+    const [a, x, y] = k.split(":");
+    if (a === "open") return this._abNew();
+    if (a === "edit") return this._abEdit(x);
+    if (a === "del") return this._abDel(x);
+    const X = this._ab; if (!X) return;
+    this._abSync();
+    if (a === "x") { this._ab = null; this._last = null; return this._draw(true); }
+    if (a === "at" || a === "ac" || a === "aa") { const L = a === "at" ? "trig" : a === "ac" ? "cond" : "act"; X[L].push(this._abDef(L, x)); }
+    else if (a === "rt" || a === "rc" || a === "ra") { const L = a === "rt" ? "trig" : a === "rc" ? "cond" : "act"; X[L].splice(+x, 1); }
+    else if (a === "wd") { const b = X.cond[+x]; if (b) { const w = new Set(b.wd || []); w.has(y) ? w.delete(y) : w.add(y); b.wd = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].filter((d) => w.has(d)); } }
+    else if (a === "ok") return this._abSave();
+    X.err = ""; this._last = null; this._draw(true);
+  }
+  async _abSave() {
+    const X = this._ab, r = this._abBuild(), er = (m) => { X.err = m; X.busy = false; this._last = null; this._draw(true); };
+    if (r.err) return er(r.err);
+    if (X.busy) return; X.busy = true;
+    const id = X.id || String(Date.now());
+    try { await this._h.callApi("POST", "config/automation/config/" + id, r.cfg); await this._h.callService("automation", "reload"); }
+    catch (e) { return er("Home Assistant did not accept it: " + this._err(e, "the automation editor is not available (the config integration)")); }
+    let eid = null; for (let n = 0; n < 24 && !eid; n++) { eid = Object.keys(this._h.states).find((i) => i.startsWith("automation.") && this._h.states[i].attributes.id === id); if (!eid) await new Promise((f) => setTimeout(f, 250)); }
+    if (eid && !(this._c.autos || []).includes(eid)) { this._c.autos = [...(this._c.autos || []), eid]; this._save(); }
+    this._ab = null; this._toast(X.id ? "Automation saved" : "Automation created" + (eid ? "" : ", it appears once Home Assistant has loaded it")); this._last = null; this._draw(true);
+  }
+  async _abEdit(eid) {
+    const st = this._h.states[eid], id = st && st.attributes.id; if (!id) return this._toast("This automation has no id, edit it in Home Assistant");
+    let cfg; try { cfg = await this._h.callApi("GET", "config/automation/config/" + id); } catch (e) { return this._toast("Could not read it: " + this._err(e, "not available")); }
+    const m = cfg && cfg.variables && cfg.variables.quint;
+    if (!m || !Array.isArray(m.act)) return this._toast("This automation was not made in Quint. Edit it in Home Assistant");
+    this._ab = { id, name: m.name || cfg.alias || "", mode: m.mode || "single", trig: structuredClone(m.trig || []), cond: structuredClone(m.cond || []), act: structuredClone(m.act || []), err: "" }; this._last = null; this._draw(true);
+  }
+  async _abDel(eid) {
+    const st = this._h.states[eid], id = st && st.attributes.id; if (!id) return;
+    if (!confirm('Delete the automation "' + this._nm(eid) + '"? This removes it from Home Assistant.')) return;
+    try { await this._h.callApi("DELETE", "config/automation/config/" + id); await this._h.callService("automation", "reload"); }
+    catch (e) { return this._toast("Could not delete it: " + this._err(e, "not available")); }
+    this._c.autos = (this._c.autos || []).filter((i) => i !== eid); this._save(); this._toast("Automation deleted"); this._last = null; this._draw(true);
+  }
+  _abDlg() {
+    const X = this._ab; if (!X || !this._admin()) return "";
+    const E = (t) => this._esc(t), S = this._h.states, K = this._abKinds();
+    const doms = { all: null, light: ["light"], cover: ["cover"], climate: ["climate"], lock: ["lock"], sr: ["scene", "script"], num: ["sensor", "number", "input_number", "counter", "climate", "weather"] };
+    const dl = Object.entries(doms).map(([k, d]) => `<datalist id="ab-l-${k}">${Object.keys(S).filter((i) => !d || d.includes(i.split(".")[0])).sort().slice(0, 1500).map((i) => `<option value="${E(i)}">${E(S[i].attributes.friendly_name || "")}</option>`).join("")}</datalist>`).join("") + `<datalist id="ab-ns">${Object.keys((this._h.services && this._h.services.notify) || {}).sort().map((v) => `<option value="notify.${E(v)}"></option>`).join("")}</datalist>`;
+    const I = (path, v, ph, ty) => `<input type="${ty || "text"}" data-abf="${path}" value="${E(v == null ? "" : v)}" ${ph ? `placeholder="${E(ph)}"` : ""} ${ty === "number" ? 'step="any"' : 'autocomplete="off"'}>`;
+    const EI = (path, v, dom) => `<input type="text" data-abf="${path}" list="ab-l-${dom || "all"}" value="${E(v || "")}" placeholder="Name or entity id" autocomplete="off">`;
+    const L = (t) => `<div class="lbl" style="margin:6px 0 0">${t}</div>`;
+    const SEL = (path, v, opts) => `<select data-abf="${path}">${opts.map(([o, n]) => `<option value="${o}" ${v === o ? "selected" : ""}>${E(n)}</option>`).join("")}</select>`;
+    const TS = (kind, i, t) => `<select data-abf="${kind}.${i}.t">${K[kind].map(([o, n]) => `<option value="${o}" ${t === o ? "selected" : ""}>${E(n)}</option>`).join("")}</select>`;
+    const blk = (kind, i, b, inner) => `<div class="abk"><div class="abh"><span style="flex:1">${TS(kind, i, b.t)}</span><button class="rb2" data-ab="r${kind[0]}:${i}" title="Remove" style="width:30px;height:30px;padding:0;margin-left:8px">✕</button></div>${inner}</div>`;
+    const trig = X.trig.map((b, i) => { const p = "trig." + i + "."; return blk("trig", i, b,
+      b.t === "state" ? L("Entity") + EI(p + "entity", b.entity) + L("From (optional)") + I(p + "from", b.from, "any, or for example off") + L("To (optional)") + I(p + "to", b.to, "for example on, open, home") + L("For at least (seconds, optional)") + I(p + "for", b.for, "", "number")
+      : b.t === "time" ? L("At") + I(p + "at", b.at, "", "time")
+      : b.t === "sun" ? L("Event") + SEL(p + "ev", b.ev, [["sunset", "Sunset"], ["sunrise", "Sunrise"]]) + L("Offset in minutes (negative = before)") + I(p + "off", b.off, "", "number")
+      : b.t === "num" ? L("Entity") + EI(p + "entity", b.entity, "num") + L("Above") + I(p + "above", b.above, "", "number") + L("Below") + I(p + "below", b.below, "", "number")
+      : `<div class="lbl">Runs when Home Assistant has started</div>`); }).join("");
+    const cond = X.cond.map((b, i) => { const p = "cond." + i + "."; return blk("cond", i, b,
+      b.t === "state" ? L("Entity") + EI(p + "entity", b.entity) + L("State") + I(p + "state", b.state, "for example on, off, home, open")
+      : b.t === "time" ? L("After (optional)") + I(p + "after", b.after, "", "time") + L("Before (optional)") + I(p + "before", b.before, "", "time") + L("Weekdays (none = every day)") + `<div class="abc">${[["mon", "Mon"], ["tue", "Tue"], ["wed", "Wed"], ["thu", "Thu"], ["fri", "Fri"], ["sat", "Sat"], ["sun", "Sun"]].map(([d, n]) => `<button class="${(b.wd || []).includes(d) ? "pri" : ""}" data-ab="wd:${i}:${d}">${n}</button>`).join("")}</div>`
+      : b.t === "num" ? L("Entity") + EI(p + "entity", b.entity, "num") + L("Above") + I(p + "above", b.above, "", "number") + L("Below") + I(p + "below", b.below, "", "number")
+      : SEL(p + "sun", b.sun, [["above_horizon", "Sun is up (daytime)"], ["below_horizon", "Sun is down (night)"]])); }).join("");
+    const act = X.act.map((b, i) => { const p = "act." + i + "."; return blk("act", i, b,
+      ["on", "off", "toggle"].includes(b.t) ? L("Entity") + EI(p + "entity", b.entity)
+      : b.t === "light" ? L("Light") + EI(p + "entity", b.entity, "light") + L("Brightness %") + I(p + "pct", b.pct, "", "number")
+      : b.t === "cover" ? L("Shade or cover") + EI(p + "entity", b.entity, "cover") + SEL(p + "cmd", b.cmd, [["open", "Open"], ["close", "Close"], ["stop", "Stop"], ["pos", "Set position"]]) + (b.cmd === "pos" ? L("Position %") + I(p + "pos", b.pos, "", "number") : "")
+      : b.t === "climate" ? L("Thermostat") + EI(p + "entity", b.entity, "climate") + L("Temperature") + I(p + "temp", b.temp, "", "number")
+      : b.t === "lock" ? L("Lock") + EI(p + "entity", b.entity, "lock") + SEL(p + "cmd", b.cmd, [["lock", "Lock"], ["unlock", "Unlock"]])
+      : b.t === "scene" ? L("Scene or script") + EI(p + "entity", b.entity, "sr")
+      : b.t === "notify" ? L("Notify service") + `<input type="text" data-abf="${p}svc" list="ab-ns" value="${E(b.svc || "")}" placeholder="notify.mobile_app_your_phone" autocomplete="off">` + L("Title (optional)") + I(p + "title", b.title) + L("Message") + I(p + "msg", b.msg)
+      : b.t === "delay" ? L("Wait (seconds)") + I(p + "sec", b.sec, "", "number")
+      : L("Service") + I(p + "svc", b.svc, "for example light.turn_on") + L("Entity (optional)") + EI(p + "entity", b.entity) + L("Data (optional, JSON)") + `<textarea data-abf="${p}data" rows="2" placeholder='{"brightness": 120}' style="width:100%">${E(b.data || "")}</textarea>`); }).join("");
+    const adds = (a, kind) => `<div class="abc">${K[kind].map(([o, n]) => `<button data-ab="${a}:${o}">＋ ${E(n)}</button>`).join("")}</div>`;
+    return `<div class="ov"><div class="dlg" style="max-width:600px;max-height:90vh;overflow:auto"><h1 style="font-size:22px">${X.id ? "Edit automation" : "New automation"}</h1><div class="lbl" style="margin:2px 0 6px">Creates a real Home Assistant automation. It runs on its own, also when this page is closed</div>
+      ${L("Name")}${I("name", X.name, "for example Lights off at night")}
+      <h2 class="abt">When</h2><div class="lbl">Any of these starts it</div>${trig}${adds("at", "trig")}
+      <h2 class="abt">Only if <span class="lbl">optional</span></h2><div class="lbl">All of these must be true</div>${cond}${adds("ac", "cond")}
+      <h2 class="abt">Do</h2><div class="lbl">Runs in this order</div>${act}${adds("aa", "act")}
+      ${L("If it starts again while running")}${SEL("mode", X.mode, [["single", "Ignore the new start"], ["restart", "Restart"], ["queued", "Wait in line"], ["parallel", "Run both"]])}
+      ${dl}<div class="err">${E(X.err || "")}</div><div class="btns"><button data-ab="x">Cancel</button><button class="pri" data-ab="ok" ${X.busy ? "disabled" : ""}>${X.id ? "Save" : "Create automation"}</button></div></div></div>`;
+  }
   _icCur() { const l = this._ics(); return l[Math.min(this._icSel || 0, l.length - 1)]; }
   _ics() { const c = this._c; if (!c.intercoms) { c.intercoms = c.intercom ? [{ id: "ic1", ...c.intercom }] : []; delete c.intercom; } return c.intercoms; }
   _icOk(ic) { return !!(ic && (ic.camera || (ic.door && ic.door.a) || (ic.audio && ic.audio.a))); }
@@ -5012,7 +5159,7 @@ class QuintDashboard extends HTMLElement {
     } else if (tab === "autos") {
       const all = Object.keys(this._h.states).filter((i) => /^(automation|script)\./.test(i)).sort((a, b) => this._nm(a).localeCompare(this._nm(b))).slice(0, 300), sel = new Set(c.autos || []);
       body = sec("Automations", `choose the automations and scripts that appear on the home page and in the Automations tab (${sel.size} chosen). Users can switch an automation on or off and run it with ▶`,
-        (all.map((id) => row(E(this._nm(id)), E(id), tg(sel.has(id), `data-s="auto|${E(id)}"`))).join("") || '<div class="lbl" style="padding:6px 4px 12px">No automations or scripts found in Home Assistant.</div>') +
+        row("Create an automation", "build a new Home Assistant automation here: when, only if, do", `<button class="pri" data-ab="open" style="flex:none;padding:9px 16px">＋ New automation</button>`) + (all.map((id) => row(E(this._nm(id)), E(id), tg(sel.has(id), `data-s="auto|${E(id)}"`))).join("") || '<div class="lbl" style="padding:6px 4px 12px">No automations or scripts found in Home Assistant.</div>') +
         (sel.size ? '<div class="btns"><button data-s="autoclear|">Clear all</button></div>' : ""));
     } else if (tab === "scenes") {
       const mine = this._myScenes().filter((x) => (adm || x.sc === "l") && this._sceneOk(x)), has = Object.keys(this._h.states).filter((i) => i.startsWith("scene.")).slice(0, 60), hid = c.hide || [];
@@ -5083,7 +5230,7 @@ class QuintDashboard extends HTMLElement {
     const cr = this._credit(), adm = this._admin();
     const sy = this.scrollTop;
     const vk = JSON.stringify(V), changed = this._vk !== vk;
-    const html = `<div class="bgl"><i></i></div><div class="app${p === "h3edit" ? " ed" : ""}${p === "home" && this._h3dImm() ? " imm" : ""}${p === "home" && this._h3dPImm() ? " pim" : ""}">${phone ? pbar : `<button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button>`}<main class="${changed ? "anim" : ""}">${body}</main>${phone ? "" : `<nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav>`}</div>${more}${this._dialog()}${this._secPad()}${this._secAddDlg()}${this._scDialog()}${this._persDialog()}${this._devSheet()}${this._ntfPanel()}${this._camView()}`;
+    const html = `<div class="bgl"><i></i></div><div class="app${p === "h3edit" ? " ed" : ""}${p === "home" && this._h3dImm() ? " imm" : ""}${p === "home" && this._h3dPImm() ? " pim" : ""}">${phone ? pbar : `<button class="gb nbell tbell" data-ntf="open" title="Notifications">${BELL_I}${this._nList().some((x) => !x.read) ? `<span class="nbd">${this._nList().filter((x) => !x.read).length > 9 ? "9+" : this._nList().filter((x) => !x.read).length}</span>` : ""}</button>`}<main class="${changed ? "anim" : ""}">${body}</main>${phone ? "" : `<nav><div class="tabs2">${tabs}</div><div class="nr">${cr ? `<span class="cr">${cr}</span>` : ""}<button class="gb" data-pers="open" title="Background">${PALETTE_I}</button><button class="gb" data-go='{"p":"settings"}' title="Settings">${GEAR_I}</button></div></nav>`}</div>${more}${this._dialog()}${this._secPad()}${this._secAddDlg()}${this._abDlg()}${this._scDialog()}${this._persDialog()}${this._devSheet()}${this._ntfPanel()}${this._camView()}`;
     if (html === this._last) { Object.values(this._lvc || {}).forEach((e) => (e.hass = this._h)); Object.values(this._h3el || {}).forEach((e) => (e.hass = this._h)); if (this._h3panel) this._h3panel.hass = this._h; if (this._h3dNeedsFit()) this._mountLv(); return; }
     this._last = html; this._vk = vk;
     const tpl = document.createElement("template");
