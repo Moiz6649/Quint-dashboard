@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.81.0";
+const VER = "1.81.1";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -1856,7 +1856,7 @@ class QuintDashboard extends HTMLElement {
   _secOpts() {
     const o = this._c.sec || {}, show = {}; this._secParts().forEach(([k]) => { show[k] = !(o.show && o.show[k] === false); });
     const ok = this._secModes().map((m) => m[0]);
-    return { page: o.page !== false, title: String(o.title || "Security").slice(0, 30), show, modes: Array.isArray(o.modes) ? o.modes.filter((m) => ok.includes(m)) : ["armed_home", "armed_away", "armed_night"], confirm: o.confirm !== false, adminOnly: !!o.adminOnly, recent: [0, 3, 5, 10].includes(+o.recent) ? +o.recent : 5, hide: Array.isArray(o.hide) ? o.hide : [], extra: Array.isArray(o.extra) ? o.extra.filter((i) => typeof i === "string") : [], names: o.names && typeof o.names === "object" ? o.names : {}, all: !!o.all, atypes: Array.isArray(o.atypes) ? o.atypes.filter((k) => this._secAllTypes().some((t) => t[0] === k)) : ["light", "switch", "cover", "fan", "lock", "climate", "media_player", "scene"] };
+    return { page: o.page !== false, title: String(o.title || "Security").slice(0, 30), show, modes: Array.isArray(o.modes) ? o.modes.filter((m) => ok.includes(m)) : ["armed_home", "armed_away", "armed_night"], confirm: o.confirm !== false, adminOnly: !!o.adminOnly, recent: [0, 3, 5, 10].includes(+o.recent) ? +o.recent : 5, hide: Array.isArray(o.hide) ? o.hide : [], extra: Array.isArray(o.extra) ? o.extra.filter((i) => typeof i === "string") : [], names: o.names && typeof o.names === "object" ? o.names : {}, list: o.list === true, all: !!o.all, atypes: Array.isArray(o.atypes) ? o.atypes.filter((k) => this._secAllTypes().some((t) => t[0] === k)) : ["light", "switch", "cover", "fan", "lock", "climate", "media_player", "scene"] };
   }
   /* every entity the card may show (before the ones switched off in Settings) */
   _secAll() { const S = this._h.states, o = this._secOpts(), base = this._ents("security"); return [...base, ...o.extra.filter((i) => S[i] && !base.includes(i) && !this._c.hide.includes(i))]; }
@@ -1946,7 +1946,7 @@ class QuintDashboard extends HTMLElement {
   }
   _secPage() {
     const o = this._secOpts(), list = this._ents("security");
-    return `${this._top()}<h1>${SV.security.i} ${SV.security.n}</h1>${this._secCards(o)}${list.length ? `<div class="dvh"><span>All security devices</span></div><div class="grid" data-grid="list:security" style="grid-template-columns:repeat(auto-fill,minmax(calc(200px * var(--tm,1)),1fr))">${this._cardsOf(list, "list:security")}</div>` : ""}${o.all ? this._secAllHtml(o, list) : ""}`;
+    return `${this._top()}<h1>${SV.security.i} ${SV.security.n}</h1>${this._secCards(o)}${o.list && list.length ? `<div class="dvh"><span>All security devices</span></div><div class="grid" data-grid="list:security" style="grid-template-columns:repeat(auto-fill,minmax(calc(200px * var(--tm,1)),1fr))">${this._cardsOf(list, "list:security")}</div>` : ""}${o.all ? this._secAllHtml(o, list) : ""}`;
   }
   /* arm, disarm, lock, unlock: asks for the code and a confirmation when needed. The code is typed for this one call and never kept */
   _secAct(str) {
@@ -4843,6 +4843,7 @@ class QuintDashboard extends HTMLElement {
           row(E(o.title) + " · main card", "alarm, locks and sensors. Set up below", sw(o.page, "secb|page")) +
           (xc.map(({ it, i }) => row(E(it.name || "Security card"), E(it.type === "security" ? pn(it) + (it.extra && it.extra.length ? " · " + it.extra.length + " own devices" : "") : it.type), `<div class="the" style="gap:10px">${tg(!it.off, `data-cc="vis:security:${i}"`)}<button class="ib2" data-cc="del:security:${i}" title="Delete">✕</button></div>`)).join("")) +
           `<div class="btns"><button class="pri" data-cc="open:security">＋ Add card</button></div>`) +
+        sec("On the Security page", "what is shown besides the cards", row("List of all security devices", "the grid of every alarm panel, lock, door, window and sensor under the cards. Off by default: add cards above to show only what you choose", sw(o.list, "secb|list"))) +
         sec("Main card", "the first card on the Security page", row("Title", "the name on the card", `<input type="text" data-sect="1" value="${E(o.title)}" style="width:200px" maxlength="30">`) +
           row("Recent activity", "the latest changes at the bottom of the card", `<div class="seg sm">${[[0, "Off"], [3, "3"], [5, "5"], [10, "10"]].map(([v, n]) => `<button class="${o.recent === v ? "on" : ""}" data-s="secr|${v}">${n}</button>`).join("")}</div>`)) +
         sec("Control all devices", "show every device on the Security page, with filters, a search and buttons for all lights, shades and more", row("All devices on the Security page", "a section under the security devices: every device of the chosen types, with its own controls", sw(o.all, "secb|all")) +
