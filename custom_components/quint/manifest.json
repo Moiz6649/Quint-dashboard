@@ -14,7 +14,7 @@
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/YOUR-USER/quint-dashboard/issues",
   "requirements": [],
-  "version": "1.80.1",
+  "version": "1.81.0",
   "after_dependencies": [
     "bluetooth",
     "knx",

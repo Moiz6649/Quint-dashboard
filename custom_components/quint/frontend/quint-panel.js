@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.80.1";
+const VER = "1.81.0";
 const HOLD_MS = 2000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -265,7 +265,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .sal{margin:8px 0}.sar,.sr{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:6px 0}.sr .sn,.sar .sn{font-weight:600}.ss{font-size:12px;color:var(--mu)}.ss.w{color:#ffb04a}.ss.b{color:#ff6b6b}.sr button.sk{flex:none;padding:6px 14px}.sal .seg{width:100%}
 .sgh{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin:14px 0 6px}.sgh .w{color:#ffb04a}
 .scc{display:flex;flex-wrap:wrap;gap:6px}.scc .sch{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:6px 12px;border-radius:12px;border:0;background:rgba(255,255,255,.07);color:var(--tx);font:inherit;font-size:13px;cursor:pointer}.scc .sch small{font-size:11px;color:var(--mu)}.scc .sch.w{background:rgba(255,176,74,.2)}.scc .sch.w small{color:#ffc678}.scc .sch.b{background:rgba(255,107,107,.25)}
-.sev{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;border-top:1px solid rgba(255,255,255,.05)}.sev small{color:var(--mu);white-space:nowrap}.secw{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;align-items:start;margin:0 0 6px}
+.sev{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;border-top:1px solid rgba(255,255,255,.05)}.sev small{color:var(--mu);white-space:nowrap}.sab{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 12px}.sab .sbtn{flex:0 0 auto;padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.08);color:var(--tx,#fff);font:inherit;font-size:13px;font-weight:600;cursor:pointer}.sab .sbtn:hover{background:rgba(255,255,255,.14)}.sab .sbtn[disabled]{opacity:.4;cursor:default}.sab input{flex:1 1 160px}.secw{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;align-items:start;margin:0 0 6px}
 .spv{text-align:center;font-size:26px;letter-spacing:.3em;min-height:38px;margin:6px 0}.spk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 12px}.spk button{padding:14px 0;font-size:20px}
 .secparts{display:grid;grid-template-columns:1fr 1fr;gap:6px}.secpt{display:flex;gap:8px;align-items:center;font-size:14px}.secpt input{width:auto!important}
 .sr .sw{flex:none}.sr .seg{flex:none;width:auto}.sadd{padding:4px 12px;border:0;border-radius:10px;background:rgba(255,255,255,.1);color:var(--tx);font:inherit;font-size:11px;text-transform:none;letter-spacing:0;cursor:pointer}.sch.sx{display:inline-flex;flex-direction:row;align-items:center;gap:8px;padding:5px 6px 5px 12px;border-radius:12px;background:rgba(255,255,255,.07)}.sch.sx button{border:0;background:transparent;color:var(--mu);cursor:pointer;padding:0 6px;font-size:13px}.scg{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}.scg .cvw{position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:#0b0f18;cursor:pointer}.scg .cvw img{width:100%;height:100%;object-fit:cover}.scg .cvw .cn{position:absolute;left:8px;bottom:6px;font-size:12px;text-shadow:0 1px 4px #000}
@@ -1389,6 +1389,7 @@ class QuintDashboard extends HTMLElement {
     else if (a === "thscan") { this._thScan(v); return; }
     else if (a === "ktadd") { const L = this._ktList(); if (L.length >= 20) return; let id; do id = "k" + Math.random().toString(36).slice(2, 8); while (L.some((t) => t.id === id)); c.kt = [...L, { id, name: "Thermostat " + (L.length + 1), room: "", s: {} }]; this._pick = { ...(this._pick || {}), ktsel: id }; this._kxt = 0; this._last = null; }
     else if (a === "ktdel") { c.kt = this._ktList().filter((t) => t.id !== v); this._last = null; }
+    else if (a === "seca") { const o = this._secOpts(), cur = o.atypes.includes(v) ? o.atypes.filter((k) => k !== v) : [...o.atypes, v]; c.sec = { ...(c.sec || {}), atypes: cur }; if (this._saf && !cur.includes(this._saf)) this._saf = ""; this._last = null; }
     else if (a === "secb") { c.sec = { ...(c.sec || {}), [v]: !(v === "adminOnly" ? this._secOpts().adminOnly : this._secOpts()[v]) }; this._last = null; }
     else if (a === "secp") { const sh = { ...(this._c.sec || {}).show }; sh[v] = !this._secOpts().show[v]; c.sec = { ...(c.sec || {}), show: sh }; this._last = null; }
     else if (a === "secm") { const m = this._secOpts().modes; c.sec = { ...(c.sec || {}), modes: m.includes(v) ? m.filter((x) => x !== v) : [...m, v] }; this._last = null; }
@@ -1836,12 +1837,26 @@ class QuintDashboard extends HTMLElement {
     const P = (...on) => { const o = {}; this._secParts().forEach(([k]) => { o[k] = on.includes(k); }); return o; }, all = {}; this._secParts().forEach(([k]) => { all[k] = true; });
     return [["all", "Everything", all], ["alarm", "Alarm and locks", P("alarm", "locks")], ["openings", "Doors, windows and garage", P("doors", "windows", "garage")], ["motion", "Motion and presence", P("motion")], ["safety", "Smoke, gas, water and tamper", P("smoke", "water", "tamper")], ["cams", "Cameras", P("cameras")], ["mine", "My own devices (add entities)", P("devices")]];
   }
+  /* "Control all devices": every device of the chosen types on the Security page, with filters and bulk buttons */
+  _secAllTypes() { return [["light", "Lights"], ["switch", "Switches"], ["cover", "Shades and covers"], ["fan", "Fans"], ["lock", "Locks"], ["climate", "Climate"], ["media_player", "Media players"], ["scene", "Scenes"], ["script", "Scripts"], ["input_boolean", "Toggles"], ["vacuum", "Vacuums"], ["humidifier", "Humidifiers"], ["camera", "Cameras"], ["sensor", "Sensors"], ["binary_sensor", "Binary sensors"]]; }
+  _secBulk(t) { return { light: [["turn_on", "All on"], ["turn_off", "All off"]], switch: [["turn_on", "All on"], ["turn_off", "All off"]], fan: [["turn_on", "All on"], ["turn_off", "All off"]], input_boolean: [["turn_on", "All on"], ["turn_off", "All off"]], humidifier: [["turn_on", "All on"], ["turn_off", "All off"]], cover: [["open_cover", "Open all"], ["close_cover", "Close all"]], lock: [["lock", "Lock all"]], media_player: [["media_pause", "Pause all"], ["turn_off", "Turn all off"]], vacuum: [["return_to_base", "Send all home"]] }[t] || []; }
+  _secAllIds(t) {
+    const o = this._secOpts(), S = this._h.states, q = String(this._sasq || "").toLowerCase().trim();
+    return Object.keys(S).filter((i) => { const d = i.split(".")[0]; return (t ? d === t : o.atypes.includes(d)) && !this._c.hide.includes(i) && !["unavailable"].includes(S[i].state) && (!q || (S[i].attributes.friendly_name || i).toLowerCase().includes(q) || i.toLowerCase().includes(q)); }).sort((a, b) => String(this._h.states[a].attributes.friendly_name || a).localeCompare(String(this._h.states[b].attributes.friendly_name || b)));
+  }
+  _secAllHtml(o, list) {
+    const E = (x) => this._esc(x), S = this._h.states, T = this._secAllTypes().filter(([k]) => o.atypes.includes(k) && Object.keys(S).some((i) => i.startsWith(k + ".") && !this._c.hide.includes(i)));
+    if (!T.length) return "";
+    const f = T.some((t) => t[0] === this._saf) || this._saf === "" ? this._saf || "" : "", ids = this._secAllIds(f), shown = ids.filter((i) => !list.includes(i)), can = !o.adminOnly || this._admin();
+    const bulk = f ? this._secBulk(f).map(([sv, l]) => `<button class="sbtn" data-sa="bulk|${E(f)}|${E(sv)}" ${f === "lock" && !can ? "disabled" : ""}>${E(l)}${ids.length ? " (" + ids.length + ")" : ""}</button>`).join("") : "";
+    return `<div class="dvh"><span>All devices</span></div><div class="sab"><div class="seg sm" style="flex-wrap:wrap"><button class="${f === "" ? "on" : ""}" data-sa="ft||">All</button>${T.map(([k, n]) => `<button class="${f === k ? "on" : ""}" data-sa="ft|${k}|">${E(n)}</button>`).join("")}</div><input type="text" data-sas="1" value="${E(this._sasq || "")}" placeholder="Search devices" style="max-width:220px"></div>${bulk ? `<div class="sab">${bulk}</div>` : ""}${shown.length ? `<div class="grid" data-grid="list:secall" style="grid-template-columns:repeat(auto-fill,minmax(calc(200px * var(--tm,1)),1fr))">${this._sort("list:secall", shown.slice(0, 150), (i) => "e:" + i).map((i) => this._kw("e:" + i, SV[this._svcOf(i)] ? this._card(i) : this._gen({ entity: i, style: "x" }))).join("")}</div>${shown.length > 150 ? `<div class="lbl" style="padding:8px 2px">Showing 150 of ${shown.length}. Use the search or a type to narrow down.</div>` : ""}` : `<div class="lbl" style="padding:8px 2px">${ids.length ? "These devices are already shown above." : "No device found."}</div>`}`;
+  }
   _secParts() { return [["alarm", "Alarm panel"], ["locks", "Locks"], ["doors", "Doors"], ["windows", "Windows"], ["garage", "Garage and gates"], ["motion", "Motion and presence"], ["smoke", "Smoke, gas and CO"], ["water", "Water leaks"], ["tamper", "Tamper"], ["other", "Other sensors"], ["devices", "Added devices"], ["cameras", "Cameras"]]; }
   _secModes() { return [["armed_home", "Home", "alarm_arm_home", 1], ["armed_away", "Away", "alarm_arm_away", 2], ["armed_night", "Night", "alarm_arm_night", 4], ["armed_vacation", "Vacation", "alarm_arm_vacation", 32]]; }
   _secOpts() {
     const o = this._c.sec || {}, show = {}; this._secParts().forEach(([k]) => { show[k] = !(o.show && o.show[k] === false); });
     const ok = this._secModes().map((m) => m[0]);
-    return { page: o.page !== false, title: String(o.title || "Security").slice(0, 30), show, modes: Array.isArray(o.modes) ? o.modes.filter((m) => ok.includes(m)) : ["armed_home", "armed_away", "armed_night"], confirm: o.confirm !== false, adminOnly: !!o.adminOnly, recent: [0, 3, 5, 10].includes(+o.recent) ? +o.recent : 5, hide: Array.isArray(o.hide) ? o.hide : [], extra: Array.isArray(o.extra) ? o.extra.filter((i) => typeof i === "string") : [], names: o.names && typeof o.names === "object" ? o.names : {} };
+    return { page: o.page !== false, title: String(o.title || "Security").slice(0, 30), show, modes: Array.isArray(o.modes) ? o.modes.filter((m) => ok.includes(m)) : ["armed_home", "armed_away", "armed_night"], confirm: o.confirm !== false, adminOnly: !!o.adminOnly, recent: [0, 3, 5, 10].includes(+o.recent) ? +o.recent : 5, hide: Array.isArray(o.hide) ? o.hide : [], extra: Array.isArray(o.extra) ? o.extra.filter((i) => typeof i === "string") : [], names: o.names && typeof o.names === "object" ? o.names : {}, all: !!o.all, atypes: Array.isArray(o.atypes) ? o.atypes.filter((k) => this._secAllTypes().some((t) => t[0] === k)) : ["light", "switch", "cover", "fan", "lock", "climate", "media_player", "scene"] };
   }
   /* every entity the card may show (before the ones switched off in Settings) */
   _secAll() { const S = this._h.states, o = this._secOpts(), base = this._ents("security"); return [...base, ...o.extra.filter((i) => S[i] && !base.includes(i) && !this._c.hide.includes(i))]; }
@@ -1931,13 +1946,20 @@ class QuintDashboard extends HTMLElement {
   }
   _secPage() {
     const o = this._secOpts(), list = this._ents("security");
-    return `${this._top()}<h1>${SV.security.i} ${SV.security.n}</h1>${this._secCards(o)}${list.length ? `<div class="dvh"><span>All security devices</span></div><div class="grid" data-grid="list:security" style="grid-template-columns:repeat(auto-fill,minmax(calc(200px * var(--tm,1)),1fr))">${this._cardsOf(list, "list:security")}</div>` : ""}`;
+    return `${this._top()}<h1>${SV.security.i} ${SV.security.n}</h1>${this._secCards(o)}${list.length ? `<div class="dvh"><span>All security devices</span></div><div class="grid" data-grid="list:security" style="grid-template-columns:repeat(auto-fill,minmax(calc(200px * var(--tm,1)),1fr))">${this._cardsOf(list, "list:security")}</div>` : ""}${o.all ? this._secAllHtml(o, list) : ""}`;
   }
   /* arm, disarm, lock, unlock: asks for the code and a confirmation when needed. The code is typed for this one call and never kept */
   _secAct(str) {
     const [act, id, mode] = str.split("|");
     if (act === "add") { if (!this._admin()) return; this._sx = { uid: id, dom: "" }; this._last = null; return this._draw(true); }
     if (act === "rm") { if (this._admin()) this._secRemove(id, mode); return; }
+    if (act === "ft") { this._saf = id || ""; this._last = null; return this._draw(true); }
+    if (act === "bulk") {
+      const o0 = this._secOpts(); if (!o0.all || !this._secAllTypes().some((t) => t[0] === id) || !this._secBulk(id).some((b) => b[0] === mode)) return;
+      if (id === "lock" && o0.adminOnly && !this._admin()) return this._toast("Only an admin can do this");
+      const ids = this._secAllIds(id); if (!ids.length) return;
+      this._h.callService(id, mode, { entity_id: ids }); this._toast(this._secBulk(id).find((b) => b[0] === mode)[1] + ": " + ids.length + " " + (this._secAllTypes().find((t) => t[0] === id) || [0, id])[1].toLowerCase()); return;
+    }
     const S = this._h.states[id], o = this._secOpts();
     if (!S) return;
     if (o.adminOnly && !this._admin()) return this._toast("Only an admin can do this");
@@ -2252,6 +2274,7 @@ class QuintDashboard extends HTMLElement {
       this._c.thermo = { ...(this._c.thermo || {}), map: m }; this._save(); this._last = null; this._draw(true); return;
     }
     if (adm && d.sxd !== undefined && this._sx) { this._sx.dom = t.value; const l = this.shadowRoot.getElementById("sx-l"); if (l) l.innerHTML = this._opts(t.value); return; }
+    if (d.sas !== undefined) { this._sasq = t.value; this._last = null; return this._draw(true); }
     if (adm && d.secd !== undefined) { this._secDom = t.value; const l = this.shadowRoot.getElementById("secx-l"); if (l) l.innerHTML = this._opts(t.value); return; }
     if (adm && (d.sect !== undefined || d.secn !== undefined || d.secx !== undefined)) {
       const val = e.target.value.trim(), sc = { ...(this._c.sec || {}) };
@@ -4822,6 +4845,8 @@ class QuintDashboard extends HTMLElement {
           `<div class="btns"><button class="pri" data-cc="open:security">＋ Add card</button></div>`) +
         sec("Main card", "the first card on the Security page", row("Title", "the name on the card", `<input type="text" data-sect="1" value="${E(o.title)}" style="width:200px" maxlength="30">`) +
           row("Recent activity", "the latest changes at the bottom of the card", `<div class="seg sm">${[[0, "Off"], [3, "3"], [5, "5"], [10, "10"]].map(([v, n]) => `<button class="${o.recent === v ? "on" : ""}" data-s="secr|${v}">${n}</button>`).join("")}</div>`)) +
+        sec("Control all devices", "show every device on the Security page, with filters, a search and buttons for all lights, shades and more", row("All devices on the Security page", "a section under the security devices: every device of the chosen types, with its own controls", sw(o.all, "secb|all")) +
+          (o.all ? row("Device types", "which types are listed", `<div class="seg sm" style="flex-wrap:wrap">${this._secAllTypes().map(([k, n]) => `<button class="${o.atypes.includes(k) ? "on" : ""}" data-s="seca|${k}">${E(n)}</button>`).join("")}</div>`) : "")) +
         sec("What the card shows", "", this._secParts().map(([k, n]) => row(n, "", sw(o.show[k], "secp|" + k))).join("")) +
         sec("Alarm and locks", "", row("Arm buttons", "which modes the alarm panel card offers (only the ones the panel supports)", `<div class="seg sm" style="flex-wrap:wrap">${this._secModes().map(([k, n]) => `<button class="${o.modes.includes(k) ? "on" : ""}" data-s="secm|${k}">${n}</button>`).join("")}</div>`) +
           row("Ask before disarm or unlock", "a confirmation (and the code, when the panel or lock needs one). The code is typed each time and is never saved", sw(o.confirm, "secb|confirm")) +
