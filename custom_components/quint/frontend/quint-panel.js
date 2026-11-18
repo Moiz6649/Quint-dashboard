@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.85.1";
+const VER = "1.86.0";
 const HOLD_MS = 1000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -215,7 +215,7 @@ h2{font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;co
 .mxs.mcd .md{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 14px;align-items:center}
 .mxs.mcd .art{width:56px;height:56px}.mxs.mcd .mt{min-width:0}.mxs.mcd .mt .tt{font-size:22px}
 .mxs.mcd .mc{grid-column:1/-1;justify-content:center;gap:22px}.mxs.mcd .vol{grid-column:1/-1;flex:none;min-width:0}
-.dvh{display:flex;align-items:center;justify-content:space-between;margin:22px 4px 10px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);font-weight:600}.dvh button{background:none;border:0;color:var(--ac);font-size:13px;letter-spacing:.3px;text-transform:none;font-weight:600;padding:2px 4px}
+.dvh{display:flex;align-items:center;justify-content:space-between;margin:22px 4px 10px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);font-weight:600}.dvh small{font-size:12px;letter-spacing:0;color:var(--mu);font-weight:500;text-transform:none}.dvh button{background:none;border:0;color:var(--ac);font-size:13px;letter-spacing:.3px;text-transform:none;font-weight:600;padding:2px 4px}
 .mxs.g.dvg{margin-bottom:6px}
 .mxmore{position:relative;z-index:2;align-self:flex-start;margin-top:4px;padding:3px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);font-size:calc(11px*var(--z,1));font-weight:600}
 .chips.dvc{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}.chips.dvc .scb{width:auto;flex:none;padding:8px 16px;min-height:0;border-radius:999px}.chips.dvc .scb i{display:none}.chips.dvc .scb.on{background:var(--ac);color:#10131c;border-color:var(--ac)}
@@ -1094,14 +1094,19 @@ class QuintDashboard extends HTMLElement {
     });
     return out;
   }
-  _mxFree(segs, dash) {
+  /* a group of dashboard tiles under a heading (a room page: one group per category) */
+  _dbGroup(title, ctx, hs, side) {
+    const E = (t) => this._esc(t), hd = `<div class="dvh"><span>${E(title)}</span><small>${hs.length}</small></div>`;
+    return hd + (this._frOn() ? this._mxFree([{ t: "g", h: hs }], true, ctx, side) : `<div class="mxs g dbd dvg" style="${this._mxStyle(this._dbCols(side))}">${hs.join("")}</div>`);
+  }
+  _mxFree(segs, dash, ctx, side) {
     const mo = this._hmx(), k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1, z = this._z || 1, items = [], seen = new Set();
     segs.forEach((g) => g.h.forEach((h) => {
       let fk = (/data-id="([^"]+)"/.exec(h) || /data-hi="([^"]+)"/.exec(h) || [])[1] || g.t + items.length;
       while (seen.has(fk)) fk += "'"; seen.add(fk); items.push({ t: g.t, h, fk });
     }));
-    const n = dash ? this._dbCols() : this._mxCols(items.filter((x) => x.t === "g").length), fg = dash ? 12 : 16, fu = dash ? 62 * k : 142 * z * k, zf = dash ? z : 1, p = (fu + fg) / 2;
-    const wide = this.getAttribute("data-wide") === "1", area = (wide ? (this._w || 1024) - 88 : (this._w || 1024) - 56), gV = fg * zf, colV = (area - gV * (n - 1)) / n;
+    const n = dash ? this._dbCols(side) : this._mxCols(items.filter((x) => x.t === "g").length), fg = dash ? 12 : 16, fu = dash ? 62 * k : 142 * z * k, zf = dash ? z : 1, p = (fu + fg) / 2;
+    const wide = this.getAttribute("data-wide") === "1", area = (wide ? (this._w || 1024) - 88 : (this._w || 1024) - 56) - (side || 0), gV = fg * zf, colV = (area - gV * (n - 1)) / n;
     items.forEach((it) => {
       if (it.t === "b") { it.w = n; it.a = 1; it.d = 8; it.cls = "mxs b fi fa"; }
       else if (it.t === "f") { it.w = Math.max(1, Math.min(n, +((/data-fw="(\d+)"/.exec(it.h) || [])[1]) || 2)); it.a = 1; it.d = 10; it.cls = "fi fa"; }
@@ -1113,7 +1118,7 @@ class QuintDashboard extends HTMLElement {
         it.w = Math.min(n, w); it.hr = r; it.cls = "fi ft";
       }
     });
-    return this._frRender(this._frPhone() ? "homep" : "home", items, { n, p, fg, cls: dash ? "dbd" : "tl", style: this._mxStyle(n) });
+    return this._frRender(ctx || (this._frPhone() ? "homep" : "home"), items, { n, p, fg, cls: dash ? "dbd" : "tl", style: this._mxStyle(n) });
   }
   /* blocks and cards have the height of their content: measure it and give them that many rows, then draw once more */
   _frAfter() {
@@ -4181,12 +4186,12 @@ class QuintDashboard extends HTMLElement {
     let body = `<div class="abody">${sec.join("")}</div>`;
     if (this._hmx().on && this._hmx().style === "dash") {
       /* dashboard: one small tile for every device of the room */
-      const tl = [], sd = this.getAttribute("data-wide") === "1" ? 310 : 0;
-      order.forEach((s) => { if (isCs(s) || !has(room, s)) return; this._sort("room:" + rid + ":" + s, this._ents(s, rid), (i) => "e:" + i).forEach((id) => { const h = this._dbTile(id); if (h) tl.push(h); }); });
+      const tl = [], sd = this.getAttribute("data-wide") === "1" ? 310 : 0, groups = [];
+      order.forEach((s) => { if (isCs(s) || !has(room, s)) return; const hs = this._sort("room:" + rid + ":" + s, this._ents(s, rid), (i) => "e:" + i).map((id) => this._dbTile(id)).filter(Boolean); if (hs.length) groups.push(this._dbGroup(SV[s].n, "room:" + rid + ":" + s, hs, sd)); });
       const cc = [...order.filter((s) => isCs(s) && by[s]).map((s) => by[s]), ...this._roomTiles(rid)];
       if (adm) tl.push(`<div class="bc dbt d1 dba" data-id="a:add" data-cc="open:${rid}" style="--c:#8d9ab8"><div class="dbh"><i class="dbi">＋</i><span class="dbn"><b>Add card</b><small>your own card in this room</small></span></div></div>`);
-      if (!tl.length && !cc.length) tl.push(`<div class="bc dbt d1" data-id="a:none"><div class="dbh"><span class="dbn"><b>Nothing in this room yet</b></span></div></div>`);
-      body = `<div class="dbr"><div class="mxs g dbd" style="${this._mxStyle(this._dbCols(sd))}">${tl.join("")}</div>${cc.length ? `<div class="mxs k">${cc.join("")}</div>` : ""}</div>`;
+      if (!groups.length && !tl.length && !cc.length) tl.push(`<div class="bc dbt d1" data-id="a:none"><div class="dbh"><span class="dbn"><b>Nothing in this room yet</b></span></div></div>`);
+      body = `<div class="dbr">${groups.join("")}${tl.length ? `<div class="mxs g dbd dvg" style="${this._mxStyle(this._dbCols(sd))}">${tl.join("")}</div>` : ""}${cc.length ? `<div class="mxs k">${cc.join("")}</div>` : ""}</div>`;
     } else if (this._hmx().on) {
       /* matrix: every card of the room is a cell of the same size */
       const cells = [], cell = (s, id, head, sub, inner) => `<div class="bc" data-sk="${E(s)}" data-id="a:${E(id)}"><div class="bh" ${this._tileGo(s)}><span>${E(head)}</span>${sub ? `<span class="bs">${E(sub)}</span>` : ""}</div>${inner}</div>`;
