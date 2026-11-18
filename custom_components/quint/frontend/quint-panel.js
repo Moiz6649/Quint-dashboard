@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.84.0";
+const VER = "1.85.0";
 const HOLD_MS = 1000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -447,7 +447,9 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .mxs.fr>.fi.fa{align-self:start}
 .mxs.fr.dbd>.fi.fa{zoom:calc(1/var(--z,1))}
 .mxs.fr>.fi.k{grid-template-columns:minmax(0,1fr);gap:0}
-.dbt.sct1 .dbn b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;overflow:hidden}
+.bc.scs{padding:14px 14px 16px}.scsh{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);font-weight:600;margin:0 2px 10px}.scsh i{display:grid;place-items:center;width:16px;height:16px}.scsh i svg{width:100%;height:100%}.scsh small{margin-left:auto;letter-spacing:0;font-size:12px}
+.scs2{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;align-items:stretch}.scs .scw{display:flex}.scs .scw .scb{flex:1}.scs .scw{min-width:0}.scs .scb{padding:11px 12px;min-height:46px}.scs .scb span{white-space:normal;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ptg.scq .ptl span{white-space:normal;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .mxs.fr.lp{--fu:0px;--fg:16px;--fp:8px;margin-bottom:0}
 .mxs.fr.lp>.fi>.kw{zoom:var(--z,1)}
 .fpr{grid-column:1;grid-row:1;border:2px dashed var(--ac);border-radius:18px;background:color-mix(in srgb,var(--ac) 12%,transparent);margin-bottom:var(--fg);pointer-events:none;z-index:0;box-sizing:border-box}
@@ -825,6 +827,7 @@ input[type=file]::file-selector-button{border:0;border-radius:10px;padding:10px 
 .ptl span{padding:0 10px 10px;font-size:15px;line-height:1.15;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ptl small{position:absolute;right:8px;top:8px;font-size:11px;color:#ffd08a;background:rgba(0,0,0,.28);padding:2px 7px;border-radius:9px}
 .ptl.sct.on{box-shadow:inset 4px 0 0 #3ddc84,0 4px 14px -6px rgba(0,0,0,.55)}
+.ptg.sys{grid-template-columns:repeat(2,minmax(0,1fr))}.ptg.sys .ptl{aspect-ratio:auto;height:54px;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;padding:0 14px;border-radius:12px}.ptg.sys .ptl i{flex:none;padding:0;font-size:22px;width:24px;height:24px}.ptg.sys .ptl i svg{width:100%;height:100%}.ptg.sys .ptl span{padding:0;font-size:14px}.psep{margin:14px 0 12px}
 .ptl.pwr i{color:#fff}.ptl.pwr.on i{color:#ff8a1f}.ptl.pwr.on span{color:#ff8a1f}
 .ptg.sys .ptl{background:rgba(20,22,30,.55)}
 .phero{margin:12px 2px 4px;text-shadow:0 2px 14px rgba(0,0,0,.45)}
@@ -1046,7 +1049,10 @@ class QuintDashboard extends HTMLElement {
     this._last = null; this._draw(true);
   }
   /* ---------- free placement on Home: every item has its own cell on one grid and is dropped in any free spot ---------- */
-  _frOn() { const o = this._c.hfree; return !(o && o.off) && this.getAttribute("data-dev") !== "phone"; }
+  _frOn() { const o = this._c.hfree; return !(o && o.off); }
+  _frPhone() { return this.getAttribute("data-dev") === "phone"; }
+  /* the Home page: free placement on every screen, on a phone only in the Dashboard style (two columns) */
+  _frHome() { return this._frOn() && (!this._frPhone() || this._hmx().style === "dash"); }
   _frPos(key) {
     if (!this._admin()) { try { const o = JSON.parse(localStorage.getItem("quint_hfree") || "null"); if (o && o[key]) return o[key]; } catch (e) {} }
     const o = (this._c.hfree || {}).pos; return (o && o[key]) || {};
@@ -1068,7 +1074,7 @@ class QuintDashboard extends HTMLElement {
   /* a page of device cards (Lighting, Climate, Media, Shades, Cameras...): every card can be dropped in any free spot */
   _frList(ctx, ids, minW, tm, classicStyle) {
     const sorted = this._sort(ctx, ids, (i) => "e:" + i);
-    if (!this._frOn()) return `<div class="grid" data-grid="${ctx}"${classicStyle ? ` style="${classicStyle}"` : ""}>${this._cardsOf(ids, ctx)}</div>`;
+    if (!this._frOn() || this._frPhone()) return `<div class="grid" data-grid="${ctx}"${classicStyle ? ` style="${classicStyle}"` : ""}>${this._cardsOf(ids, ctx)}</div>`;
     const w = this._w || 1024, area = Math.min(1500, w) - 88, n = Math.max(1, Math.floor((area + 16) / (minW * (tm ? this._m || 1 : 1) + 16)));
     return this._frRender(ctx, sorted.map((i) => ({ fk: "e:" + i, h: this._kw("e:" + i, this._card(i)), w: 1, a: 1, d: 10, cls: "fi fa" })), { n, p: 8, fg: 16, cls: "lp", style: `--mxt:repeat(${n},minmax(0,1fr))` });
   }
@@ -1098,6 +1104,7 @@ class QuintDashboard extends HTMLElement {
     const wide = this.getAttribute("data-wide") === "1", area = (wide ? (this._w || 1024) - 88 : (this._w || 1024) - 56), gV = fg * zf, colV = (area - gV * (n - 1)) / n;
     items.forEach((it) => {
       if (it.t === "b") { it.w = n; it.a = 1; it.d = 8; it.cls = "mxs b fi fa"; }
+      else if (it.t === "f") { it.w = Math.max(1, Math.min(n, +((/data-fw="(\d+)"/.exec(it.h) || [])[1]) || 2)); it.a = 1; it.d = 10; it.cls = "fi fa"; }
       else if (it.t === "k") { it.w = Math.max(1, Math.min(n, Math.ceil((340 * z + gV) / (colV + gV)))); it.a = 1; it.d = 12; it.cls = "mxs k fi fa"; }
       else {
         const cl = ((/^<div class="([^"]*)"/.exec(it.h) || [])[1] || "").split(" "), has = (x) => cl.includes(x);
@@ -1106,7 +1113,7 @@ class QuintDashboard extends HTMLElement {
         it.w = Math.min(n, w); it.hr = r; it.cls = "fi ft";
       }
     });
-    return this._frRender("home", items, { n, p, fg, cls: dash ? "dbd" : "tl", style: this._mxStyle(n) });
+    return this._frRender(this._frPhone() ? "homep" : "home", items, { n, p, fg, cls: dash ? "dbd" : "tl", style: this._mxStyle(n) });
   }
   /* blocks and cards have the height of their content: measure it and give them that many rows, then draw once more */
   _frAfter() {
@@ -1153,12 +1160,6 @@ class QuintDashboard extends HTMLElement {
     f.g.querySelectorAll(":scope>.fi").forEach((o) => { map[o.dataset.fk] = [+o.dataset.c, +o.dataset.r]; });
     map[m.fi.dataset.fk] = [m.slot.c, m.slot.r];
     this._frSet(f.pk, map);
-  }
-  /* one scene as a small tile (same size as a device tile) */
-  _scTile(s, dash) {
-    const E = (t) => this._esc(t), at = s.ha ? `data-act="scene.turn_on" data-e="${s.ha}"` : `data-sc="run|${E(s.key)}"`, ic = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-    if (dash) return `<div class="bc dbt d1 sct1 ${s.on ? "on" : ""}" data-id="sc:${E(s.key)}" ${at} style="--c:#e8c98f"><div class="dbh"><i class="dbi">${ic}</i><span class="dbn"><b>${E(s.nm)}</b></span></div></div>`;
-    return `<div class="bc mxc dvn ${s.on ? "on" : ""}" data-id="sc:${E(s.key)}" ${at} style="--c:#e8c98f"><div class="mxt"><i class="mxi">${ic}</i><span class="mxdot"></span></div><div class="mxb"><b class="mxv">${E(s.nm)}</b><span class="mxn">Scene</span></div></div>`;
   }
   _hint(t, cancel) {
     const old = this.shadowRoot.getElementById("hint"); if (old) old.remove();
@@ -3792,8 +3793,8 @@ class QuintDashboard extends HTMLElement {
   _mxBuild(keys0, partsOf, addH) {
     let keys = keys0.slice();
     const mo = this._hmx(), segs = [];
-    if (!this._hlayStored() && keys.includes("b:scenes")) { keys = keys.filter((k) => k !== "b:scenes"); let j = -1; keys.forEach((k, i) => { if (k[0] === "s" || k[0] === "c") j = i; }); keys.splice(j + 1, 0, "b:scenes"); }   // not arranged yet: the scenes sit under the tiles and cards
-    const add = (t, h) => { const l = segs[segs.length - 1]; if (l && l.t === t && t !== "b") l.h.push(h); else segs.push({ t, h: [h] }); };
+    if (!this._hlayStored() && !this._frPhone() && keys.includes("b:scenes")) { keys = keys.filter((k) => k !== "b:scenes"); let j = -1; keys.forEach((k, i) => { if (k[0] === "s" || k[0] === "c") j = i; }); keys.splice(j + 1, 0, "b:scenes"); }   // not arranged yet: the scenes sit under the tiles and cards
+    const add = (t, h) => { const l = segs[segs.length - 1]; if (l && l.t === t && t !== "b" && t !== "f") l.h.push(h); else segs.push({ t, h: [h] }); };
     const cards = mo.style === "cards", dash = mo.style === "dash"; this._mcd = cards;
     keys.forEach((key) => {
       if (dash && key[0] === "s") { if (key === "s:more" && !this._csHas("more")) return; this._dbCells(key).forEach((h) => add("g", h)); return; }
@@ -3801,14 +3802,14 @@ class QuintDashboard extends HTMLElement {
       if (cards && key === "s:more" && !this._csHas("more")) return;
       if (cards && (key[0] === "s" || (key[0] === "b" && key !== "b:house"))) partsOf(key).forEach((p) => add("g", p.h));
       else if (key === "b:clock") this._mxCells("s:clock").forEach((h) => add("g", h.replace(/data-hi="s:clock"/, 'data-hi="b:clock"')));
-      else if (key[0] === "b") partsOf(key).forEach((p) => add(p.g ? "g" : "b", p.h));
+      else if (key[0] === "b") partsOf(key).forEach((p) => add(p.f ? "f" : "b", p.h));
       else if (key[0] === "s") this._mxCells(key).forEach((h) => add("g", h));
       else partsOf(key).forEach((p) => add("k", p.h));
     });
     this._mcd = false;
     const gs = segs.filter((g) => g.t === "g"), big = gs.reduce((a, g) => (!a || g.h.length > a.h.length ? g : a), null);
     if (addH) { if (big) big.h.push(addH); else segs.push({ t: "g", h: [addH] }); }
-    if (this._frOn()) return this._mxFree(segs, dash);
+    if (this._frHome()) return this._mxFree(segs, dash);
     this._frN = 0;
     const st = dash ? this._mxStyle(this._dbCols()) : this._mxStyle(this._mxCols(Math.max(0, ...segs.filter((g) => g.t === "g").map((g) => g.h.length)), cards), cards);
     return segs.map((g) => `<div class="mxs ${g.t}${cards && g.t === "g" ? " mcd" : ""}${dash && g.t === "g" ? " dbd" : ""}" style="${st}">${g.h.join("")}</div>`).join("");
@@ -3932,13 +3933,13 @@ class QuintDashboard extends HTMLElement {
     const homeIdx = {}; (c.custom.home || []).forEach((it, i) => { homeIdx["c:" + (it.uid || "i" + i)] = { it, i }; });
     const partsOf = (key) => {
       const t = key.slice(2);
-      if (key === "b:scenes" && sc.length && mxo0.on && !phone0 && this._frOn()) return sc.map((s) => ({ h: this._scTile(s, mxo0.style === "dash"), g: true, w: 1, wide: false }));
+      if (key === "b:scenes" && sc.length && mxo0.on && this._frHome()) return [{ h: `<div class="bc scs" data-hi="b:scenes" data-id="bt:scenes" data-fw="${sc.length > 6 ? 3 : 2}"><div class="scsh"><i>${GRID_I}</i><span>Scenes</span><small>${sc.length}</small></div><div class="scs2">${sc.map(scBtn).join("")}</div></div>`, f: true, w: 2, wide: false }];
       if (key[0] === "b") return [{ h: `<div class="bc hbt ${t === "house" ? "h3b" : ""}" data-hi="${key}" data-id="bt:${t}">${tileB[t].h}</div>`, w: tileB[t].w, wide: false }];
       if (key[0] === "s") return this._bento(t);
       const x = homeIdx[key]; return x ? [{ h: this._ccHtml("home", x.it, x.i, true), w: 2.6, wide: false }] : [];
     };
     const phone = this.getAttribute("data-dev") === "phone";
-    const keys = this._hlist().filter((k) => !phone || k[0] !== "b"), mxo = this._hmx(), parts = mxo.on && !phone ? [] : keys.flatMap(partsOf), n = this._cols(), cr = this._credit(), adm = this._admin();
+    const frp = phone && this._frHome() && this._hmx().on, keys = frp ? ["b:scenes", ...this._hlist().filter((k) => k[0] !== "b")] : this._hlist().filter((k) => !phone || k[0] !== "b"), mxo = this._hmx(), parts = mxo.on && (!phone || frp) ? [] : keys.flatMap(partsOf), n = this._cols(), cr = this._credit(), adm = this._admin();
     this._colsN = n;
     let bento = "", grp = [], seg = 0;
     const flush = () => {
@@ -3949,12 +3950,12 @@ class QuintDashboard extends HTMLElement {
     };
     parts.forEach((p) => { if (p.wide) { flush(); bento += `<div class="bwide">${p.h}</div>`; } else grp.push(p); });
     flush();
-    const addMx = adm && mxo.on && !phone && mxo.style === "dash" ? `<div class="bc dbt d1 dba" data-cc="open:home" style="--c:#8d9ab8"><div class="dbh"><i class="dbi">＋</i><span class="dbn"><b>Add card</b><small>your own card on the home page</small></span></div></div>` : adm && mxo.on && !phone ? `<div class="bc mxc mxadd" data-cc="open:home"><div class="mxt"><i class="mxi">＋</i></div><div class="mxb"><span class="mxn">Add card</span><small class="mxl">your own card on the home page</small></div></div>` : "";
-    let any = parts.length > 0; if (mxo.on && !phone) { bento = this._mxBuild(keys, partsOf, addMx); any = !!bento; }
+    const addMx = adm && mxo.on && (!phone || frp) && mxo.style === "dash" ? `<div class="bc dbt d1 dba" data-cc="open:home" style="--c:#8d9ab8"><div class="dbh"><i class="dbi">＋</i><span class="dbn"><b>Add card</b><small>your own card on the home page</small></span></div></div>` : adm && mxo.on && !phone ? `<div class="bc mxc mxadd" data-cc="open:home"><div class="mxt"><i class="mxi">＋</i></div><div class="mxb"><span class="mxn">Add card</span><small class="mxl">your own card on the home page</small></div></div>` : "";
+    let any = parts.length > 0; if (mxo.on && (!phone || frp)) { bento = this._mxBuild(keys, partsOf, addMx); any = !!bento; }
     if (!any) bento = phone ? "" : '<div class="bc">Nothing to show yet.</div>';
     const add = mxo.on && !phone ? "" : adm ? `<div class="grid addg"><div class="tile add" data-cc="open:home"><div class="bdg" style="--c:#8d9ab8">＋</div><div class="nm">Add card</div></div></div>` : "";
     if (!phone) bento += this._devSection(false);
-    if (phone) return this._homePhone({ house: this._h3dHome() ? this._h3dBox("phone") : "", g: g + (who ? ", " + E(who) : ""), date, sc, bento: bento + add, hasFav: any || adm, cr });
+    if (phone) return this._homePhone({ house: this._h3dHome() ? this._h3dBox("phone") : "", g: g + (who ? ", " + E(who) : ""), date, sc: frp ? [] : sc, fr: frp, bento: bento + add, hasFav: any || adm, cr });
     return `<div class="home"><div class="hh">${this._brand()}</div><div class="hgr gr">${g}${who ? ", " + E(who) : ""}</div>${this._h3dSwitch() ? `<div class="h3swr">${this._h3dSwitch()}</div>` : ""}<div class="hall" data-hz="a">${bento}${add}</div>${cr ? `<div class="crm">${cr}</div>` : ""}</div>`;
   }
   /* the Home page as the 3D house: a slim line (greeting, time, weather, switch) above the house, which fills the rest */
@@ -4049,7 +4050,7 @@ class QuintDashboard extends HTMLElement {
     const clk = c.noClock ? "" : `<div class="hck">${this._clockBlock("tl")}<div class="dt">${E(o.date)}</div></div>`;
     const stl = (s) => { const at = s.ha ? `data-act="scene.turn_on" data-e="${s.ha}"` : `data-sc="run|${E(s.key)}"`; return `<button class="ptl sct ${s.on ? "on" : ""}" data-id="sc:${E(s.key)}" ${at}><i>${GRID_I}</i><span>${E(s.nm)}</span></button>`; };
     const mxOn = this._hmx().on, scx = mxOn ? ` scq" style="--mxn:${this._mxCols(0)}` : "";
-    const scn = c.noScenes ? "" : `<div class="psec"><span>Scenes</span></div>${o.sc.length ? `<div class="ptg${scx}">${o.sc.map(stl).join("")}</div>` : `<div class="hintx">${adm ? "Add scenes in Settings → Scenes." : "No scenes yet."}</div>`}`;
+    const scn = c.noScenes || o.fr ? "" : `<div class="psec"><span>Scenes</span></div>${o.sc.length ? `<div class="ptg${scx}">${o.sc.map(stl).join("")}</div>` : `<div class="hintx">${adm ? "Add scenes in Settings → Scenes." : "No scenes yet."}</div>`}`;
     const tl = (k, go, ico, nm, sub) => `<button class="ptl" data-id="pm:${E(k)}" ${go}><i>${ico}</i><span>${E(nm)}</span>${sub ? `<small>${E(sub)}</small>` : ""}</button>`;
     const mt = [];
     if (!(c.noRooms || !this._rooms().length)) mt.push(tl("room", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", `${this._rooms().length} rooms`));
@@ -4066,8 +4067,14 @@ class QuintDashboard extends HTMLElement {
       });
       if (cells.length) menu = `<div class="mxs g mxp" style="${this._mxStyle(this._mxCols(cells.length))}">${cells.join("")}</div>`;
     }
+    if (o.fr) {   // Dashboard style on a phone: the menu is a row of small tiles like the device tiles below
+      const sm = (id, go, ico, nm, sub, col, on) => `<div class="bc dbt d1 ${on ? "on" : ""}" data-id="pm:${E(id)}" ${go} style="--c:${col}"><div class="dbh"><i class="dbi">${ico}</i><span class="dbn"><b>${E(nm)}</b><small>${E(sub)}</small></span></div></div>`, cl = [];
+      if (!(c.noRooms || !this._rooms().length)) cl.push(sm("room", `data-go='{"p":"room"}'`, ICONS.door, "Rooms", `${this._rooms().length} rooms`, "#8d9ab8", false));
+      this._svcs().forEach((k) => { let i = {}; try { i = k === "camwall" || k === "house" ? {} : this._mxInfo(k) || {}; } catch (e) {} cl.push(sm(k, this._tileGo(k), SV[k].i, SV[k].n, [i.v, i.l].filter(Boolean).join(" · "), SV[k].c, !!i.on)); });
+      menu = `<div class="mxs g dbd" style="${this._mxStyle(2)}">${cl.join("")}</div>`;
+    }
     if (o.houseFull) hero = "";
-    return `<div class="home phh"><div class="phero ${o.houseFull ? "ph3" : ""}" data-id="ph:hero"><div class="hgr2">${o.g}</div>${hero}${clk}</div>${o.houseFull ? `${o.sw ? `<div class="h3swr">${o.sw}</div>` : ""}<div class="phouse full">${o.houseFull}</div>` : ""}${o.house ? `<div class="psec"><span>3D house</span></div><div class="phouse">${o.house}</div>` : ""}${scn}<div class="psec"><span>Menu</span></div>${menu}${this._devSection(true)}<div class="psep"></div><div class="ptg sys">${sys.join("")}</div>${o.hasFav ? `<div class="psec"><span>Favourites</span></div><div class="hall" data-hz="a">${o.bento}</div>` : ""}${o.cr ? `<div class="crm">${o.cr}</div>` : ""}</div>`;
+    return `<div class="home phh"><div class="phero ${o.houseFull ? "ph3" : ""}" data-id="ph:hero"><div class="hgr2">${o.g}</div>${hero}${clk}</div>${o.houseFull ? `${o.sw ? `<div class="h3swr">${o.sw}</div>` : ""}<div class="phouse full">${o.houseFull}</div>` : ""}${o.house ? `<div class="psec"><span>3D house</span></div><div class="phouse">${o.house}</div>` : ""}${scn}<div class="psec"><span>Menu</span></div>${menu}${this._devSection(true)}<div class="psep"></div><div class="ptg sys">${sys.join("")}</div>${o.hasFav ? `<div class="psec"><span>${o.fr ? "Devices" : "Favourites"}</span></div><div class="hall" data-hz="a">${o.bento}</div>` : ""}${o.cr ? `<div class="crm">${o.cr}</div>` : ""}</div>`;
   }
   _roomsGrid() {
     const rs = this._rooms(), H = this._h.states, E = (t) => this._esc(t), L = this._svcs(), fl = this._c.floors || [];
