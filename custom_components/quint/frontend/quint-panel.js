@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.85.0";
+const VER = "1.85.1";
 const HOLD_MS = 1000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -2318,7 +2318,7 @@ class QuintDashboard extends HTMLElement {
     if (d.sp) return this._spKey(d.sp);
     if (d.sx) return this._sxKey(d.sx);
     if (d.ab) return this._abKey(d.ab);
-    if (d.more) return this._moreInfo(d.more);
+    if (d.more && d.more.includes(".")) return this._moreInfo(d.more);   // an entity id has a dot; "open", "close" and "bg" belong to the menu
     if (d.kx) { const [id, fn, ...v] = d.kx.split("|"); return this._kxSet(id, fn, v.join("|")); }
     if (d.out) return this._signOut();
     if (d.md) return this._moreInfo(d.md);
