@@ -106,7 +106,7 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.83.0";
+const VER = "1.84.0";
 const HOLD_MS = 1000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
@@ -447,6 +447,9 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .mxs.fr>.fi.fa{align-self:start}
 .mxs.fr.dbd>.fi.fa{zoom:calc(1/var(--z,1))}
 .mxs.fr>.fi.k{grid-template-columns:minmax(0,1fr);gap:0}
+.dbt.sct1 .dbn b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;overflow:hidden}
+.mxs.fr.lp{--fu:0px;--fg:16px;--fp:8px;margin-bottom:0}
+.mxs.fr.lp>.fi>.kw{zoom:var(--z,1)}
 .fpr{grid-column:1;grid-row:1;border:2px dashed var(--ac);border-radius:18px;background:color-mix(in srgb,var(--ac) 12%,transparent);margin-bottom:var(--fg);pointer-events:none;z-index:0;box-sizing:border-box}
 .gh{position:fixed;left:0;top:0;z-index:140;pointer-events:none;will-change:transform}
 .gh.carry{left:50%;top:auto;bottom:150px;transform:translateX(-50%) scale(.5)!important;transform-origin:bottom center;pointer-events:none}
@@ -1044,13 +1047,30 @@ class QuintDashboard extends HTMLElement {
   }
   /* ---------- free placement on Home: every item has its own cell on one grid and is dropped in any free spot ---------- */
   _frOn() { const o = this._c.hfree; return !(o && o.off) && this.getAttribute("data-dev") !== "phone"; }
-  _frPos(n) {
-    if (!this._admin()) { try { const o = JSON.parse(localStorage.getItem("quint_hfree") || "null"); if (o && o[n]) return o[n]; } catch (e) {} }
-    const o = (this._c.hfree || {}).pos; return (o && o[n]) || {};
+  _frPos(key) {
+    if (!this._admin()) { try { const o = JSON.parse(localStorage.getItem("quint_hfree") || "null"); if (o && o[key]) return o[key]; } catch (e) {} }
+    const o = (this._c.hfree || {}).pos; return (o && o[key]) || {};
   }
-  _frSet(n, map) {
-    if (this._admin()) { const o = (this._c.hfree = this._c.hfree || {}); o.pos = { ...(o.pos || {}), [n]: map }; this._save(); return; }
-    try { const o = JSON.parse(localStorage.getItem("quint_hfree") || "null") || {}; o[n] = map; localStorage.setItem("quint_hfree", JSON.stringify(o)); } catch (e) { this._toast("Not enough space to save the arrangement"); }
+  _frSet(key, map) {
+    if (this._admin()) { const o = (this._c.hfree = this._c.hfree || {}); o.pos = { ...(o.pos || {}), [key]: map }; this._save(); return; }
+    try { const o = JSON.parse(localStorage.getItem("quint_hfree") || "null") || {}; o[key] = map; localStorage.setItem("quint_hfree", JSON.stringify(o)); } catch (e) { this._toast("Not enough space to save the arrangement"); }
+  }
+  /* one free grid: items = [{ fk, h (html), w (columns), cls, hr (tile rows) or a (measured height) }] */
+  _frRender(ctx, items, o) {
+    const n = o.n, E = (t) => this._esc(t), pk = ctx === "home" ? String(n) : ctx + "@" + n; this._frH = this._frH || {};
+    items.forEach((it) => { it.h2 = it.a ? this._frH[pk + "|" + it.fk] || it.d || 12 : it.hr * 2; });
+    const pos = this._frPlace(items.map((it) => ({ fk: it.fk, w: it.w, h: it.h2 })), n, this._frPos(pk));
+    return `<div class="mxs fr ${o.cls}" data-pk="${E(pk)}" data-n="${n}" data-p="${o.p}" data-fg="${o.fg}" style="${o.style}">` + items.map((it) => {
+      const [c, r] = pos[it.fk];
+      return `<div class="${it.cls}" data-id="fi:${E(it.fk)}" data-fk="${E(it.fk)}" data-c="${c}" data-r="${r}" data-w="${it.w}" data-h="${it.h2}" style="grid-column:${c} / span ${it.w};grid-row:${r} / span ${it.h2}">${it.h}</div>`;
+    }).join("") + `</div>`;
+  }
+  /* a page of device cards (Lighting, Climate, Media, Shades, Cameras...): every card can be dropped in any free spot */
+  _frList(ctx, ids, minW, tm, classicStyle) {
+    const sorted = this._sort(ctx, ids, (i) => "e:" + i);
+    if (!this._frOn()) return `<div class="grid" data-grid="${ctx}"${classicStyle ? ` style="${classicStyle}"` : ""}>${this._cardsOf(ids, ctx)}</div>`;
+    const w = this._w || 1024, area = Math.min(1500, w) - 88, n = Math.max(1, Math.floor((area + 16) / (minW * (tm ? this._m || 1 : 1) + 16)));
+    return this._frRender(ctx, sorted.map((i) => ({ fk: "e:" + i, h: this._kw("e:" + i, this._card(i)), w: 1, a: 1, d: 10, cls: "fi fa" })), { n, p: 8, fg: 16, cls: "lp", style: `--mxt:repeat(${n},minmax(0,1fr))` });
   }
   /* first free spot for every item that has no place of its own yet; items with a saved place keep it */
   _frPlace(list, n, stored) {
@@ -1069,40 +1089,36 @@ class QuintDashboard extends HTMLElement {
     return out;
   }
   _mxFree(segs, dash) {
-    const mo = this._hmx(), E = (t) => this._esc(t), k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1, z = this._z || 1, items = [], seen = new Set();
+    const mo = this._hmx(), k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1, z = this._z || 1, items = [], seen = new Set();
     segs.forEach((g) => g.h.forEach((h) => {
       let fk = (/data-id="([^"]+)"/.exec(h) || /data-hi="([^"]+)"/.exec(h) || [])[1] || g.t + items.length;
       while (seen.has(fk)) fk += "'"; seen.add(fk); items.push({ t: g.t, h, fk });
     }));
     const n = dash ? this._dbCols() : this._mxCols(items.filter((x) => x.t === "g").length), fg = dash ? 12 : 16, fu = dash ? 62 * k : 142 * z * k, zf = dash ? z : 1, p = (fu + fg) / 2;
     const wide = this.getAttribute("data-wide") === "1", area = (wide ? (this._w || 1024) - 88 : (this._w || 1024) - 56), gV = fg * zf, colV = (area - gV * (n - 1)) / n;
-    this._frU = { n, p, fg, fu, zf }; this._frN = n; this._frH = this._frH || {};
     items.forEach((it) => {
-      if (it.t === "b") { it.w = n; it.a = 1; }
-      else if (it.t === "k") { it.w = Math.max(1, Math.min(n, Math.ceil((340 * z + gV) / (colV + gV)))); it.a = 1; }
+      if (it.t === "b") { it.w = n; it.a = 1; it.d = 8; it.cls = "mxs b fi fa"; }
+      else if (it.t === "k") { it.w = Math.max(1, Math.min(n, Math.ceil((340 * z + gV) / (colV + gV)))); it.a = 1; it.d = 12; it.cls = "mxs k fi fa"; }
       else {
         const cl = ((/^<div class="([^"]*)"/.exec(it.h) || [])[1] || "").split(" "), has = (x) => cl.includes(x);
         let w = 1, r = 1;
         if (has("dbt")) { if (has("dbw")) { w = 2; r = has("nw") ? 2 : 3; } else if (has("dv")) { w = 2; r = 2; } else if (has("dk")) r = 3; else if (has("dl") || has("dc") || has("dm")) r = 2; }
-        it.w = Math.min(n, w); it.hr = r;
+        it.w = Math.min(n, w); it.hr = r; it.cls = "fi ft";
       }
-      it.h2 = it.a ? this._frH[n + "|" + it.fk] || (it.t === "b" ? 8 : 12) : it.hr * 2;
     });
-    const list = items.map((it) => ({ fk: it.fk, w: it.w, h: it.h2 })), pos = this._frPlace(list, n, this._frPos(n));
-    return `<div class="mxs fr ${dash ? "dbd" : "tl"}" data-n="${n}" style="${this._mxStyle(n)}">` + items.map((it) => {
-      const [c, r] = pos[it.fk];
-      return `<div class="${it.t === "g" ? "fi ft" : it.t === "b" ? "mxs b fi fa" : "mxs k fi fa"}" data-id="fi:${E(it.fk)}" data-fk="${E(it.fk)}" data-c="${c}" data-r="${r}" data-w="${it.w}" data-h="${it.h2}" style="grid-column:${c} / span ${it.w};grid-row:${r} / span ${it.h2}">${it.h}</div>`;
-    }).join("") + `</div>`;
+    return this._frRender("home", items, { n, p, fg, cls: dash ? "dbd" : "tl", style: this._mxStyle(n) });
   }
   /* blocks and cards have the height of their content: measure it and give them that many rows, then draw once more */
   _frAfter() {
-    const g = this.shadowRoot.querySelector(".mxs.fr"); if (!g) { this._frN = 0; return; }
-    const U = this._frU; if (!U || this._mv) return;
-    const gr = g.getBoundingClientRect(), sc = g.offsetWidth ? gr.width / g.offsetWidth : 1; let ch = false;
-    g.querySelectorAll(":scope>.fi.fa").forEach((el) => {
-      const h = el.getBoundingClientRect().height / sc; if (!h) return;
-      const rows = Math.max(2, Math.ceil((h - 0.5) / U.p)), key = U.n + "|" + el.dataset.fk;
-      if (rows !== +el.dataset.h) { this._frH[key] = rows; ch = true; }
+    const grids = this.shadowRoot.querySelectorAll(".mxs.fr"); this._frN = grids.length; if (!grids.length || this._mv) return;
+    let ch = false;
+    grids.forEach((g) => {
+      const p = +g.dataset.p, pk = g.dataset.pk, gr = g.getBoundingClientRect(), sc = g.offsetWidth ? gr.width / g.offsetWidth : 1;
+      g.querySelectorAll(":scope>.fi.fa").forEach((el) => {
+        const h = el.getBoundingClientRect().height / sc; if (!h) return;
+        const rows = Math.max(2, Math.ceil((h - 0.5) / p));
+        if (rows !== +el.dataset.h) { this._frH[pk + "|" + el.dataset.fk] = rows; ch = true; }
+      });
     });
     if (!ch) { this._frRe = 0; return; }
     if ((this._frRe = (this._frRe || 0) + 1) > 4) return;
@@ -1110,17 +1126,17 @@ class QuintDashboard extends HTMLElement {
     this._last = null; this._draw(true);
   }
   _frBegin(m, fi) {
-    const g = fi.parentNode, U = this._frU || { p: 37, fg: 12 }, gr = g.getBoundingClientRect(), sc = g.offsetWidth ? gr.width / g.offsetWidth : 1, n = +g.dataset.n || 3;
-    const gV = U.fg * sc, pV = U.p * sc, colV = (gr.width - gV * (n - 1)) / n, w = +fi.dataset.w, h = +fi.dataset.h, occ = [];
+    const g = fi.parentNode, gr = g.getBoundingClientRect(), sc = g.offsetWidth ? gr.width / g.offsetWidth : 1, n = +g.dataset.n || 3;
+    const gV = (+g.dataset.fg || 12) * sc, pV = (+g.dataset.p || 37) * sc, colV = (gr.width - gV * (n - 1)) / n, w = +fi.dataset.w, h = +fi.dataset.h, occ = [];
     g.querySelectorAll(":scope>.fi").forEach((o) => { if (o !== fi) occ.push({ c: +o.dataset.c, r: +o.dataset.r, w: +o.dataset.w, h: +o.dataset.h }); });
     const pv = document.createElement("div"); pv.className = "fpr"; g.appendChild(pv); g.style.marginBottom = Math.round(pV * 12) + "px";
-    m.fi = fi; m.fr = { g, n, w, h, pV, gV, colV, occ, pv, wV: colV * w + gV * (w - 1), hV: pV * h - gV };
+    m.fi = fi; m.fr = { g, n, w, h, pV, gV, colV, occ, pv, pk: g.dataset.pk, snap: fi.classList.contains("ft"), wV: colV * w + gV * (w - 1), hV: pV * h - gV };
     m.slot = { c: +fi.dataset.c, r: +fi.dataset.r }; this._frShow(m);
   }
   _frShow(m) { const f = m.fr, s = m.slot; f.pv.style.gridColumn = `${s.c} / span ${f.w}`; f.pv.style.gridRow = `${s.r} / span ${f.h}`; }
   /* the item's top-left corner is at (left, top) on the screen: the nearest free spot there */
   _frAt(m, left, top) {
-    const f = m.fr, gr = f.g.getBoundingClientRect(), mc = Math.max(1, f.n - f.w + 1), even = f.h % 2 === 0;
+    const f = m.fr, gr = f.g.getBoundingClientRect(), mc = Math.max(1, f.n - f.w + 1), even = f.snap && f.h % 2 === 0;
     let c = Math.round((left - gr.left) / (f.colV + f.gV)) + 1, r = Math.round((top - gr.top) / f.pV) + 1;
     c = Math.max(1, Math.min(mc, c)); r = Math.max(1, r); if (even) r = 2 * Math.round((r - 1) / 2) + 1;
     const ok = (cc, rr) => !f.occ.some((o) => cc < o.c + o.w && cc + f.w > o.c && rr < o.r + o.h && rr + f.h > o.r);
@@ -1136,7 +1152,13 @@ class QuintDashboard extends HTMLElement {
     const f = m.fr, map = {};
     f.g.querySelectorAll(":scope>.fi").forEach((o) => { map[o.dataset.fk] = [+o.dataset.c, +o.dataset.r]; });
     map[m.fi.dataset.fk] = [m.slot.c, m.slot.r];
-    this._frSet(f.n, map);
+    this._frSet(f.pk, map);
+  }
+  /* one scene as a small tile (same size as a device tile) */
+  _scTile(s, dash) {
+    const E = (t) => this._esc(t), at = s.ha ? `data-act="scene.turn_on" data-e="${s.ha}"` : `data-sc="run|${E(s.key)}"`, ic = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    if (dash) return `<div class="bc dbt d1 sct1 ${s.on ? "on" : ""}" data-id="sc:${E(s.key)}" ${at} style="--c:#e8c98f"><div class="dbh"><i class="dbi">${ic}</i><span class="dbn"><b>${E(s.nm)}</b></span></div></div>`;
+    return `<div class="bc mxc dvn ${s.on ? "on" : ""}" data-id="sc:${E(s.key)}" ${at} style="--c:#e8c98f"><div class="mxt"><i class="mxi">${ic}</i><span class="mxdot"></span></div><div class="mxb"><b class="mxv">${E(s.nm)}</b><span class="mxn">Scene</span></div></div>`;
   }
   _hint(t, cancel) {
     const old = this.shadowRoot.getElementById("hint"); if (old) old.remove();
@@ -2062,7 +2084,7 @@ class QuintDashboard extends HTMLElement {
   }
   _secPage() {
     const o = this._secOpts(), list = this._ents("security");
-    return `${this._top()}<h1>${SV.security.i} ${SV.security.n}</h1>${this._secCards(o)}${o.list && list.length ? `<div class="dvh"><span>All security devices</span></div><div class="grid" data-grid="list:security" style="grid-template-columns:repeat(auto-fill,minmax(calc(200px * var(--tm,1)),1fr))">${this._cardsOf(list, "list:security")}</div>` : ""}${o.all ? this._secAllHtml(o, list) : ""}`;
+    return `${this._top()}<h1>${SV.security.i} ${SV.security.n}</h1>${this._secCards(o)}${o.list && list.length ? `<div class="dvh"><span>All security devices</span></div>${this._frList("list:security", list, 200, true, "grid-template-columns:repeat(auto-fill,minmax(calc(200px * var(--tm,1)),1fr))")}` : ""}${o.all ? this._secAllHtml(o, list) : ""}`;
   }
   /* arm, disarm, lock, unlock: asks for the code and a confirmation when needed. The code is typed for this one call and never kept */
   _secAct(str) {
@@ -3779,7 +3801,7 @@ class QuintDashboard extends HTMLElement {
       if (cards && key === "s:more" && !this._csHas("more")) return;
       if (cards && (key[0] === "s" || (key[0] === "b" && key !== "b:house"))) partsOf(key).forEach((p) => add("g", p.h));
       else if (key === "b:clock") this._mxCells("s:clock").forEach((h) => add("g", h.replace(/data-hi="s:clock"/, 'data-hi="b:clock"')));
-      else if (key[0] === "b") partsOf(key).forEach((p) => add("b", p.h));
+      else if (key[0] === "b") partsOf(key).forEach((p) => add(p.g ? "g" : "b", p.h));
       else if (key[0] === "s") this._mxCells(key).forEach((h) => add("g", h));
       else partsOf(key).forEach((p) => add("k", p.h));
     });
@@ -3906,9 +3928,11 @@ class QuintDashboard extends HTMLElement {
       scenes: { h: scn, w: 1.6 + Math.ceil(sc.length / 2) * 0.9 },
       house: { h: `<div class="bh h3h"><span>3D house</span><button class="bs" data-go='{"p":"house"}' title="Open full page">⤢</button></div>${this._h3dBox("home")}`, w: 1.2 + (+this._h3d().height || 360) / 150 },
     };
+    const mxo0 = this._hmx(), phone0 = this.getAttribute("data-dev") === "phone";
     const homeIdx = {}; (c.custom.home || []).forEach((it, i) => { homeIdx["c:" + (it.uid || "i" + i)] = { it, i }; });
     const partsOf = (key) => {
       const t = key.slice(2);
+      if (key === "b:scenes" && sc.length && mxo0.on && !phone0 && this._frOn()) return sc.map((s) => ({ h: this._scTile(s, mxo0.style === "dash"), g: true, w: 1, wide: false }));
       if (key[0] === "b") return [{ h: `<div class="bc hbt ${t === "house" ? "h3b" : ""}" data-hi="${key}" data-id="bt:${t}">${tileB[t].h}</div>`, w: tileB[t].w, wide: false }];
       if (key[0] === "s") return this._bento(t);
       const x = homeIdx[key]; return x ? [{ h: this._ccHtml("home", x.it, x.i, true), w: 2.6, wide: false }] : [];
@@ -4249,7 +4273,7 @@ class QuintDashboard extends HTMLElement {
       const btn = s === "lights" ? `<button data-act="light.turn_on" data-e="${all}">All on</button><button data-act="light.turn_off" data-e="${all}">All off</button>`
         : s === "shades" ? `<button data-act="cover.open_cover" data-e="${all}">Open all</button><button data-act="cover.close_cover" data-e="${all}">Close all</button>` : "";
       const go = rid ? `data-go='${JSON.stringify({ p: "room", room: rid, svc: s })}'` : "";
-      return `<section><div class="rh"><div class="grow" ${go}><div class="rn">${title}</div><div class="lbl">${on} active of ${ids.length}</div></div><div class="btns rb">${btn}</div></div><div class="grid" data-grid="svc:${s}:${rid || "other"}" ${s === "shades" ? 'style="grid-template-columns:repeat(auto-fill,minmax(310px,1fr))"' : ""}>${this._cardsOf(ids, "svc:" + s + ":" + (rid || "other"))}</div></section>`;
+      return `<section><div class="rh"><div class="grow" ${go}><div class="rn">${title}</div><div class="lbl">${on} active of ${ids.length}</div></div><div class="btns rb">${btn}</div></div>${this._frList("svc:" + s + ":" + (rid || "other"), ids, s === "shades" ? 310 : 250, s !== "shades", s === "shades" ? "grid-template-columns:repeat(auto-fill,minmax(310px,1fr))" : "")}</section>`;
     };
     const rs = this._svcRooms(s), known = new Set(this._rooms().map((r) => r.id));
     const parts = rs.map((r) => [r, this._ents(s, r.id)]).filter(([, e]) => e.length).map(([r, e]) => sec(r.name, e, r.id));
@@ -4259,7 +4283,7 @@ class QuintDashboard extends HTMLElement {
     return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="sub">${total} active · grouped by room</div>${parts.join("")}${kt ? `<section><div class="rh"><div class="grow"><div class="rn">KNX thermostats</div><div class="lbl">own thermostats from group addresses</div></div></div>${kt}</section>` : ""}`;
   }
   _list(s) {
-    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1><div class="grid" data-grid="list:${s}" style="grid-template-columns:repeat(auto-fill,minmax(calc(${s === "cameras" ? 320 : 200}px * var(--tm,1)),1fr))">${this._cardsOf(this._ents(s), "list:" + s)}</div>`;
+    return `${this._top()}<h1>${SV[s].i} ${SV[s].n}</h1>${this._frList("list:" + s, this._ents(s), s === "cameras" ? 320 : 200, true, `grid-template-columns:repeat(auto-fill,minmax(calc(${s === "cameras" ? 320 : 200}px * var(--tm,1)),1fr))`)}`;
   }
   /* ---------- 3D house: Quinteca 3D (carried inside Quint) as the Home page, a page of its own and the plan editor ---------- */
   /* the time of day shown on the 3D house, chosen on the house itself and kept on this device: live (the real sun), day, evening, night */
