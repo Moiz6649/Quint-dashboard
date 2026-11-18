@@ -106,8 +106,8 @@ const SHADE_DC = ["shutter", "blind", "curtain", "shade", "awning", "window"];
 const SEC_BS = ["door", "window", "opening", "garage_door", "lock", "occupancy", "motion", "tamper"];
 const OFF = ["off", "unavailable", "unknown", "standby", "closed", "locked", "idle"];
 const KEY = "quint_cfg";
-const VER = "1.82.0";
-const HOLD_MS = 2000;
+const VER = "1.83.0";
+const HOLD_MS = 1000;
 // z = how much a tile and its contents are scaled, m = how wide its column is (small sizes keep a little more room so the text still fits)
 const BELL_I = ic('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>');
 const NT = {
@@ -434,9 +434,20 @@ textarea{width:100%;min-height:96px;background:rgba(0,0,0,.3);border:1px solid v
 .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:6px}.pri{background:var(--ac)!important;color:#000!important;font-weight:600}
 .rh{display:flex;align-items:center;gap:12px;margin:26px 0 12px}.rh .grow{cursor:pointer}.rn{font-family:var(--serif);font-size:30px;font-weight:400}.rb{margin:0}.rb button{flex:none;padding:8px 14px;font-size:13px}
 .kw{position:relative}.kw,.cw{border-radius:18px;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-.holding{animation:hold 2s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
+.holding{animation:hold 1s linear forwards}@keyframes hold{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 0 5px var(--ac)}}
 [data-sk],[data-k],[data-hi]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.dtgt{outline:3px dashed var(--ac);outline-offset:3px}[data-hz].dtgt{outline-offset:8px;border-radius:18px}
 .moving{opacity:.28;outline:2px dashed var(--ac);outline-offset:-2px}
+/* free placement on Home: one grid, every item has its own cell */
+.mxs.fr{display:grid;column-gap:var(--fg);row-gap:0;margin-bottom:6px;grid-template-columns:var(--mxt);grid-auto-rows:var(--fp);position:relative;--fp:calc((var(--fu) + var(--fg))/2)}
+.mxs.fr.dbd{--fu:calc(62px*var(--mxk,1));--fg:12px;zoom:var(--z,1)}
+.mxs.fr.tl{--fu:calc(142px*var(--z,1)*var(--mxk,1));--fg:16px}
+.mxs.fr>.fi{margin:0;padding:0 0 var(--fg);box-sizing:border-box;min-width:0;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.mxs.fr>.fi.ft{display:flex;flex-direction:column}
+.mxs.fr>.fi.ft>.bc{zoom:1;flex:1;min-height:0;height:auto}
+.mxs.fr>.fi.fa{align-self:start}
+.mxs.fr.dbd>.fi.fa{zoom:calc(1/var(--z,1))}
+.mxs.fr>.fi.k{grid-template-columns:minmax(0,1fr);gap:0}
+.fpr{grid-column:1;grid-row:1;border:2px dashed var(--ac);border-radius:18px;background:color-mix(in srgb,var(--ac) 12%,transparent);margin-bottom:var(--fg);pointer-events:none;z-index:0;box-sizing:border-box}
 .gh{position:fixed;left:0;top:0;z-index:140;pointer-events:none;will-change:transform}
 .gh.carry{left:50%;top:auto;bottom:150px;transform:translateX(-50%) scale(.5)!important;transform-origin:bottom center;pointer-events:none}
 .hint.hc{display:flex;align-items:center;gap:12px;pointer-events:auto}.hint.hc button{background:#12151c;color:#fff;border:0;border-radius:16px;padding:6px 14px;font-weight:600}
@@ -907,11 +918,11 @@ class QuintDashboard extends HTMLElement {
   }
   _pdown(e) {
     if (e.button > 0 || e.target.type === "range" || this._mv) return;
-    const path = e.composedPath(), kk = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl), hin = kk ? null : path.find((n) => n.dataset && n.dataset.hi), k = kk || hin;
+    const path = e.composedPath(), kk = path.find((n) => n.dataset && n.dataset.k), tp = path.find((n) => n.dataset && n.dataset.tpl), hin = kk ? null : path.find((n) => n.dataset && n.dataset.hi), fi = tp ? null : path.find((n) => n.classList && n.classList.contains("fi") && n.dataset.fk && n.firstElementChild), k = fi ? fi.firstElementChild : kk || hin;
     if (!k || this._dlg || this._cam || path.some((n) => n.dataset && n.dataset.lv && n.dataset.lv.startsWith("house"))) return;
     if (this._c.noArrange && !this._admin() && !this._mgr()) return;
     this._lp = { x: e.clientX, y: e.clientY };
-    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, pt: e.pointerType, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", hi: hin ? hin.dataset.hi : "" };
+    this._hold = { k, x: e.clientX, y: e.clientY, id: e.pointerId, pt: e.pointerType, t: Date.now(), tpl: tp ? tp.dataset.tpl : "", hi: !fi && hin ? hin.dataset.hi : "", fi };
     if (!tp) { k.classList.add("holding"); this._ht = setTimeout(() => this._startMove(), HOLD_MS); }
   }
   _startMove() {
@@ -921,16 +932,19 @@ class QuintDashboard extends HTMLElement {
     try { el.setPointerCapture(this._hold.id); } catch (e) {}
     // the lifted copy floats under the finger; the original stays as a faded placeholder
     const gh = document.createElement("div"), cp = el.cloneNode(true);
+    const fi = this._hold.fi || null, zz = fi ? r.width / (el.offsetWidth || r.width) : z;
     gh.className = "gh"; gh.style.width = r.width + "px";
     cp.classList.remove("moving", "holding", "dtgt"); ["data-k", "data-sk", "data-id", "data-hb", "data-hi"].forEach((a) => cp.removeAttribute(a));
-    cp.style.zoom = z; cp.style.width = r.width / z + "px";
+    cp.style.zoom = zz; cp.style.width = r.width / zz + "px";
+    if (fi) { cp.style.setProperty("height", r.height / zz + "px", "important"); ["--mxt", "--mxk"].forEach((v) => gh.style.setProperty(v, fi.parentNode.style.getPropertyValue(v))); }
     gh.appendChild(cp); this.shadowRoot.appendChild(gh);
     const m = (this._mv = { el, hi: this._hold.hi || "", tgt: "", te: null, gh, pt: this._hold.pt, ox: lp.x - r.left, oy: lp.y - r.top });
     this._hold = null;
+    if (fi) this._frBegin(m, fi);
     gh.style.transform = `translate(${lp.x - m.ox}px,${lp.y - m.oy}px)`;
     m.as = setInterval(() => this._mvStep(), 30);
     if (navigator.vibrate) navigator.vibrate(40);
-    this._hint(m.hi ? "Drag it anywhere on the screen, then release. It goes where you drop it" : "Drag onto the card whose place you want, then release");
+    this._hint(m.fr ? "Drag it to any free spot, then release. Nothing else moves" : m.hi ? "Drag it anywhere on the screen, then release. It goes where you drop it" : "Drag onto the card whose place you want, then release");
   }
   _mvStep() {
     const m = this._mv, p = this._lp; if (!m || !p || m.carry) return;
@@ -938,6 +952,7 @@ class QuintDashboard extends HTMLElement {
     const box = this.getBoundingClientRect(), yy = p.y - box.top, edge = 90;   // scroll the page when the tile is near the top or bottom
     if (yy < edge) this.scrollTop -= Math.ceil((edge - Math.max(yy, 0)) / 5);
     else if (yy > box.height - edge) this.scrollTop += Math.ceil((yy - (box.height - edge)) / 5);
+    if (m.fr) return this._frAt(m, p.x - m.ox, p.y - m.oy);
     const hit = this.shadowRoot.elementFromPoint(p.x, p.y);
     this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
     m.te = null; m.tgt = "";
@@ -981,7 +996,7 @@ class QuintDashboard extends HTMLElement {
     }
     if (!this._mv || this._mv.carry) return;
     // a finger lifted over nothing keeps the tile in hand: tap the card where it should go
-    if (this._mv.pt === "touch" && (!this._mv.te || this._mv.tgt.startsWith("zone:"))) return this._carry();
+    if (!this._mv.fr && this._mv.pt === "touch" && (!this._mv.te || this._mv.tgt.startsWith("zone:"))) return this._carry();
     this._endMove(true);
   }
   _pcancel() {
@@ -995,12 +1010,13 @@ class QuintDashboard extends HTMLElement {
     m.gh.classList.add("carry"); m.gh.style.transform = "";
     this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
     m.to = setTimeout(() => this._endMove(false), 90000);
-    this._hint(this._mv.hi ? "Tap where it should go. It takes the place of the item you tap" : "Tap the card where it should go", true);
+    this._hint(this._mv.fr ? "Tap the free spot where it should go" : this._mv.hi ? "Tap where it should go. It takes the place of the item you tap" : "Tap the card where it should go", true);
   }
   _carryClick(e) {
     const m = this._mv, path = e.composedPath();
     if (Date.now() < m.armed) return;
     if (path.some((n) => n.dataset && n.dataset.carry === "cancel")) return this._endMove(false);
+    if (m.fr) { if (path.includes(m.el)) return this._endMove(false); const f = m.fr; this._frAt(m, e.clientX - f.wV / 2, e.clientY - Math.min(f.hV / 2, 30)); return this._endMove(true); }
     const t = m.hi ? path.find((n) => n.dataset && n.dataset.hi) || (path.some((n) => n.classList && n.classList.contains("home")) ? "near" : null) : path.find((n) => n.dataset && n.dataset.k && n.parentNode === m.el.parentNode);
     if (!t) return;
     if (t === m.el) return this._endMove(false);
@@ -1014,8 +1030,10 @@ class QuintDashboard extends HTMLElement {
     const el = m.el, grid = el.parentNode;
     el.classList.remove("moving");
     this.shadowRoot.querySelectorAll(".dtgt").forEach((x) => x.classList.remove("dtgt"));
+    if (m.fr) { m.fr.pv.remove(); m.fr.g.style.marginBottom = ""; }
     if (apply) {
-      if (m.hi) { if (m.tgt) this._hMove(m.hi, m.tgt); }
+      if (m.fr) { if (m.slot) this._frDrop(m); }
+      else if (m.hi) { if (m.tgt) this._hMove(m.hi, m.tgt); }
       else if (m.te) {
         grid.insertBefore(el, m.te.compareDocumentPosition(el) & 2 ? m.te.nextSibling : m.te);   // the card takes the place of the one it was dropped on
         const ctx = grid.dataset.grid; if (ctx) this._ordSet(ctx, Array.from(grid.children).filter((c) => c.dataset && c.dataset.k).map((c) => c.dataset.k));
@@ -1023,6 +1041,102 @@ class QuintDashboard extends HTMLElement {
     }
     this._mv = null; this._sup = Date.now() + 400; this._hint("");
     this._last = null; this._draw(true);
+  }
+  /* ---------- free placement on Home: every item has its own cell on one grid and is dropped in any free spot ---------- */
+  _frOn() { const o = this._c.hfree; return !(o && o.off) && this.getAttribute("data-dev") !== "phone"; }
+  _frPos(n) {
+    if (!this._admin()) { try { const o = JSON.parse(localStorage.getItem("quint_hfree") || "null"); if (o && o[n]) return o[n]; } catch (e) {} }
+    const o = (this._c.hfree || {}).pos; return (o && o[n]) || {};
+  }
+  _frSet(n, map) {
+    if (this._admin()) { const o = (this._c.hfree = this._c.hfree || {}); o.pos = { ...(o.pos || {}), [n]: map }; this._save(); return; }
+    try { const o = JSON.parse(localStorage.getItem("quint_hfree") || "null") || {}; o[n] = map; localStorage.setItem("quint_hfree", JSON.stringify(o)); } catch (e) { this._toast("Not enough space to save the arrangement"); }
+  }
+  /* first free spot for every item that has no place of its own yet; items with a saved place keep it */
+  _frPlace(list, n, stored) {
+    const occ = new Set(), out = {};
+    const fits = (c, r, w, h) => { for (let y = r; y < r + h; y++) for (let x = c; x < c + w; x++) if (occ.has(x + "," + y)) return false; return true; };
+    const mark = (c, r, w, h) => { for (let y = r; y < r + h; y++) for (let x = c; x < c + w; x++) occ.add(x + "," + y); };
+    list.forEach((it) => {
+      const s = stored[it.fk]; if (!Array.isArray(s)) return;
+      const c = Math.max(1, Math.min(Math.max(1, n - it.w + 1), s[0] | 0)), r = Math.max(1, s[1] | 0);
+      if (fits(c, r, it.w, it.h)) { out[it.fk] = [c, r]; mark(c, r, it.w, it.h); }
+    });
+    list.forEach((it) => {
+      if (out[it.fk]) return;
+      for (let r = 1; ; r++) for (let c = 1; c <= Math.max(1, n - it.w + 1); c++) if (fits(c, r, it.w, it.h)) { out[it.fk] = [c, r]; mark(c, r, it.w, it.h); return; }
+    });
+    return out;
+  }
+  _mxFree(segs, dash) {
+    const mo = this._hmx(), E = (t) => this._esc(t), k = { s: 0.86, m: 1, l: 1.2 }[mo.size] || 1, z = this._z || 1, items = [], seen = new Set();
+    segs.forEach((g) => g.h.forEach((h) => {
+      let fk = (/data-id="([^"]+)"/.exec(h) || /data-hi="([^"]+)"/.exec(h) || [])[1] || g.t + items.length;
+      while (seen.has(fk)) fk += "'"; seen.add(fk); items.push({ t: g.t, h, fk });
+    }));
+    const n = dash ? this._dbCols() : this._mxCols(items.filter((x) => x.t === "g").length), fg = dash ? 12 : 16, fu = dash ? 62 * k : 142 * z * k, zf = dash ? z : 1, p = (fu + fg) / 2;
+    const wide = this.getAttribute("data-wide") === "1", area = (wide ? (this._w || 1024) - 88 : (this._w || 1024) - 56), gV = fg * zf, colV = (area - gV * (n - 1)) / n;
+    this._frU = { n, p, fg, fu, zf }; this._frN = n; this._frH = this._frH || {};
+    items.forEach((it) => {
+      if (it.t === "b") { it.w = n; it.a = 1; }
+      else if (it.t === "k") { it.w = Math.max(1, Math.min(n, Math.ceil((340 * z + gV) / (colV + gV)))); it.a = 1; }
+      else {
+        const cl = ((/^<div class="([^"]*)"/.exec(it.h) || [])[1] || "").split(" "), has = (x) => cl.includes(x);
+        let w = 1, r = 1;
+        if (has("dbt")) { if (has("dbw")) { w = 2; r = has("nw") ? 2 : 3; } else if (has("dv")) { w = 2; r = 2; } else if (has("dk")) r = 3; else if (has("dl") || has("dc") || has("dm")) r = 2; }
+        it.w = Math.min(n, w); it.hr = r;
+      }
+      it.h2 = it.a ? this._frH[n + "|" + it.fk] || (it.t === "b" ? 8 : 12) : it.hr * 2;
+    });
+    const list = items.map((it) => ({ fk: it.fk, w: it.w, h: it.h2 })), pos = this._frPlace(list, n, this._frPos(n));
+    return `<div class="mxs fr ${dash ? "dbd" : "tl"}" data-n="${n}" style="${this._mxStyle(n)}">` + items.map((it) => {
+      const [c, r] = pos[it.fk];
+      return `<div class="${it.t === "g" ? "fi ft" : it.t === "b" ? "mxs b fi fa" : "mxs k fi fa"}" data-id="fi:${E(it.fk)}" data-fk="${E(it.fk)}" data-c="${c}" data-r="${r}" data-w="${it.w}" data-h="${it.h2}" style="grid-column:${c} / span ${it.w};grid-row:${r} / span ${it.h2}">${it.h}</div>`;
+    }).join("") + `</div>`;
+  }
+  /* blocks and cards have the height of their content: measure it and give them that many rows, then draw once more */
+  _frAfter() {
+    const g = this.shadowRoot.querySelector(".mxs.fr"); if (!g) { this._frN = 0; return; }
+    const U = this._frU; if (!U || this._mv) return;
+    const gr = g.getBoundingClientRect(), sc = g.offsetWidth ? gr.width / g.offsetWidth : 1; let ch = false;
+    g.querySelectorAll(":scope>.fi.fa").forEach((el) => {
+      const h = el.getBoundingClientRect().height / sc; if (!h) return;
+      const rows = Math.max(2, Math.ceil((h - 0.5) / U.p)), key = U.n + "|" + el.dataset.fk;
+      if (rows !== +el.dataset.h) { this._frH[key] = rows; ch = true; }
+    });
+    if (!ch) { this._frRe = 0; return; }
+    if ((this._frRe = (this._frRe || 0) + 1) > 4) return;
+    clearTimeout(this._frRt); this._frRt = setTimeout(() => { this._frRe = 0; }, 2500);
+    this._last = null; this._draw(true);
+  }
+  _frBegin(m, fi) {
+    const g = fi.parentNode, U = this._frU || { p: 37, fg: 12 }, gr = g.getBoundingClientRect(), sc = g.offsetWidth ? gr.width / g.offsetWidth : 1, n = +g.dataset.n || 3;
+    const gV = U.fg * sc, pV = U.p * sc, colV = (gr.width - gV * (n - 1)) / n, w = +fi.dataset.w, h = +fi.dataset.h, occ = [];
+    g.querySelectorAll(":scope>.fi").forEach((o) => { if (o !== fi) occ.push({ c: +o.dataset.c, r: +o.dataset.r, w: +o.dataset.w, h: +o.dataset.h }); });
+    const pv = document.createElement("div"); pv.className = "fpr"; g.appendChild(pv); g.style.marginBottom = Math.round(pV * 12) + "px";
+    m.fi = fi; m.fr = { g, n, w, h, pV, gV, colV, occ, pv, wV: colV * w + gV * (w - 1), hV: pV * h - gV };
+    m.slot = { c: +fi.dataset.c, r: +fi.dataset.r }; this._frShow(m);
+  }
+  _frShow(m) { const f = m.fr, s = m.slot; f.pv.style.gridColumn = `${s.c} / span ${f.w}`; f.pv.style.gridRow = `${s.r} / span ${f.h}`; }
+  /* the item's top-left corner is at (left, top) on the screen: the nearest free spot there */
+  _frAt(m, left, top) {
+    const f = m.fr, gr = f.g.getBoundingClientRect(), mc = Math.max(1, f.n - f.w + 1), even = f.h % 2 === 0;
+    let c = Math.round((left - gr.left) / (f.colV + f.gV)) + 1, r = Math.round((top - gr.top) / f.pV) + 1;
+    c = Math.max(1, Math.min(mc, c)); r = Math.max(1, r); if (even) r = 2 * Math.round((r - 1) / 2) + 1;
+    const ok = (cc, rr) => !f.occ.some((o) => cc < o.c + o.w && cc + f.w > o.c && rr < o.r + o.h && rr + f.h > o.r);
+    let s = { c, r };
+    if (!ok(c, r)) {
+      let bd = 1e15; s = null;
+      for (let cc = 1; cc <= mc; cc++) for (let rr = 1; rr <= r + 60; rr += even ? 2 : 1) if (ok(cc, rr)) { const d = ((cc - c) * (f.colV + f.gV)) ** 2 + ((rr - r) * f.pV) ** 2; if (d < bd) { bd = d; s = { c: cc, r: rr }; } }
+      if (!s) s = m.slot;
+    }
+    m.slot = s; this._frShow(m);
+  }
+  _frDrop(m) {
+    const f = m.fr, map = {};
+    f.g.querySelectorAll(":scope>.fi").forEach((o) => { map[o.dataset.fk] = [+o.dataset.c, +o.dataset.r]; });
+    map[m.fi.dataset.fk] = [m.slot.c, m.slot.r];
+    this._frSet(f.n, map);
   }
   _hint(t, cancel) {
     const old = this.shadowRoot.getElementById("hint"); if (old) old.remove();
@@ -1183,7 +1297,7 @@ class QuintDashboard extends HTMLElement {
     if (this.getAttribute("data-nav") !== "bar") this.setAttribute("data-nav", "bar");
     this._applyTs();
     clearTimeout(this._h3t); this._h3t = setTimeout(() => { if (this._loaded && this._h3dNeedsFit()) this._mountLv(); }, 250);
-    if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; this._slide(); if (this._loaded && this._v.p === "home" && this._cols() !== this._colsN) this._draw(true); if (this._loaded && this._v.p === "camwall") this._draw(true); }
+    if (this._auto !== auto || this._w !== w) { this._auto = auto; this._w = w; this._slide(); if (this._loaded && this._v.p === "home" && (this._cols() !== this._colsN || this._frN)) this._draw(true); if (this._loaded && this._v.p === "camwall") this._draw(true); }
   }
   _slide() {
     try {
@@ -1407,7 +1521,8 @@ class QuintDashboard extends HTMLElement {
     else if (a === "tsz") { if (TSIZES[v]) { c.tsz = v; delete c.tszd; } }
     else if (a === "tszd0") { delete c.tszd; delete c.tsz; }
     else if (a === "scr") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.scr = c.scr || {}); if (["awake", "night"].includes(k)) o[k] = x === "1"; else if (["idle"].includes(k)) o.idle = x; else o[k] = +x; this._wkT = 0; this._ambHide(); }
-    else if (a === "hbreset") { delete c.hbOrder; delete c.hlay; delete c.hlist; try { localStorage.removeItem("quint_hbo"); localStorage.removeItem("quint_hlay"); localStorage.removeItem("quint_hlist"); } catch (e) {} }
+    else if (a === "hbreset") { delete c.hbOrder; delete c.hlay; delete c.hlist; if (c.hfree) delete c.hfree.pos; try { localStorage.removeItem("quint_hbo"); localStorage.removeItem("quint_hlay"); localStorage.removeItem("quint_hlist"); localStorage.removeItem("quint_hfree"); } catch (e) {} this._last = null; }
+    else if (a === "hfree") { const o = (c.hfree = c.hfree || {}); if (v === "off") o.off = !o.off; else if (v === "reset") { delete o.pos; try { localStorage.removeItem("quint_hfree"); } catch (e) {} this._toast("Tiles are back in their first places"); } this._last = null; }
     else if (a === "push") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.push = c.push || { on: false, targets: [] }); if (k === "on") o.on = x === "1"; else if (k === "t" && /^mobile_app_[a-z0-9_]{1,60}$/.test(x)) { const s = new Set(o.targets || []); s.has(x) ? s.delete(x) : s.add(x); o.targets = [...s].slice(0, 12); } }
     else if (a === "ntf") { const i = v.indexOf("|"), k = v.slice(0, i), x = v.slice(i + 1), o = (c.ntf = c.ntf || {}); if (k === "on") o.on = x === "1"; else if (k === "mins") o.mins = +x; else if (k.startsWith("t:") && NT[k.slice(2)]) (o.types = o.types || {})[k.slice(2)] = x === "1"; }
     else if (a === "cks") c.cks = v === "analog" ? "analog" : "digital";
@@ -3401,7 +3516,7 @@ class QuintDashboard extends HTMLElement {
     if (a === "ckd") { try { if (v === "analog" || v === "digital") localStorage.setItem("quint_ck", v); else localStorage.removeItem("quint_ck"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "ctd") { try { if (v === "1" || v === "0") localStorage.setItem("quint_ct", v); else localStorage.removeItem("quint_ct"); } catch (e) {} this._last = null; return this._draw(true); }
     if (a === "tsd") { try { if (TSIZES[v]) localStorage.setItem("quint_ts", v); else localStorage.removeItem("quint_ts"); } catch (e) {} this._applyTs(); return this._draw(true); }
-    if (a === "ordreset") { try { localStorage.removeItem("quint_ord"); localStorage.removeItem("quint_svo"); localStorage.removeItem("quint_hbo"); localStorage.removeItem("quint_hlay"); localStorage.removeItem("quint_hlist"); } catch (e) {} this._toast("Back to the shared order"); return this._draw(true); }
+    if (a === "ordreset") { try { localStorage.removeItem("quint_ord"); localStorage.removeItem("quint_svo"); localStorage.removeItem("quint_hbo"); localStorage.removeItem("quint_hlay"); localStorage.removeItem("quint_hlist"); localStorage.removeItem("quint_hfree"); } catch (e) {} this._toast("Back to the shared order"); return this._draw(true); }
     if (a === "new") { this._sd = { name: "", scope: this._admin() ? "s" : "l", room: "", q: "", sel: new Set(Object.keys(this._h.states).filter((i) => ["lights", "shades", "climate"].includes(this._svcOf(i)) && !this._c.hide.includes(i))) }; return this._draw(true); }
     if (a === "re") { const s = find(v); if (!s) return; this._sd = { name: s.name, scope: s.sc, room: s.room || "", q: "", edit: v, sel: new Set((s.items || []).map((x) => x.e)) }; return this._draw(true); }
     if (a === "del") {
@@ -3671,6 +3786,8 @@ class QuintDashboard extends HTMLElement {
     this._mcd = false;
     const gs = segs.filter((g) => g.t === "g"), big = gs.reduce((a, g) => (!a || g.h.length > a.h.length ? g : a), null);
     if (addH) { if (big) big.h.push(addH); else segs.push({ t: "g", h: [addH] }); }
+    if (this._frOn()) return this._mxFree(segs, dash);
+    this._frN = 0;
     const st = dash ? this._mxStyle(this._dbCols()) : this._mxStyle(this._mxCols(Math.max(0, ...segs.filter((g) => g.t === "g").map((g) => g.h.length)), cards), cards);
     return segs.map((g) => `<div class="mxs ${g.t}${cards && g.t === "g" ? " mcd" : ""}${dash && g.t === "g" ? " dbd" : ""}" style="${st}">${g.h.join("")}</div>`).join("");
   }
@@ -4885,7 +5002,7 @@ class QuintDashboard extends HTMLElement {
           (q.on ? row("Starts at", "", seg([20, 21, 22, 23, 0].map((h) => [h, h + ":00"]), q.from == null ? 22 : q.from, "qfrom")) + row("Ends at", "", seg([5, 6, 7, 8, 9].map((h) => [h, "0" + h + ":00"]), q.to == null ? 7 : q.to, "qto")) +
             row("Critical alerts", "alarm, smoke, gas and leak alerts still sound during quiet hours", tg(q.crit !== false, `data-s="adv|qcrit|${q.crit !== false ? 0 : 1}"`)) : "")) +
         sec("What normal users can do", "admins are never limited",
-          row("Rearrange the home page", "hold a tile for 2 seconds and drag it", tg(!c.noArrange, 'data-s="flag|noArrange"')) +
+          row("Rearrange the home page", "hold a tile for 1 second and drag it", tg(!c.noArrange, 'data-s="flag|noArrange"')) +
           row("Change their own look", "background, room photos and tile size on their own device", tg(!c.noLook, 'data-s="flag|noLook"')) +
           row("Hide offline devices", "a device that stops answering disappears from their pages instead of showing as unavailable", tg(!!c.hideUnavail, 'data-s="flag|hideUnavail"')));
     } else if (tab === "health") {
@@ -5039,7 +5156,9 @@ class QuintDashboard extends HTMLElement {
         row("Tile layout", "Dashboard: one tile for each device, small tiles with a switch, a brightness bar for lights, a position bar for shades and a round gauge for climate. Compact tiles: one small tile for each service with its state and one quick button", `<div class="seg sm">${[["dash", "Dashboard"], ["tiles", "Compact tiles"]].map(([k, n]) => `<button class="${this._hmx().style === k ? "on" : ""}" data-s="hmx|mode|${k}">${n}</button>`).join("")}</div>`) +
         (this._hmx().on ? row("Tile columns", "how many tiles sit side by side. Auto fits the screen", `<div class="seg sm">${[[0, "Auto"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"]].map(([k, n]) => `<button class="${this._hmx().cols === k ? "on" : ""}" data-s="hmx|cols|${k}">${n}</button>`).join("")}</div>`) +
         row("Tile size", "the size of every tile", `<div class="seg sm">${[["s", "Small"], ["m", "Medium"], ["l", "Large"]].map(([k, n]) => `<button class="${this._hmx().size === k ? "on" : ""}" data-s="hmx|size|${k}">${n}</button>`).join("")}</div>`) : "") +
-        row("Home page layout", "everyone can drag every item (clock, weather, greeting, scenes, tiles, cards) to any place: hold for 2 seconds. What you arrange here is the layout everyone starts with", '<button class="sbtn" data-s="hbreset|">Reset the shared layout</button>') +
+        row("Place tiles anywhere", "hold any tile, card or block for 1 second and drop it in any free spot or corner of the home page. Nothing is swapped or pushed. Off: dropping puts it in the place of another item", tg(!(c.hfree && c.hfree.off), 'data-s="hfree|off"')) +
+        (!(c.hfree && c.hfree.off) ? row("Tile positions", "put every tile back in its first place", '<button class="sbtn" data-s="hfree|reset">Reset tile positions</button>') : "") +
+        row("Home page layout", "everyone can drag every item (clock, weather, greeting, scenes, tiles, cards): hold for 1 second. What you arrange here is the layout everyone starts with", '<button class="sbtn" data-s="hbreset|">Reset the shared layout</button>') +
         row("Weather line", "temperature, condition and sunset", tg(!c.noWeather, 'data-s="flag|noWeather"')) +
         row("Scenes", "the scene buttons", tg(!c.noScenes, 'data-s="flag|noScenes"')) +
         row("Rooms tab", "the page with the list of rooms", tg(!c.noRooms, 'data-s="flag|noRooms"'))) +
@@ -5239,7 +5358,7 @@ class QuintDashboard extends HTMLElement {
     this._rn = (this._rn || 0) + 1;
     this.scrollTop = changed ? 0 : sy;
     this._slide(); this._fitPrev(); if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => { this._slide(); this._fitPrev(); });
-    this._mountLv(); this._mountHa(); this._tickClock();
+    this._mountLv(); this._mountHa(); this._tickClock(); this._frAfter();
   }
 }
 customElements.define("quint-panel", QuintDashboard);
